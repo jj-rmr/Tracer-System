@@ -19,7 +19,7 @@ export default function Sidebar() {
   return (
     <>
       <aside 
-          className={`z-1 fixed flex flex-col py-8 px-2 bg-accent gap-3 h-dvh ${
+          className={`z-1 fixed flex flex-col py-8 px-2 bg-accent gap-3 h-svh ${
             isOpen ? "w-75 max-w-5/6" : "w-20"
           }`}
         >
