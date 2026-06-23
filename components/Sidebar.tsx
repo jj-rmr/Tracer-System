@@ -19,7 +19,7 @@ export default function Sidebar() {
   return (
     <>
       <aside 
-          className={`z-1 fixed flex flex-col py-8 px-2 bg-accent gap-3 h-screen ${
+          className={`z-1 fixed flex flex-col py-8 px-2 bg-accent gap-3 h-dvh ${
             isOpen ? "w-75 max-w-5/6" : "w-20"
           }`}
         >
@@ -142,7 +142,7 @@ export default function Sidebar() {
           </div>  
         </aside>
         <div 
-          className={`h-screen ${
+          className={`h-dvh ${
             isOpen ? "lg:w-75" : "lg:w-20"
           }`}
         />
