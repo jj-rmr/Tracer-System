@@ -154,24 +154,24 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation"; // Optional: Used here to highlight active items
+import { usePathname } from "next/navigation";
 import { 
   RiArrowLeftSLine, 
   RiCloudLine, 
   RiFootprintLine, 
-  RiHome6Line, 
+  RiHome3Line, 
   RiLogoutCircleLine, 
   RiQuestionLine, 
   RiSettingsLine, 
   RiSurveyLine 
 } from "react-icons/ri";
 
-export default function Sidebar() {
+export default function Nav() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
 
   const mainNavItems = [
-    { label: "Home", href: "/", icon: RiHome6Line },
+    { label: "Home", href: "/", icon: RiHome3Line },
     { label: "Forms", href: "/forms", icon: RiSurveyLine },
     { label: "FAQs", href: "/faqs", icon: RiQuestionLine },
   ];
@@ -185,7 +185,7 @@ export default function Sidebar() {
   return (
     <>
       <aside 
-        className={`z-10 fixed hidden md:flex flex-col py-8 px-2 bg-accent gap-3 h-svh transition-all ease-out duration-300 ${
+        className={`z-10 fixed hidden md:flex flex-col py-8 px-2 gap-3 h-svh transition-all ease-out duration-300 ${
           isOpen ? "w-75 max-w-5/6" : "w-20"
         }`}
       >
@@ -261,9 +261,8 @@ export default function Sidebar() {
           />
         </div>  
       </aside>
-
       <div 
-        className={`hidden md:block h-dvh transition-all ease-out duration-300 ${
+        className={`hidden md:block h-dvh bg-accent transition-[width] ease-out duration-300 ${
           isOpen ? "md:w-75" : "md:w-20"
         }`}
       />
