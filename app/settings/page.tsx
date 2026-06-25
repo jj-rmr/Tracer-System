@@ -22,6 +22,12 @@ export default function Settings() {
             </div>
             <div className="mt-4 text-slate-600">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Itaque, facere!</div>
           </div>
+          <div className="w-full max-w-200 h-fit rounded-2xl p-4 flex flex-col items-start hover:bg-surface/20 cursor-pointer active:scale-95 transition-all ease-out duration-300">
+            <div className="flex flex-row justify-between w-full">
+              <p className="font-semibold">Sign Out</p>
+            </div>
+            <div className="mt-4 text-slate-600">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Itaque, facere!</div>
+          </div>
         </div>
     </div>
   );
