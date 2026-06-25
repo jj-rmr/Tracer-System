@@ -45,7 +45,7 @@ export default function RootLayout({
     
     <div className="flex flex-col md:flex-row h-screen w-screen bg-white">
       <Nav />
-      <main className="flex flex-col items-center justify-start md:justify-center flex-1 overflow-y-auto bg-white text-accent px-4 pb-safe md:pb-0">
+      <main className="flex flex-col items-center justify-start md:justify-center flex-1 overflow-y-auto bg-white text-accent px-4 pb-17 md:pb-0">
         {children}
       </main>
     </div>
