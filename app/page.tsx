@@ -1,7 +1,7 @@
 
 export default function Home() {
   return (
-    <div className="flex flex-col items-center justify-center h-screen">
+    <div className="flex flex-col items-center justify-center pb-17 md:pb-0 h-screen">
       <h1 className="text-4xl font-bold text-center">Welcome to the Tracer System</h1>
       <p className="text-center">This is a demo application for the Tracer System.</p>    
     </div>
