@@ -156,53 +156,55 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { 
-  RiArrowLeftSLine, 
-  RiCloudLine, 
-  RiFootprintLine, 
-  RiHome3Line, 
-  RiLogoutCircleLine, 
-  RiQuestionLine, 
-  RiSettingsLine, 
-  RiSurveyLine 
-} from "react-icons/ri";
+  LuPanelLeftClose, 
+  LuCloud, 
+  LuUserRoundSearch, 
+  LuHouse, 
+  LuSettings2, 
+  LuFileSpreadsheet, 
+  LuPanelLeftOpen
+} from "react-icons/lu";
 
 export default function Nav() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
 
   const mainNavItems = [
-    { label: "Home", href: "/", icon: RiHome3Line },
-    { label: "Forms", href: "/forms", icon: RiSurveyLine },
-    { label: "FAQs", href: "/faqs", icon: RiQuestionLine },
+    { label: "Home", href: "/", icon: LuHouse },
+    { label: "Forms", href: "/forms", icon: LuFileSpreadsheet },
   ];
 
   const secondaryNavItems = [
-    { label: "Uploads", href: "/manage-uploads", icon: RiCloudLine },
-    { label: "Settings", href: "/settings", icon: RiSettingsLine },
-    { label: "Sign Out", href: "/logout", icon: RiLogoutCircleLine },
+    { label: "Uploads", href: "/manage-uploads", icon: LuCloud },
+    { label: "Settings", href: "/settings", icon: LuSettings2 },
   ];
 
   return (
     <>
       <aside 
-        className={`z-10 fixed hidden md:flex flex-col py-8 px-2 gap-3 h-svh transition-all ease-out duration-300 ${
+        className={`z-10 fixed hidden md:flex flex-col py-8 px-2 gap-3 h-svh transition-all ease-out duration-300 text-accent border-r border-sky-200 overflow-y-auto overflow-x-hidden ${
           isOpen ? "w-75 max-w-5/6" : "w-20"
         }`}
       >
-        <div className="py-3 px-6 flex flex-col items-center h-fit justify-center">
+        <div 
+          onClick={() => setIsOpen(!isOpen)}
+          className={`top-8.5 right-6.5 absolute flex flex-row w-fit h-fit place-self-center gap-3 mt-3 text-sky-200 cursor-pointer hover:text-sky-400 active:text-sky-400 active:scale-95 transition-all ease-out duration-300 layout`}
+        >
+          <LuPanelLeftOpen 
+            size={24} className={`${isOpen ? "hidden" : ""}`}
+          />
+          <LuPanelLeftClose
+            size={24}  className={`${isOpen ? "" : "hidden"}`}/>
+        </div>  
+        <div className={`p-2 pl-4 flex flex-row gap-3 items-center h-fit justify-start transition-margin duration-300 ${isOpen ? "mt-0" : "mt-16"}`}>
           <span className="shrink-0 inline-flex items-center justify-center">
-            <RiFootprintLine size={32}/>
+            <LuUserRoundSearch size={32}/>
           </span>
-          <h1 className={`text-2xl font-bold text-center whitespace-nowrap transition-all duration-300 ${
+          <h1 className={`text-3xl font-bold text-center whitespace-nowrap transition-all duration-300 ${
             isOpen ? "opacity-100" : "opacity-0 w-0 overflow-hidden"
           }`}>
-            Tracer System 
+            Tracer 
           </h1>
-          <span className={`text-xs font-medium bg-surface/10 rounded-full transition-all duration-300 ${
-            isOpen ? "py-1 px-2 opacity-100" : "opacity-0 w-0 overflow-hidden"
-          }`}>
-            v1
-          </span>
         </div>
         
         <div className="flex flex-col w-full h-fit gap-2 mt-3">
@@ -212,12 +214,10 @@ export default function Nav() {
               <Link 
                 key={item.href}
                 href={item.href} 
-                className={`flex flex-row items-center w-full h-fit p-4 rounded-2xl bg-surface/10 cursor-pointer hover:bg-surface/20 active:scale-95 transition-all ease-out duration-300 ${
-                  isOpen ? "justify-start px-6" : "justify-center"
-                }`}
+                className={`flex flex-row items-center w-full h-fit pl-[19] py-4 rounded-2xl outline outline-sky-200 cursor-pointer hover:text-sky-400 hover:bg-sky-100 active:text-sky-400 active:bg-sky-50 active:scale-95 transition-all ease-out duration-300`}
               >
                 <span className="shrink-0 inline-flex items-center justify-center">
-                  <Icon size={28}/>
+                  <Icon size={24}/>
                 </span>
                 <p className={`font-semibold whitespace-nowrap origin-left transition-all duration-300 ${
                   isOpen ? "ml-3 opacity-100 w-auto" : "opacity-0 w-0 overflow-hidden"
@@ -236,11 +236,9 @@ export default function Nav() {
               <Link 
                 key={item.href}
                 href={item.href} 
-                className={`flex flex-row items-center w-full h-fit cursor-pointer hover:text-surface active:scale-95 transition-all ease-out duration-300 ${
-                  isOpen ? "justify-start px-3 py-2" : "justify-center p-3"
-                }`}
+                className={`pl-6 py-2 flex flex-row items-center w-full h-fit cursor-pointer hover:text-sky-400 active:text-sky-400 active:scale-95 transition-all ease-out duration-300`}
               >
-                <Icon size={18}/>
+                <Icon size={18} />
                 <p className={`text-sm font-medium whitespace-nowrap transition-all duration-300 ${
                   isOpen ? "ml-3 opacity-100 w-auto" : "opacity-0 w-0 overflow-hidden"
                 }`}>
@@ -250,29 +248,19 @@ export default function Nav() {
             );
           })}
         </div>
-
-        <div 
-          onClick={() => setIsOpen(!isOpen)}
-          className="flex flex-row w-fit h-fit p-1 rounded-2xl bg-white border-4 border-accent gap-3 mt-3 text-accent absolute -right-6 top-1/2 -translate-y-1/2 cursor-pointer hover:bg-surface active:scale-95 transition-all ease-out duration-300 layout"
-        >
-          <RiArrowLeftSLine 
-            size={32} 
-            className={`transition-transform duration-300 ${!isOpen ? "rotate-180" : ""}`}
-          />
-        </div>  
       </aside>
       <div 
-        className={`hidden md:block h-dvh bg-accent transition-[width] ease-out duration-300 ${
+        className={`hidden md:block h-dvh bg-transparent transition-[width] ease-out duration-300 ${
           isOpen ? "md:w-75" : "md:w-20"
         }`}
       />
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-accent border-t border-surface/10 px-4 py-2 block md:hidden pb-safe">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t shadow-2xl border-accent/20 px-4 py-2 block md:hidden pb-safe">
         <div className="flex justify-around items-center w-full max-w-md mx-auto">
           {[
             ...mainNavItems,
-            { label: "Uploads", href: "/manage-uploads", icon: RiCloudLine },
-            { label: "Settings", href: "/settings", icon: RiSettingsLine }
+            { label: "Uploads", href: "/manage-uploads", icon: LuCloud },
+            { label: "Settings", href: "/settings", icon: LuSettings2 },
           ].map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href;
@@ -282,7 +270,7 @@ export default function Nav() {
                 key={item.href}
                 href={item.href}
                 className={`flex flex-col items-center justify-center flex-1 py-1 px-2 rounded-xl text-center transition-all duration-200 active:scale-90 ${
-                  isActive ? "text-white bg-surface/20" : "text-white/70 hover:text-white"
+                  isActive ? "text-accent bg-sky-50 " : ""
                 }`}
               >
                 <Icon size={24} />

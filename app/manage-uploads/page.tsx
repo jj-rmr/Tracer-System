@@ -1,40 +1,48 @@
-import { RiCheckboxCircleLine, RiCloseCircleLine, RiDeleteBinLine, RiRestartLine, RiStopCircleLine, RiUploadCloudLine } from "react-icons/ri";
+import { LuRefreshCw , LuFileCheck2, LuFileClock, LuFileX2, LuX, LuFileMinus2 } from "react-icons/lu";
 
 export default function ManageUploads() {
   return (
-    <div className="w-full max-w-6xl px-6 py-12 h-screen">
+    <div className="w-full max-w-6xl px-6 py-12 h-fit">
       <h1 className="text-3xl font-bold">Manage Uploads</h1>
-      <p className="text-slate-600">This is the manage uploads page.</p>
-      <div className="flex flex-col gap-2 mt-8 items-center">
-        <div className="w-full max-w-100 h-fit border-2 border-surface/50 rounded-2xl p-4 flex flex-row justify-between items-center">
+      <p className="text-foreground">This is the manage uploads page.</p>
+      <div className="flex flex-col gap-2 mt-8 md:mt-12 items-center">
+        <div className="w-full lg:max-w-8/12 h-fit border border-sky-200 rounded-2xl px-4 py-6 flex flex-row justify-between items-center">
           <div className="flex gap-2 items-center">
-            <RiUploadCloudLine size={24} className="text-blue-400"/>
+            <LuFileClock size={18} className="text-blue-400"/>
             <p className="font-semibold">Form A</p>
           </div>
           <div className="flex gap-2 items-center">
-            
-            <RiStopCircleLine size={24} className="hover:opacity-50 active:scale-95 cursor-pointer"/>
-            <RiDeleteBinLine size={24} className="hover:opacity-50 active:scale-95 cursor-pointer"/>
+            <p className="text-blue-400 text-xs">Waiting</p>
+            <LuX size={18} className="hover:opacity-50 active:scale-95 cursor-pointer"/>
           </div>
         </div>
-        <div className="w-full max-w-100 h-fit border-2 border-surface/50 rounded-2xl p-4 flex flex-row justify-between items-center">
+        <div className="w-full lg:max-w-8/12 h-fit border border-sky-200 rounded-2xl px-4 py-6 flex flex-row justify-between items-center">
           <div className="flex gap-2 items-center">
-            <RiCheckboxCircleLine size={24} className="text-green-400"/>
+            <LuFileCheck2 size={18} className="text-green-400"/>
             <p className="font-semibold">Form B</p>
           </div>
           <div className="flex gap-2 items-center">
-            <RiDeleteBinLine size={24} className="hover:opacity-50 active:scale-95 cursor-pointer"/>            
+            <p className="text-green-400 text-xs">Success</p>
           </div>
-
         </div>
-        <div className="w-full max-w-100 h-fit border-2 border-surface/50 rounded-2xl p-4 flex flex-row justify-between items-center">
+        <div className="w-full lg:max-w-8/12 h-fit border border-sky-200 rounded-2xl px-4 py-6 flex flex-row justify-between items-center">
           <div className="flex gap-2 items-center">
-            <RiCloseCircleLine size={24} className="text-red-400"/>
+            <LuFileX2 size={18} className="text-red-400"/>
             <p className="font-semibold">Form C</p>          
           </div>
           <div className="flex gap-2 items-center">
-            <RiRestartLine size={24} className="hover:opacity-50 active:scale-95 cursor-pointer"/>
-            <RiDeleteBinLine size={24} className="hover:opacity-50 active:scale-95 cursor-pointer"/>
+            <p className="text-red-400 text-xs">Error</p>
+            <LuRefreshCw  size={15} className="hover:opacity-50 active:scale-95 cursor-pointer"/>
+            <LuX size={18} className="hover:opacity-50 active:scale-95 cursor-pointer"/>
+          </div>
+        </div>
+        <div className="w-full lg:max-w-8/12 h-fit border border-sky-200 rounded-2xl px-4 py-6 flex flex-row justify-between items-center">
+          <div className="flex gap-2 items-center">
+            <LuFileMinus2 size={18} className="text-yellow-400"/>
+            <p className="font-semibold">Form C</p>          
+          </div>
+          <div className="flex gap-2 items-center">
+            <p className="text-yellow-400 text-xs">Cancelled</p>
           </div>
         </div>
       </div>

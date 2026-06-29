@@ -2,9 +2,9 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #45556c;
 
-  --accent: #1c398e;
+  --accent: #055285;
   --surface: #b7ebee;
   interpolate-size: allow-keywords;
 }
@@ -16,21 +16,14 @@
   --color-accent: var(--accent);
   --color-surface: var(--surface);
 
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: var(--font-montserrat-sans);
+  --font-mono: var(--font-jetbrains-mono);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans), Helvetica, sans-serif;
   margin: 0;
 }
 

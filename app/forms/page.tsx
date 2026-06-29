@@ -1,23 +1,29 @@
-import { RiUploadCloud2Line } from "react-icons/ri";
+import Link from "next/link";
+import { LuFileInput } from "react-icons/lu";
+
+const FORMS_DATA = [
+  { title: "Form A", href: "/forms/form-a" },
+  { title: "Form B", href: "/forms/form-b" },
+  { title: "Form C", href: "/forms/form-c" },
+];
 
 export default function Forms() {
   return (
     <div className="w-full max-w-6xl px-6 py-12 min-h-fit h-screen">
       <h1 className="text-3xl font-bold">Forms</h1>
-      <p className="text-slate-600">This is the Forms page.</p>
-      <div className="flex flex-row flex-wrap gap-2 mt-8 justify-center">
-        <div className="relative w-full max-w-60 h-60 border-2 border-surface/50 rounded-4xl p-4">
-          <p className="font-semibold">Form A</p>
-          <RiUploadCloud2Line size={48} className="absolute left-1/2 -translate-1/2 top-1/2"/>
-        </div>
-        <div className="relative w-full max-w-60 h-60 border-2 border-surface/50 rounded-4xl p-4">
-          <p className="font-semibold">Form B</p>
-          <RiUploadCloud2Line size={48} className="absolute left-1/2 -translate-1/2 top-1/2"/>
-        </div>
-        <div className="relative w-full max-w-60 h-60 border-2 border-surface/50 rounded-4xl p-4">
-          <p className="font-semibold">Form C</p>
-          <RiUploadCloud2Line size={48} className="absolute left-1/2 -translate-1/2 top-1/2"/>
-        </div>
+      <p className="text-foreground">This is the Forms page.</p>
+      
+      <div className="flex flex-col gap-2 mt-8 md:mt-12 justify-center items-center">
+        {FORMS_DATA.map((form) => (
+          <Link 
+            key={form.href} 
+            href={form.href} 
+            className="flex flex-row gap-4 items-center w-full lg:max-w-10/12 h-fit border border-sky-200 hover:bg-sky-100 hover:text-sky-400 hover:transform active:scale-95 rounded-2xl transition-color duration-300 px-4 py-6"
+          >
+            <LuFileInput size={24} />
+            <p className="font-semibold">{form.title}</p>
+          </Link>
+        ))}
       </div>
     </div>
   );

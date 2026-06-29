@@ -1,10 +1,17 @@
-import { RiArrowDownSLine } from "react-icons/ri";
+import Link from "next/link";
+import { RiArrowDownSLine, RiArrowRightSLine } from "react-icons/ri";
 
-export default function FAQsPage() {
+export default function FormB() {
   return (
     <div className="w-full max-w-6xl px-6 py-12 h-screen">
-      <h1 className="text-3xl font-bold">FAQs</h1>
-      <p className="text-slate-600">This is the FAQs page.</p>
+      <div className="flex flex-row gap-2 text-3xl font-bold items-center">
+        <Link href="/forms" className="text-accent/50 hover:text-accent/75 transition-color duration-300 flex flex-row gap-2 items-center">
+          <h1 >Forms </h1>
+          <RiArrowRightSLine size={32} />          
+        </Link>
+        <h1>Form B</h1>
+      </div>
+      <p className="text-slate-600">This is Form B.</p>
       <div className="flex flex-col gap-2 mt-8 items-center">
         <div className="w-full max-w-100 h-fit rounded-2xl p-4 flex flex-col items-start hover:bg-surface/20 cursor-pointer active:scale-95 transition-all ease-out duration-300">
           <div className="flex flex-row justify-between w-full">
