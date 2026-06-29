@@ -28,7 +28,7 @@ export default function RootLayout({
       lang="en"
       className={`${montserratSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="h-screen w-full overflow-hidden"> 
+      <body className="h-dvh w-full overflow-hidden"> 
         
         <div className="flex flex-col md:flex-row h-screen w-screen bg-white">
           <Nav />
