@@ -5,28 +5,15 @@ import Link from "next/link";
 import { RiArrowRightSLine, RiArrowDownSLine } from "react-icons/ri";
 
 export default function FormA() {
-  const [openId, setOpenId] = useState<number | null>(0);
 
-  const questions = [
-    {
-      id: 0,
-      title: "Question 1",
-      content: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Reiciendis modi quod dolore nesciunt recusandae corporis, quam, quas architecto ad aspernatur, rerum ex assumenda ab sint vel perferendis explicabo illo dolor?",
-    },
-    {
-      id: 1,
-      title: "Question 2",
-      content: "This is the answer/details for Question 2. You can expand and collapse this section dynamically.",
-    },
-    {
-      id: 2,
-      title: "Question 3",
-      content: "This is the answer/details for Question 3. Everything responds smoothly to user clicks.",
-    },
-  ];
+  const [name, setName] = useState("");
+  const [course, setCourse] = useState("");
+  const [college, setCollege] = useState("");
+  const [file, setFile] = useState<File | null>(null);
 
-  const toggleDropdown = (id: number) => {
-    setOpenId(openId === id ? null : id);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log({ name, course, college, file });
   };
 
   return (
@@ -38,36 +25,71 @@ export default function FormA() {
         </Link>
         <h1>Form A</h1>
       </div>
-      <p className="text-foreground">This is Form A.</p>
+      <p className="text-foreground mb-6">This is Form A.</p>
       
-      <div className="flex flex-col gap-2 mt-8 md:mt-12 items-center">
-        {questions.map((q) => {
-          const isOpen = openId === q.id;
-          
-          return (
-            <div 
-              key={q.id}
-              onClick={() => toggleDropdown(q.id)}
-              className="w-full lg:max-w-10/12 h-fit rounded-2xl p-4 flex flex-col items-start hover:bg-sky-100 border border-sky-200 cursor-pointer active:scale-95 transition-all ease-out duration-300"
-            >
-              <div className="flex flex-row justify-between w-full items-center">
-                <p className="font-semibold">{q.title}</p>
-                <RiArrowDownSLine 
-                  size={24} 
-                  className={`transition-transform duration-300 ${isOpen ? "rotate-180" : "rotate-0"}`}
-                />
-              </div>
-              <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                isOpen ? "max-h-40 mt-4 opacity-100" : "max-h-0 opacity-0"
-              }`}>
-                <div className="text-foreground">
-                  {q.content}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+      <form onSubmit={handleSubmit} className="w-full  flex flex-col gap-4 mb-8 items-center">
+        <div className="flex flex-col gap-1">
+          <label htmlFor="name" className="font-semibold text-foreground">Name</label>
+          <input
+            type="text"
+            id="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Enter your name"
+            className="w-full min-w-80 rounded-2xl p-4 border border-sky-200 focus:outline-none focus:border-sky-400 bg-transparent transition-all duration-300"
+            required
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label htmlFor="course" className="font-semibold text-foreground">Course</label>
+          <select
+            id="course"
+            value={course}
+            onChange={(e) => setCourse(e.target.value)}
+            className="w-full min-w-80 rounded-2xl p-4 border border-sky-200 focus:outline-none focus:border-sky-400 bg-transparent cursor-pointer transition-all duration-300"
+            required
+          >
+            <option value="" disabled className="text-gray-400">Select your course</option>
+            <option value="computer-science">Computer Science</option>
+            <option value="information-technology">Information Technology</option>
+            <option value="engineering">Engineering</option>
+            <option value="business">Business Administration</option>
+          </select>
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label htmlFor="college" className="font-semibold text-foreground">College</label>
+          <select
+            id="college"
+            value={college}
+            onChange={(e) => setCollege(e.target.value)}
+            className="w-full min-w-80 rounded-2xl p-4 border border-sky-200 focus:outline-none focus:border-sky-400 bg-transparent cursor-pointer transition-all duration-300"
+            required  
+          >
+            <option value="" disabled className="text-gray-400">Select your college</option>
+            <option value="college-of-engineering">College of Engineering</option>
+            <option value="college-of-science">College of Science</option>
+            <option value="college-of-business">College of Business</option>
+          </select>
+        </div>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="file" className="font-semibold text-foreground">File</label>
+          <input
+            type="file"
+            id="file"
+            onChange={(e) => setFile(e.target.value ? e.target.files?.[0] || null : null)}
+            className="w-80 rounded-2xl p-4 border border-sky-200 focus:outline-none focus:border-sky-400 bg-transparent cursor-pointer transition-all duration-300"
+            required
+          />
+        </div>
+        <button
+          type="submit"
+          className="w-80 rounded-2xl p-4 font-bold text-white bg-sky-500 hover:bg-sky-600 active:scale-95 transition-all ease-out duration-300 mt-2 cursor-pointer"
+        >
+          Submit
+        </button>
+      </form>
     </div>
   );
 }
