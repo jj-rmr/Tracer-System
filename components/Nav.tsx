@@ -166,7 +166,7 @@ import {
 } from "react-icons/lu";
 
 export default function Nav() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const pathname = usePathname();
 
   const mainNavItems = [
