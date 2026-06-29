@@ -3,7 +3,7 @@ import { RiArrowDownSLine, RiArrowRightSLine } from "react-icons/ri";
 
 export default function FAQsPage() {
   return (
-    <div className="w-full max-w-6xl px-6 py-12 h-screen">
+    <div className="w-full max-w-6xl h-screen">
       <div className="flex flex-row gap-2 text-3xl font-bold items-center">
         <Link href="/settings" className="text-accent/50 hover:text-accent/75 transition-color duration-300 flex flex-row gap-2 items-center">
           <h1 >Settings </h1>

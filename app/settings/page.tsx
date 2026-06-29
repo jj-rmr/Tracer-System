@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function Settings() {
   return (
-    <div className="w-full max-w-6xl px-6 py-12 h-fit">
+    <div className="w-full max-w-6xl h-fit">
       <h1 className="text-3xl font-bold">Settings</h1>
       <p className="text-foreground">This is the settings page.</p>
         <div className="flex flex-col gap-2 mt-8 md:mt-12 items-center">
