@@ -2,7 +2,7 @@ import { LuRefreshCw , LuFileCheck2, LuFileClock, LuFileX2, LuX, LuFileMinus2 } 
 
 export default function ManageUploads() {
   return (
-    <div className="w-full max-w-6xl h-fit">
+    <>
       <h1 className="text-3xl font-bold">Manage Uploads</h1>
       <p className="text-foreground">This is the manage uploads page.</p>
       <div className="flex flex-col gap-2 mt-8 md:mt-12 items-center">
@@ -46,6 +46,6 @@ export default function ManageUploads() {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

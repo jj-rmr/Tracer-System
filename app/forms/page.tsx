@@ -9,7 +9,7 @@ const FORMS_DATA = [
 
 export default function Forms() {
   return (
-    <div className="w-full max-w-6xl min-h-fit h-screen">
+    <>
       <h1 className="text-3xl font-bold">Forms</h1>
       <p className="text-foreground">This is the Forms page.</p>
       
@@ -25,6 +25,6 @@ export default function Forms() {
           </Link>
         ))}
       </div>
-    </div>
+    </>
   );
 }
