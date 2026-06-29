@@ -5,6 +5,12 @@ const FORMS_DATA = [
   { title: "Form A", href: "/forms/form-a" },
   { title: "Form B", href: "/forms/form-b" },
   { title: "Form C", href: "/forms/form-c" },
+  { title: "Form D", href: "/forms/form-d" },
+  { title: "Form E", href: "/forms/form-e" },
+  { title: "Form F", href: "/forms/form-f" },
+  { title: "Form G", href: "/forms/form-g" },
+  { title: "Form H", href: "/forms/form-h" },
+  { title: "Form I", href: "/forms/form-i" },
 ];
 
 export default function Forms() {
@@ -18,9 +24,9 @@ export default function Forms() {
           <Link 
             key={form.href} 
             href={form.href} 
-            className="flex flex-row gap-4 items-center w-full lg:max-w-10/12 h-fit border border-sky-200 hover:bg-sky-100 hover:text-sky-400 hover:transform active:scale-95 rounded-2xl transition-color duration-300 px-4 py-6"
+            className="flex flex-row gap-2 items-center w-full lg:max-w-10/12 h-fit border border-sky-200 hover:bg-sky-100 hover:text-sky-400 hover:transform active:scale-95 rounded-2xl transition-color duration-300 px-4 py-6"
           >
-            <LuFileInput size={24} />
+            <LuFileInput size={18} />
             <p className="font-semibold">{form.title}</p>
           </Link>
         ))}

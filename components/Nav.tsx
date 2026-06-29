@@ -188,7 +188,8 @@ export default function Nav() {
       >
         <div 
           onClick={() => setIsOpen(!isOpen)}
-          className={`top-8.5 right-6.5 absolute flex flex-row w-fit h-fit place-self-center gap-3 mt-3 text-sky-200 cursor-pointer hover:text-sky-400 active:text-sky-400 active:scale-95 transition-all ease-out duration-300 layout`}
+          className={`right-7 absolute flex flex-row w-fit h-fit place-self-center gap-3 mt-3 text-sky-200 cursor-pointer hover:text-sky-400 active:text-sky-400 active:scale-95 transition-all ease-out duration-300 font-light
+            ${isOpen ? "top-8" : "top-2"}`}
         >
           <LuPanelLeftOpen 
             size={24} className={`${isOpen ? "hidden" : ""}`}
@@ -196,7 +197,7 @@ export default function Nav() {
           <LuPanelLeftClose
             size={24}  className={`${isOpen ? "" : "hidden"}`}/>
         </div>  
-        <div className={`p-2 pl-4 flex flex-row gap-3 items-center h-fit justify-start transition-margin duration-300 ${isOpen ? "mt-0" : "mt-16"}`}>
+        <div className={`p-2 pl-4 flex flex-row gap-3 items-center h-fit justify-start transition-margin duration-300 ${isOpen ? "mt-0" : "mt-4"}`}>
           <span className="shrink-0 inline-flex items-center justify-center">
             <LuUserRoundSearch size={32}/>
           </span>
@@ -236,11 +237,11 @@ export default function Nav() {
               <Link 
                 key={item.href}
                 href={item.href} 
-                className={`pl-6 py-2 flex flex-row items-center w-full h-fit cursor-pointer hover:text-sky-400 active:text-sky-400 active:scale-95 transition-all ease-out duration-300`}
+                className={`pl-5.5 py-2 flex flex-row items-center w-full h-fit cursor-pointer hover:text-sky-400 active:text-sky-400 active:scale-95 transition-all ease-out duration-300`}
               >
-                <Icon size={18} />
+                <Icon size={18} className="shrink-0"/>
                 <p className={`text-sm font-medium whitespace-nowrap transition-all duration-300 ${
-                  isOpen ? "ml-3 opacity-100 w-auto" : "opacity-0 w-0 overflow-hidden"
+                  isOpen ? "ml-3 opacity-100" : "opacity-0 overflow-hidden"
                 }`}>
                   {item.label === "Uploads" ? "Manage Uploads" : item.label}
                 </p>

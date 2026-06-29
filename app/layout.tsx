@@ -28,15 +28,13 @@ export default function RootLayout({
       lang="en"
       className={`${montserratSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="h-dvh w-full overflow-hidden"> 
-        
-        <div className="flex flex-col md:flex-row h-screen w-screen bg-white">
+      <body className="h-full w-full overflow-hidden"> 
+        <div className="flex flex-col md:flex-row h-dvh w-screen bg-white overflow-hidden">
           <Nav />
-          <main className="flex flex-col items-center justify-start flex-1 scrollbar-gutter-stable overflow-y-scroll text-accent px-4 ">
-            <div className="w-full max-w-6xl h-fit pt-8 md:pt-12 pb-25 md:pb-12">
+          <main className="flex flex-col items-center justify-start flex-1 scrollbar-gutter-stable overflow-y-auto text-accent px-4">
+            <div className="w-full max-w-6xl h-fit flex-1 py-8 pb-25 md:pb-8">
               {children}
             </div>
-            
           </main>
         </div>
       </body>
