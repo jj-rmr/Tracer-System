@@ -44,14 +44,15 @@ export default function Nav() {
       >
         <div 
           onClick={() => setIsOpen(!isOpen)}
-          className={`right-7 absolute flex flex-row w-fit h-fit place-self-center gap-3 mt-3 text-sky-200 cursor-pointer hover:text-sky-400 active:text-sky-400 active:scale-95 transition-all ease-out duration-300 font-light
-            ${isOpen ? "top-8" : "top-2"}`}
+          className={`right-6 p-1 rounded-lg absolute flex flex-row w-fit h-fit place-self-center gap-3 mt-3 text-sky-300 cursor-pointer hover:bg-sky-100 active:bg-sky-100 active:scale-95 transition-all ease-out duration-300
+            ${isOpen ? "top-7.5" : "top-1"}`}
         >
           <LuPanelLeftOpen 
-            size={24} className={`${isOpen ? "hidden" : ""}`}
+            size={24} className={`${isOpen ? "hidden" : ""}`} strokeWidth={1}
           />
           <LuPanelLeftClose
-            size={24}  className={`${isOpen ? "" : "hidden"}`}/>
+            size={24}  className={`${isOpen ? "" : "hidden"}`} strokeWidth={1}
+          />
         </div>  
         <div className={`p-2 pl-4 flex flex-row gap-3 items-center h-fit justify-start transition-margin duration-300 ${isOpen ? "mt-0" : "mt-4"}`}>
           <span className="shrink-0 inline-flex items-center justify-center">
@@ -118,7 +119,6 @@ export default function Nav() {
             ...mainNavItems,
             { label: "Uploads", href: "/manage-uploads", icon: LuCloud },
             { label: "Settings", href: "/settings", icon: LuSettings2 },
-            { label: "FAQs", href: "/settings/faqs", icon: LuSettings2 },
           ].map((item) => {
             const Icon = item.icon;
             const isActive = isActiveLink(item.href);
