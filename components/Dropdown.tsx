@@ -16,7 +16,7 @@ interface DropdownProps {
   required?: boolean;
 }
 
-export function Dropdown({
+export function  Dropdown({
   id,
   label,
   value,
@@ -51,28 +51,27 @@ export function Dropdown({
 
   return (
     <div className="flex flex-col gap-1 w-full">
-      <label htmlFor={id} className="font-semibold text-foreground">
+      <label htmlFor={id} className="font-semibold text-accent">
         {label}
       </label>
       <details
         ref={detailsRef}
         open={isOpen || undefined}
         className={`relative w-full rounded-2xl border transition-all duration-300 ${
-          isOpen ? "bg-sky-50/5 border-sky-400" : "border-sky-200"
+          isOpen ? "bg-sky-100 border-sky-400" : "border-sky-200"
         }`}
       >
         <summary
           onClick={handleToggle}
-          className="list-none flex gap-2 justify-between items-center p-4 cursor-pointer outline-none select-none text-foreground leading-5"
+          className="list-none flex gap-2 justify-between items-center p-4 cursor-pointer select-none text-foreground leading-5 focus-visible:outline-none focus-visible:ring focus-visible:ring-sky-400 rounded-2xl"
         >
-          <span className={!value ? "text-foreground/40" : ""}>
+          <span className={!value ? "text-foreground/50" : ""}>
             {selectedOption ? selectedOption.label : placeholder}
           </span>
-          <LuChevronDown className={`text-sky-400 transition-transform duration-300 ${
+          <LuChevronDown size={16} className={`text-sky-400 transition-transform duration-300 ${
               isOpen ? "rotate-180" : ""
             }`}/>
         </summary>
-
         <div
           className={`absolute left-0 right-0 mt-2 bg-background border border-sky-200 rounded-2xl shadow-xl z-50 overflow-hidden transition-all duration-300 ease-in-out ${
             isOpen
@@ -92,7 +91,17 @@ export function Dropdown({
           ))}
         </div>
       </details>
-      {required && <input type="text" className="sr-only" value={value} required readOnly />}
+      {required && (
+        <input
+          type="text"
+          className="sr-only"
+          value={value}
+          required
+          readOnly
+          tabIndex={-1}
+          aria-hidden="true"
+        />
+      )}
     </div>
   );
 }
