@@ -12,10 +12,10 @@ interface ToastProps {
 }
 
 const toastStyles: Record<NonNullable<ToastProps["type"]>, string> = {
-  success: "border-green-400 bg-green-50 text-green-400",
-  warning: "border-amber-400 bg-amber-50 text-amber-400",
-  error: "border-red-400 bg-red-50 text-red-400",
-  info: "border-sky-400 bg-sky-50 text-sky-400",
+  success: "border-green-400 bg-green-50/20 text-green-400",
+  warning: "border-amber-400 bg-amber-50/20 text-amber-400",
+  error: "border-red-400 bg-red-50/20 text-red-400",
+  info: "border-sky-400 bg-sky-50/20 text-sky-400",
 };
 
 export function Toast({ message, type = "success", duration = 3000, onClose, setType }: ToastProps) {
@@ -48,20 +48,20 @@ export function Toast({ message, type = "success", duration = 3000, onClose, set
 
   const getInitialPosition = () => {
     if (isLargeScreen) {
-      return {y: 100, opacity: 0, blur: 12 };
+      return {y: 100, opacity: 0 };
     }
-    return { y: -100, opacity: 0, blur: 12 };
+    return { y: -100, opacity: 0};
   };
 
   const getAnimatePosition = () => {
-    return {y: 0, opacity: 1, blur: 0 };
+    return {y: 0, opacity: 1 };
   };
 
   const getExitPosition = () => {
     if (isLargeScreen) {
-      return {y: 100, opacity: 0, blur: 12 };
+      return {y: 100, opacity: 0};
     }
-    return { y: -100, opacity: 0, blur: 12 };
+    return { y: -100, opacity: 0};
   };
 
   return (
@@ -77,7 +77,7 @@ export function Toast({ message, type = "success", duration = 3000, onClose, set
           animate={getAnimatePosition()}
           exit={getExitPosition()}
           transition={{ duration: 0.3, ease: "backInOut" }}
-          className={`fixed ${isLargeScreen ? "bottom-4 right-8 max-w-sm" : "top-4 left-1/2 -translate-x-1/2 w-full max-w-11/12"} rounded-2xl border px-4 py-3 text-sm shadow-lg ${toastStyles[toastType]} z-50`}
+          className={`fixed ${isLargeScreen ? "bottom-4 right-8 max-w-sm" : "top-4 left-1/2 -translate-x-1/2 w-full max-w-11/12"} rounded-2xl border px-4 py-3 text-sm shadow-lg backdrop-blur-sm ${toastStyles[toastType]} z-50`}
         >
           {message}
         </motion.div>
