@@ -192,7 +192,6 @@ export default function GraduateTracerStudy() {
               required
             />
           </div>
-          <div className="h-8" />
           <div className="flex flex-col gap-1 w-full">
             <label htmlFor="permanentAddress" className="font-semibold text-accent">Permanent Address <span className="text-rose-500">*</span></label>
             <input
@@ -247,7 +246,7 @@ export default function GraduateTracerStudy() {
             <button
               type="button"
               onClick={handleNextPage}
-              className="rounded-2xl py-4 px-8 font-bold w-fit text-white bg-sky-500 hover:bg-sky-600 active:scale-95 transition-all ease-out duration-300 cursor-pointer"
+              className="rounded-2xl py-4 px-8 font-semibold w-fit text-white bg-sky-500 hover:bg-sky-600 active:scale-95 transition-all ease-out duration-300 cursor-pointer"
             >
               Next
             </button>
@@ -298,13 +297,13 @@ export default function GraduateTracerStudy() {
             <button
               type="button"
               onClick={handlePreviousPage}
-              className="rounded-2xl py-4 px-8 font-bold w-fit text-foreground border border-sky-300 hover:bg-sky-50 active:scale-95 transition-all ease-out duration-300 cursor-pointer"
+              className="rounded-2xl py-4 px-8 font-semibold w-fit text-foreground border border-sky-200 hover:bg-sky-50 hover:text-sky-400 active:scale-95 transition-all ease-out duration-300 cursor-pointer"
             >
               Back
             </button>
             <button
               type="submit"
-              className="rounded-2xl py-4 px-8 font-bold w-fit text-white bg-sky-500 hover:bg-sky-600 active:scale-95 transition-all ease-out duration-300 cursor-pointer"
+              className="rounded-2xl py-4 px-8 font-semibold w-fit text-white bg-sky-500 hover:bg-sky-600 active:scale-95 transition-all ease-out duration-300 cursor-pointer"
             >
               Submit
             </button>

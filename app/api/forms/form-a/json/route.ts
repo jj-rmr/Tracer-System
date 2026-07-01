@@ -1,10 +1,8 @@
-import { NextResponse } from "next/server";
 import { formatTimestamp, sanitizeForFilename } from "@/lib/upload";
 
 export async function POST(req: Request) {
   const formData = await req.formData();
 
-  // Get all form values
   const firstName = formData.get("firstName")?.toString() || "";
   const middleName = formData.get("middleName")?.toString() || "";
   const lastName = formData.get("lastName")?.toString() || "";
@@ -16,7 +14,6 @@ export async function POST(req: Request) {
   const college = formData.get("college")?.toString() || "";
   const yearGraduated = formData.get("yearGraduated")?.toString() || "";
 
-  // Get honors array
   const honorsArray: string[] = [];
   let i = 0;
   while (true) {
@@ -29,7 +26,6 @@ export async function POST(req: Request) {
     i++;
   }
 
-  // Map values to display labels (using options from form)
   const civilStatusMap: Record<string, string> = {
     Single: "Single",
     Married: "Married",
@@ -75,12 +71,10 @@ export async function POST(req: Request) {
     honors: honorsArray.length > 0 ? honorsArray : [],
   };
 
-  // Generate filename
   const safeName = sanitizeForFilename(`${firstName}_${lastName}` || "unknown");
   const timestamp = formatTimestamp();
   const filename = `FormA_${safeName}_${timestamp}.json`;
 
-  // Return JSON file as download
   return new Response(JSON.stringify(formDataJson, null, 2), {
     headers: {
       "Content-Type": "application/json",
