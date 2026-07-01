@@ -113,7 +113,7 @@ export default function Nav() {
         }`}
       />
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background border-t shadow-2xl border-accent/20 px-4 py-2 block md:hidden pb-safe">
+      <nav className="fixed bottom-0 left-0 right-0 z-1000 bg-background border-t shadow-2xl border-accent/20 px-4 py-2 block md:hidden pb-safe">
         <div className="flex justify-around items-center w-full max-w-md mx-auto">
           {[
             ...mainNavItems,

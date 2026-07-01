@@ -2,7 +2,7 @@ import Link from "next/link";
 import { LuFileInput } from "react-icons/lu";
 
 const FORMS_DATA = [
-  { title: "Form A", href: "/forms/form-a" },
+  { title: "Graduate Tracer Study", href: "/forms/GraduateTracerStudy" },
   { title: "Form B", href: "/forms/form-b" },
   { title: "Form C", href: "/forms/form-c" },
   { title: "Form D", href: "/forms/form-d" },

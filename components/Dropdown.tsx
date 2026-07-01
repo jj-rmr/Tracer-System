@@ -73,7 +73,7 @@ export function  Dropdown({
             }`}/>
         </summary>
         <div
-          className={`absolute left-0 right-0 mt-2 bg-background border border-sky-200 rounded-2xl shadow-xl z-50 overflow-hidden transition-all duration-300 ease-in-out ${
+          className={`absolute left-0 right-0 mt-2 bg-background border border-sky-200 rounded-2xl shadow-xl z-50 overflow-hidden transition-all duration-300 ease-in-out max-h-42.25 overflow-y-auto scrollbar-none ${
             isOpen
               ? "opacity-100 translate-y-0 pointer-events-auto"
               : "opacity-0 -translate-y-2 pointer-events-none"
@@ -91,39 +91,16 @@ export function  Dropdown({
           ))}
         </div>
       </details>
-      {required && (
-        <input
-          type="text"
-          className="sr-only"
-          value={value}
-          required
-          readOnly
-          tabIndex={-1}
-          aria-hidden="true"
-        />
-      )}
+      <input
+        type="text"
+        name={id}
+        className="sr-only"
+        value={value}
+        required={required}
+        readOnly
+        tabIndex={-1}
+        aria-hidden="true"
+      />
     </div>
-  );
-}
-
-export default function CollegeForm() {
-  const [college, setCollege] = useState("");
-
-  const collegeOptions = [
-    { value: "CEC", label: "College of Engineering and Computational Sciences" },
-    { value: "COS", label: "College of Science" },
-    { value: "CBM", label: "College of Business" },
-  ];
-
-  return (
-    <Dropdown
-      id="college"
-      label="College"
-      value={college}
-      onChange={setCollege}
-      options={collegeOptions}
-      placeholder="Select your college"
-      required
-    />
   );
 }
