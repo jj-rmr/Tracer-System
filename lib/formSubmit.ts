@@ -1,8 +1,13 @@
-export async function submitFormA(form: HTMLFormElement) {
+/**
+ * Generalized form submission handler that works for all forms
+ * @param form - The form element to submit
+ * @param formName - The name of the form (e.g., "FormA", "FormB", "FormC")
+ */
+export async function submitForm(form: HTMLFormElement, formName: string) {
   const formData = new FormData(form);
-  formData.append("formName", "FormA");
+  formData.append("formName", formName);
 
-  const response = await fetch(form.action || "/api/forms/form-a", {
+  const response = await fetch(form.action || "/api/forms", {
     method: "POST",
     body: formData,
   });
@@ -24,4 +29,12 @@ export async function submitFormA(form: HTMLFormElement) {
   link.click();
   link.remove();
   URL.revokeObjectURL(downloadUrl);
+}
+
+/**
+ * Form A specific submission handler (uses generalized submitForm)
+ * @deprecated Use submitForm(form, "FormA") instead
+ */
+export async function submitFormA(form: HTMLFormElement) {
+  return submitForm(form, "FormA");
 }

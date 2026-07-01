@@ -6,6 +6,7 @@ import { RiArrowRightSLine } from "react-icons/ri";
 import { Dropdown } from "@/components/Dropdown";
 import { FileInput } from "@/components/FileInput";
 import { Toast } from "@/components/Toast";
+import { submitForm } from "@/lib/formSubmit";
 
 export default function FormC() {
 
@@ -27,16 +28,21 @@ export default function FormC() {
     { value: "CBM", label: "College of Business and Management" },
   ];
 
-  const handleSubmit = (e: React.SubmitEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    setToast("Form submitted successfully!");
-    setName("");
-    setCourse("");
-    setCollege("");
-    setFile(null);
+    try {
+      await submitForm(e.currentTarget, "FormC");
+      setToast("Form submitted successfully!");
+      setName("");
+      setCourse("");
+      setCollege("");
+      setFile(null);
+    } catch (error) {
+      setToast("Submission failed.");
+    }
 
-    window.setTimeout(() => setToast(""), 10000);
+    window.setTimeout(() => setToast(""), 3000);
   };
 
   return (
@@ -49,12 +55,13 @@ export default function FormC() {
         <h1>Form C</h1>
       </div>
       <p className="text-foreground mb-6">This is Form C.</p>
-    <form onSubmit={handleSubmit} className="w-full place-self-center lg:max-w-120 flex flex-col gap-4 mb-8 items-center">
+    <form action="/api/forms" onSubmit={handleSubmit} className="w-full place-self-center lg:max-w-120 flex flex-col gap-4 mb-8 items-center">
       <div className="flex flex-col gap-1 w-full">
         <label htmlFor="name" className="font-semibold text-accent">Name</label>
         <input
           type="text"
           id="name"
+          name="name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Enter your name"
@@ -91,7 +98,7 @@ export default function FormC() {
         hint="4MB - PDF / DOC / DOCX"
         required
       />
-      {toast && <Toast message={toast} type="success" />}
+      {toast && <Toast message={toast} type="success" onClose={() => setToast("")} />}
       <button
         type="submit"
         className="rounded-2xl py-4 px-8 font-bold text-white bg-sky-500 hover:bg-sky-600 active:scale-95 transition-all ease-out duration-300 mt-2 cursor-pointer"
