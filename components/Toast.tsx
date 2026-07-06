@@ -18,11 +18,19 @@ const toastStyles: Record<NonNullable<ToastProps["type"]>, string> = {
   info: "border-sky-400 bg-sky-50/20 text-sky-400",
 };
 
-export function Toast({ message, type = "success", duration = 3000, onClose, setType }: ToastProps) {
+export function Toast({
+  message,
+  type = "success",
+  duration = 3000,
+  onClose,
+  setType,
+}: ToastProps) {
   const [isVisible, setIsVisible] = useState(true);
-  const [toastType, setToastType] = useState<"success" | "warning" | "error" | "info">(type);
-  const [isLargeScreen, setIsLargeScreen] = useState(() => 
-    typeof window !== "undefined" && window.innerWidth >= 1024
+  const [toastType, setToastType] = useState<
+    "success" | "warning" | "error" | "info"
+  >(type);
+  const [isLargeScreen, setIsLargeScreen] = useState(
+    () => typeof window !== "undefined" && window.innerWidth >= 1024
   );
 
   useEffect(() => {
@@ -48,36 +56,42 @@ export function Toast({ message, type = "success", duration = 3000, onClose, set
 
   const getInitialPosition = () => {
     if (isLargeScreen) {
-      return {y: 100, opacity: 0 };
+      return { y: 100, opacity: 0 };
     }
-    return { y: -100, opacity: 0};
+    return { y: -100, opacity: 0 };
   };
 
   const getAnimatePosition = () => {
-    return {y: 0, opacity: 1 };
+    return { y: 0, opacity: 1 };
   };
 
   const getExitPosition = () => {
     if (isLargeScreen) {
-      return {y: 100, opacity: 0};
+      return { y: 100, opacity: 0 };
     }
-    return { y: -100, opacity: 0};
+    return { y: -100, opacity: 0 };
   };
 
   return (
-    <AnimatePresence 
+    <AnimatePresence
       onExitComplete={() => {
         onClose?.();
       }}
     >
       {isVisible && (
-        <motion.div 
+        <motion.div
           key="toast"
           initial={getInitialPosition()}
           animate={getAnimatePosition()}
           exit={getExitPosition()}
           transition={{ duration: 0.3, ease: "backInOut" }}
-          className={`fixed ${isLargeScreen ? "bottom-4 right-8 max-w-sm" : "top-4 left-1/2 -translate-x-1/2 w-full max-w-11/12"} rounded-2xl border px-4 py-3 text-sm shadow-lg backdrop-blur-sm ${toastStyles[toastType]} z-50`}
+          className={`fixed ${
+            isLargeScreen
+              ? "bottom-4 right-8 max-w-sm"
+              : "top-4 left-1/2 -translate-x-1/2 w-full max-w-11/12"
+          } rounded-2xl border px-4 py-3 text-sm shadow-lg backdrop-blur-sm ${
+            toastStyles[toastType]
+          } z-50`}
         >
           {message}
         </motion.div>

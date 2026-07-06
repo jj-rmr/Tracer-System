@@ -110,7 +110,12 @@ export function FileInput({
             : "border-sky-200 text-foreground/50 hover:border-sky-400 hover:bg-sky-100 active:border-sky-400 active:bg-sky-100 active:scale-95"
         }`}
       >
-        <LuCloudUpload size={32} className={`pointer-events-none shrink-0 ${file || isDragActive ? "text-sky-400" : "text-foreground opacity-50"}`} />
+        <LuCloudUpload
+          size={32}
+          className={`pointer-events-none shrink-0 ${
+            file || isDragActive ? "text-sky-400" : "text-foreground opacity-50"
+          }`}
+        />
         <div className="pointer-events-none">
           <h4 className="text-sm md:text-base font-semibold">
             {file ? file.name : label}
@@ -130,8 +135,14 @@ export function FileInput({
           onChange={(event) => handleFile(event.target.files?.[0] || null)}
         />
       </label>
-      <button className={`absolute top-3 right-3 md:top-1/2 md:-translate-y-1/2 p-1 rounded-lg text-sky-400 hover:bg-sky-100 transition-colors duration-300 cursor-pointer ${file ? "" : "hidden"}`} type="button" onClick={() => handleFile(null)}>
-        <LuX className="shrink-0 size-4 "/>
+      <button
+        className={`absolute top-3 right-3 md:top-1/2 md:-translate-y-1/2 p-1 rounded-lg text-sky-400 hover:bg-sky-100 transition-colors duration-300 cursor-pointer ${
+          file ? "" : "hidden"
+        }`}
+        type="button"
+        onClick={() => handleFile(null)}
+      >
+        <LuX className="shrink-0 size-4 " />
       </button>
     </div>
   );

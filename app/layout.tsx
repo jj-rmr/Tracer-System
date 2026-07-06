@@ -1,7 +1,15 @@
+// app/layout.tsx
 import type { Metadata } from "next";
 import { Montserrat, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import Nav from "@/components/Nav";
+import { createNextServerHelpers } from "@appwrite.io/react/server/next";
+import { Providers } from "./providers";
+import { appwriteConfig, hasAppwriteConfig } from "./config/appwrite";
+
+const appwrite = {
+  endpoint: appwriteConfig.endpoint,
+  projectId: appwriteConfig.projectId,
+};
 
 const montserratSans = Montserrat({
   variable: "--font-montserrat-sans",
@@ -18,25 +26,23 @@ export const metadata: Metadata = {
   description: "Tracer System by the ParSU Placement Unit (Demo)",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const helpers = hasAppwriteConfig()
+    ? createNextServerHelpers(appwrite)
+    : null;
+  const session = helpers ? await helpers.readSessionCookie() : null;
+
   return (
     <html
       lang="en"
       className={`${montserratSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="h-full w-full overflow-hidden"> 
-        <div className="flex flex-col md:flex-row h-dvh w-screen bg-white overflow-hidden">
-          <Nav />
-          <main className="flex flex-col items-center justify-start flex-1 scrollbar-gutter-stable overflow-y-auto text-accent px-4">
-            <div className="w-full max-w-6xl h-fit flex-1 py-8 pb-25 md:pb-8">
-              {children}
-            </div>
-          </main>
-        </div>
+      <body className="h-full w-full flex items-center justify-center">
+        <Providers session={session}>{children}</Providers>
       </body>
     </html>
   );

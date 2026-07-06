@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { LuArrowDown, LuChevronDown } from "react-icons/lu";
+import { LuChevronDown } from "react-icons/lu";
 
 interface Option {
   value: string;
@@ -16,7 +16,7 @@ interface DropdownProps {
   required?: boolean;
 }
 
-export function  Dropdown({
+export function Dropdown({
   id,
   label,
   value,
@@ -31,7 +31,10 @@ export function  Dropdown({
 
   useEffect(() => {
     const handleOutsideClick = (event: Event) => {
-      if (detailsRef.current && !detailsRef.current.contains(event.target as Node)) {
+      if (
+        detailsRef.current &&
+        !detailsRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -72,9 +75,12 @@ export function  Dropdown({
           <span className={!value ? "text-foreground/50" : ""}>
             {selectedOption ? selectedOption.label : placeholder}
           </span>
-          <LuChevronDown size={16} className={`text-sky-400 transition-transform duration-300 ${
+          <LuChevronDown
+            size={16}
+            className={`text-sky-400 transition-transform duration-300 ${
               isOpen ? "rotate-180" : ""
-            }`}/>
+            }`}
+          />
         </summary>
         <div
           className={`absolute left-0 right-0 mt-2 bg-background border border-sky-200 rounded-2xl shadow-xl z-50 overflow-hidden transition-all duration-300 ease-in-out max-h-42.25 overflow-y-auto scrollbar-none scrollbar-thumb-sky-200 hover:scrollbar-thumb-sky-400 scrollbar-track-transparent scrollbar-button-none ${
