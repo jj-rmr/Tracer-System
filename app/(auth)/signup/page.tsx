@@ -18,7 +18,7 @@ export default function SignUpPage() {
 
   const isProcessing = isSignUpPending || isSignOutPending;
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
 
@@ -118,8 +118,6 @@ export default function SignUpPage() {
             onChange={(e) => setEmail(e.target.value)}
             disabled={isProcessing}
             placeholder="name@parsu.edu.ph"
-            pattern="[a-zA-Z0-9\._%\+\-]+@parsu\.edu\.ph$"
-            title="Please use your official ParSU institutional email address."
             className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-transparent transition duration-150 disabled:opacity-60 bg-slate-50 focus:bg-white"
           />
         </div>

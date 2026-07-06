@@ -1,14 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useSignOut, useAppwrite } from "@appwrite.io/react"; // 1. Import useAppwrite
+import { useSignOut, useAppwrite } from "@appwrite.io/react";
 import { useRouter } from "next/navigation";
 
 export default function VerifyEmailPage() {
   const router = useRouter();
   const { signOut, isPending: isLogOutPending } = useSignOut();
 
-  // 2. Access the pre-authenticated default SDK instance from context
   const sdk = useAppwrite();
 
   const [sent, setSent] = useState(false);
@@ -22,7 +21,6 @@ export default function VerifyEmailPage() {
     try {
       const verificationUrl = `${window.location.origin}/confirm-verification`;
 
-      // 3. Fire the request directly through the context instance
       await sdk.account.createEmailVerification({
         url: verificationUrl,
       });
@@ -54,7 +52,6 @@ export default function VerifyEmailPage() {
   return (
     <div className="min-h-screen w-screen flex items-center justify-center bg-slate-50 p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-100 p-8 text-center">
-        {/* Envelope Icon */}
         <div className="w-16 h-16 bg-sky-50 text-sky-600 rounded-full flex items-center justify-center mx-auto mb-6">
           <svg
             xmlns="http://www.w3.org/2000/svg"

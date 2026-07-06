@@ -9,7 +9,6 @@ export default function SignInPage() {
   const router = useRouter();
 
   const { emailPassword, isPending: isSignInPending } = useSignIn();
-  const { signOut } = useSignOut();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -110,7 +109,6 @@ export default function SignInPage() {
             onChange={(e) => setEmail(e.target.value)}
             disabled={isSignInPending}
             placeholder="name@parsu.edu.ph"
-            title="Please use your official @parsu.edu.ph email address."
             className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-transparent transition duration-150 disabled:opacity-60 bg-slate-50 focus:bg-white"
           />
         </div>

@@ -26,7 +26,7 @@ export default function ConfirmVerificationPage() {
 
     const completeVerification = async () => {
       try {
-        await sdk.account.updateVerification({
+        await sdk.account.updateEmailVerification({
           userId,
           secret,
         });
