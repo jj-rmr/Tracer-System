@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAppwrite } from "@appwrite.io/react";
 
@@ -14,6 +14,9 @@ export default function ConfirmVerificationPage() {
   );
   const [errorMsg, setErrorMsg] = useState("");
 
+  // Track if verification has already been initiated to bypass Strict Mode double-runs
+  const verificationStarted = useRef(false);
+
   useEffect(() => {
     const userId = searchParams.get("userId");
     const secret = searchParams.get("secret");
@@ -23,6 +26,10 @@ export default function ConfirmVerificationPage() {
       setErrorMsg("Invalid or missing verification tokens in link.");
       return;
     }
+
+    // If a request is already in flight or done, skip subsequent runs
+    if (verificationStarted.current) return;
+    verificationStarted.current = true;
 
     const completeVerification = async () => {
       try {
