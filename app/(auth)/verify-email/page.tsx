@@ -30,9 +30,12 @@ export default function VerifyEmailPage() {
         url: verificationUrl,
       });
       setSent(true);
-      setCooldown(60); // Start the 60-second countdown
+      setCooldown(60);
     } catch (err: any) {
       console.error("Verification failed to send:", err);
+      if (err?.code === 409) {
+        router.replace("/");
+      }
       setError(
         err?.message || "Failed to send verification email. Please try again.",
       );
