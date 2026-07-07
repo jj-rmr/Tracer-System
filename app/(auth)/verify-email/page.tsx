@@ -13,13 +13,10 @@ export default function VerifyEmailPage() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Cooldown timer state
   const [cooldown, setCooldown] = useState(0);
 
-  // Prevent duplicate execution during double-mounts in React Strict Mode
   const verificationAttempted = useRef(false);
 
-  // Core verification dispatch logic
   const triggerVerification = async () => {
     setSending(true);
     setError(null);
@@ -32,10 +29,10 @@ export default function VerifyEmailPage() {
       setSent(true);
       setCooldown(60);
     } catch (err: any) {
-      console.error("Verification failed to send:", err);
       if (err?.code === 409) {
         router.replace("/");
       }
+      console.error("Verification failed to send:", err);
       setError(
         err?.message || "Failed to send verification email. Please try again.",
       );
@@ -84,7 +81,6 @@ export default function VerifyEmailPage() {
   return (
     <div className="min-h-screen w-screen flex items-center justify-center bg-slate-50 p-4">
       <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-slate-100 p-8 text-center">
-        {/* Animated Icon State */}
         <div
           className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 transition-colors duration-300 ${
             sending

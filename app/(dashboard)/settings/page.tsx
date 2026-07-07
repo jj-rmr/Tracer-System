@@ -1,3 +1,4 @@
+import { SignOutButton } from "@/components/SignOutButton";
 import Link from "next/link";
 
 export default function Settings() {
@@ -47,10 +48,8 @@ export default function Settings() {
           </Link>
         ))}
 
-        <div className="mt-8 md:mt-12 w-fit h-fit rounded-2xl px-6 py-4 flex flex-col items-start hover:bg-red-100 bg-red-400 hover:text-red-400 text-white border border-red-400 cursor-pointer active:bg-red-100 active:text-red-400 active:scale-95 transition-all ease-out duration-300">
-          <div className="flex flex-row justify-between w-full">
-            <p className="font-semibold">Sign Out</p>
-          </div>
+        <div className="mt-8">
+          <SignOutButton />
         </div>
       </div>
     </>

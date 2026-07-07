@@ -1,4 +1,4 @@
-// app/layout.tsx
+"// app/layout.tsx";
 import type { Metadata } from "next";
 import { Montserrat, JetBrains_Mono } from "next/font/google";
 import "./globals.css";

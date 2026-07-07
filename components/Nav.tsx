@@ -127,13 +127,13 @@ export default function Nav() {
         </div>
       </aside>
       <div
-        className={`hidden md:block h-dvh bg-transparent border border-sky-200  transition-[width] ease-out duration-300 ${
+        className={`hidden md:block h-dvh bg-transparent shadow-2xl rounded-r-4xl shadow-sky-200  transition-[width] ease-out duration-300 ${
           isOpen ? "md:w-75" : "md:w-20"
         }`}
       />
 
-      <nav className="fixed bottom-0 left-0 right-0 z-1000 bg-background border-t shadow-2xl border-accent/20 px-4 py-2 block md:hidden pb-safe">
-        <div className="flex justify-around items-center w-full max-w-md mx-auto">
+      <nav className="fixed bottom-4 left-0 right-0 z-1000 bg-background shadow-2xl rounded-full mx-4 shadow-sky-200 border border-sky-100 p-2 block md:hidden pb-safe">
+        <div className="flex justify-around items-center w-full">
           {[...mainNavItems, ...secondaryNavItems].map((item) => {
             const Icon = item.icon;
             const isActive = isActiveLink(item.href);
@@ -142,8 +142,8 @@ export default function Nav() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center justify-center flex-1 py-1 px-2 rounded-xl text-center transition-all duration-200 active:scale-90 ${
-                  isActive ? "text-accent bg-sky-50 " : ""
+                className={`flex flex-col items-center justify-center flex-1 p-2 rounded-full text-center transition-all duration-200 active:scale-90 ${
+                  isActive ? "text-sky-400 bg-sky-100 " : "text-accent"
                 }`}
               >
                 <Icon size={24} />
