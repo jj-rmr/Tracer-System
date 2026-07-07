@@ -1,13 +1,7 @@
-import { createNextServerHelpers } from "@appwrite.io/react/server/next";
-
-const appwrite = {
-  endpoint: process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!,
-  projectId: process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!,
-};
+import { getSessionUser } from "@/app/actions/cache";
 
 export default async function Page() {
-  const helpers = createNextServerHelpers(appwrite);
-  const user = await helpers.getLoggedInUser();
+  const user = await getSessionUser();
 
   return (
     <div className="space-y-8">
