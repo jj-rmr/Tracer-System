@@ -1,4 +1,3 @@
-// app/config/appwrite.ts
 import { Client, Account } from "appwrite";
 
 const endpoint =
@@ -12,15 +11,12 @@ export const appwriteConfig = {
   projectId: projectId || "",
 };
 
-// Brought back the missing configuration checker function
 export function hasAppwriteConfig() {
   return Boolean(appwriteConfig.endpoint && appwriteConfig.projectId);
 }
 
-// Global Appwrite Client instance
 export const client = new Client()
   .setEndpoint(appwriteConfig.endpoint)
   .setProject(appwriteConfig.projectId);
 
-// Unified Account service module for client-side hooks/pages
 export const account = new Account(client);

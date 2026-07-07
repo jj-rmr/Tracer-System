@@ -127,7 +127,7 @@ export default function Nav() {
         </div>
       </aside>
       <div
-        className={`hidden md:block h-dvh bg-transparent border-r border-sky-200  transition-[width] ease-out duration-300 ${
+        className={`hidden md:block h-dvh bg-transparent border border-sky-200  transition-[width] ease-out duration-300 ${
           isOpen ? "md:w-75" : "md:w-20"
         }`}
       />

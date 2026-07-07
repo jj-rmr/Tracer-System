@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useSignIn, useSignOut } from "@appwrite.io/react";
+import { useSignIn } from "@appwrite.io/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -41,7 +41,7 @@ export default function SignInPage() {
         }
 
         router.refresh();
-        router.push("/");
+        router.replace("/");
       },
       onError: (err: any) => {
         const errorMessage = err?.message?.toLowerCase() || "";
@@ -75,7 +75,7 @@ export default function SignInPage() {
         </p>
       </div>
       {error && (
-        <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-sm text-red-600 animate-in fade-in duration-200">
+        <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-sm text-red-600 animate-in fade-in duration-200">
           <div className="flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -109,7 +109,7 @@ export default function SignInPage() {
             onChange={(e) => setEmail(e.target.value)}
             disabled={isSignInPending}
             placeholder="name@parsu.edu.ph"
-            className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-transparent transition duration-150 disabled:opacity-60 bg-slate-50 focus:bg-white"
+            className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition duration-150 disabled:opacity-60 bg-slate-50 focus:bg-white"
           />
         </div>
 
@@ -130,14 +130,14 @@ export default function SignInPage() {
             onChange={(e) => setPassword(e.target.value)}
             disabled={isSignInPending}
             placeholder="••••••••"
-            className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-transparent transition duration-150 disabled:opacity-60 bg-slate-50 focus:bg-white"
+            className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition duration-150 disabled:opacity-60 bg-slate-50 focus:bg-white"
           />
         </div>
 
         <button
           type="submit"
           disabled={isSignInPending}
-          className="w-full py-3 px-4 rounded-xl bg-sky-400 hover:bg-sky-500 text-white font-medium shadow-md shadow-sky-200 hover:shadow-lg transition duration-300 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex justify-center items-center gap-2"
+          className="w-full py-3 px-4 rounded-2xl bg-sky-400 hover:bg-sky-500 text-white font-medium shadow-md shadow-sky-200 hover:shadow-lg transition duration-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer flex justify-center items-center gap-2"
         >
           {isSignInPending ? (
             <>

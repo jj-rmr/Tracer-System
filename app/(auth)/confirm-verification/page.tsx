@@ -33,7 +33,7 @@ export default function ConfirmVerificationPage() {
 
         setStatus("success");
         setTimeout(() => {
-          router.replace("/dashboard");
+          router.replace("/");
         }, 3000);
       } catch (err: any) {
         console.error("Verification confirmation failed:", err);

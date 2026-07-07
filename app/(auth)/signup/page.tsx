@@ -1,29 +1,36 @@
 "use client";
 
 import React, { useState } from "react";
-import { useSignUp, useSignOut } from "@appwrite.io/react";
+import { useSignUp, useAppwrite } from "@appwrite.io/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function SignUpPage() {
   const router = useRouter();
-
+  const sdk = useAppwrite();
   const { emailPassword, isPending: isSignUpPending } = useSignUp();
-  const { signOut, isPending: isSignOutPending } = useSignOut();
 
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [middleName, setMiddleName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [extensionName, setExtensionName] = useState("");
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const isProcessing = isSignUpPending || isSignOutPending;
+  const [pipelineStage, setPipelineStage] = useState<
+    "idle" | "creating" | "authenticating"
+  >("idle");
 
-  const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
+  const isProcessing = isSignUpPending || pipelineStage !== "idle";
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
 
-    if (!name || !email || !password) {
-      setError("Please fill in all fields.");
+    if (!firstName || !lastName || !email || !password) {
+      setError("Please fill in all required fields.");
       return;
     }
 
@@ -34,19 +41,63 @@ export default function SignUpPage() {
       return;
     }
 
+    let formattedExtension = "";
+    const ext = extensionName.trim();
+
+    if (ext) {
+      const isJrSr = /^(jr|sr)\.?$/i.test(ext);
+      const isRomanNumeral = /^[ivxldcm]+\.?$/i.test(ext);
+
+      if (isJrSr) {
+        const cleanExt = ext.replace(/\.$/, "");
+        formattedExtension =
+          cleanExt.charAt(0).toUpperCase() +
+          cleanExt.slice(1).toLowerCase() +
+          ".";
+      } else if (isRomanNumeral) {
+        const cleanExt = ext.replace(/\.$/, "");
+        formattedExtension = cleanExt.toUpperCase();
+      } else {
+        setError(
+          "Invalid Extension Name. Only Jr., Sr., or Roman numerals (I, II, III...) are allowed.",
+        );
+        return;
+      }
+    }
+
+    const formattedFullName = [
+      lastName.trim() + ",",
+      firstName.trim(),
+      middleName.trim(),
+      formattedExtension,
+    ]
+      .filter(Boolean)
+      .join(" ");
+
+    setPipelineStage("creating");
+
     emailPassword({
-      name,
+      name: formattedFullName,
       email,
       password,
-      onSuccess: () => {
-        signOut({
-          onSuccess: () => {
-            router.refresh();
-            router.push("/verify-email");
-          },
-        });
+      onSuccess: async () => {
+        setPipelineStage("authenticating");
+
+        try {
+          await sdk.account.createEmailPasswordSession(email, password);
+
+          router.refresh();
+          router.replace("/verify-email");
+        } catch (loginErr: any) {
+          console.error("Implicit login failed:", loginErr);
+          setPipelineStage("idle");
+          setError(
+            "Account created successfully, but we couldn't log you in automatically. Please go to the Sign In page.",
+          );
+        }
       },
       onError: (err: any) => {
+        setPipelineStage("idle");
         setError(err?.message || "Failed to create account. Please try again.");
       },
     });
@@ -64,7 +115,7 @@ export default function SignUpPage() {
       </div>
 
       {error && (
-        <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-sm text-red-600 animate-in fade-in duration-200">
+        <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-sm text-red-600 animate-in fade-in duration-200">
           <div className="flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -84,23 +135,80 @@ export default function SignUpPage() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        <div>
-          <label
-            htmlFor="name"
-            className="block text-sm font-medium text-slate-700 mb-1.5"
-          >
-            Full Name
-          </label>
-          <input
-            id="name"
-            type="text"
-            autoComplete="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            disabled={isProcessing}
-            placeholder="John Doe"
-            className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-transparent transition duration-150 disabled:opacity-60 bg-slate-50 focus:bg-white"
-          />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label
+              htmlFor="firstName"
+              className="block text-sm font-medium text-slate-700 mb-1.5"
+            >
+              First Name *
+            </label>
+            <input
+              id="firstName"
+              type="text"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              disabled={isProcessing}
+              placeholder="John"
+              className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition duration-150 disabled:opacity-60 bg-slate-50 focus:bg-white"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="middleName"
+              className="block text-sm font-medium text-slate-700 mb-1.5"
+            >
+              Middle Name{" "}
+              <span className="text-xs text-slate-400">(Optional)</span>
+            </label>
+            <input
+              id="middleName"
+              type="text"
+              value={middleName}
+              onChange={(e) => setMiddleName(e.target.value)}
+              disabled={isProcessing}
+              placeholder="Smith"
+              className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition duration-150 disabled:opacity-60 bg-slate-50 focus:bg-white"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="lastName"
+              className="block text-sm font-medium text-slate-700 mb-1.5"
+            >
+              Last Name *
+            </label>
+            <input
+              id="lastName"
+              type="text"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              disabled={isProcessing}
+              placeholder="Doe"
+              className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition duration-150 disabled:opacity-60 bg-slate-50 focus:bg-white"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor="extensionName"
+              className="block text-sm font-medium text-slate-700 mb-1.5"
+            >
+              Extension Name{" "}
+              <span className="text-xs text-slate-400">(Optional)</span>
+            </label>
+            <input
+              id="extensionName"
+              type="text"
+              value={extensionName}
+              onChange={(e) => setExtensionName(e.target.value)}
+              disabled={isProcessing}
+              placeholder="Jr. / III"
+              className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition duration-150 disabled:opacity-60 bg-slate-50 focus:bg-white"
+            />
+          </div>
         </div>
 
         <div>
@@ -108,7 +216,7 @@ export default function SignUpPage() {
             htmlFor="email"
             className="block text-sm font-medium text-slate-700 mb-1.5"
           >
-            Email Address
+            Email Address *
           </label>
           <input
             id="email"
@@ -118,7 +226,7 @@ export default function SignUpPage() {
             onChange={(e) => setEmail(e.target.value)}
             disabled={isProcessing}
             placeholder="name@parsu.edu.ph"
-            className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-transparent transition duration-150 disabled:opacity-60 bg-slate-50 focus:bg-white"
+            className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition duration-150 disabled:opacity-60 bg-slate-50 focus:bg-white"
           />
         </div>
 
@@ -127,7 +235,7 @@ export default function SignUpPage() {
             htmlFor="password"
             className="block text-sm font-medium text-slate-700 mb-1.5"
           >
-            Password
+            Password *
           </label>
           <input
             id="password"
@@ -137,14 +245,14 @@ export default function SignUpPage() {
             onChange={(e) => setPassword(e.target.value)}
             disabled={isProcessing}
             placeholder="••••••••"
-            className="w-full px-4 py-3 rounded-xl border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:border-transparent transition duration-150 disabled:opacity-60 bg-slate-50 focus:bg-white"
+            className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition duration-150 disabled:opacity-60 bg-slate-50 focus:bg-white"
           />
         </div>
 
         <button
           type="submit"
           disabled={isProcessing}
-          className="w-full py-3 px-4 rounded-xl bg-sky-600 hover:bg-sky-700 text-white font-medium shadow-md shadow-sky-200 hover:shadow-lg transition duration-150 focus:outline-none focus:ring-2 focus:ring-sky-600 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
+          className="w-full py-3 px-4 rounded-2xl bg-sky-400 hover:bg-sky-500 text-white font-medium shadow-md shadow-sky-200 hover:shadow-lg transition duration-150 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex justify-center items-center gap-2"
         >
           {isProcessing ? (
             <>
@@ -168,9 +276,9 @@ export default function SignUpPage() {
                 />
               </svg>
               <span>
-                {isSignUpPending
+                {pipelineStage === "creating"
                   ? "Creating account..."
-                  : "Securing account..."}
+                  : "Logging in & securing session..."}
               </span>
             </>
           ) : (
@@ -183,7 +291,7 @@ export default function SignUpPage() {
         Already have an account?{" "}
         <Link
           href="/signin"
-          className="font-medium text-sky-600 hover:text-sky-700 transition"
+          className="font-medium text-sky-400 hover:text-sky-500 transition"
         >
           Sign in here
         </Link>
