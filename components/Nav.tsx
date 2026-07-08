@@ -5,12 +5,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LuPanelLeftClose,
-  LuCloud,
   LuUserRoundSearch,
   LuHouse,
   LuSettings2,
   LuFileSpreadsheet,
   LuPanelLeftOpen,
+  LuUsersRound,
 } from "react-icons/lu";
 
 export default function Nav() {
@@ -20,6 +20,7 @@ export default function Nav() {
   const mainNavItems = [
     { label: "Home", href: "/", icon: LuHouse },
     { label: "Forms", href: "/forms", icon: LuFileSpreadsheet },
+    { label: "Members", href: "/members", icon: LuUsersRound },
   ];
 
   const secondaryNavItems = [
@@ -37,7 +38,7 @@ export default function Nav() {
   return (
     <>
       <aside
-        className={`z-10 fixed hidden md:flex flex-col py-8 px-2 gap-3 h-svh transition-all ease-out duration-300 text-accent overflow-y-auto overflow-x-hidden ${
+        className={`relative z-10 bg-white shadow-2xl rounded-r-4xl shadow-sky-200 hidden md:flex flex-col py-8 px-2 gap-3 h-svh transition-all ease-out duration-300 text-accent overflow-y-auto overflow-x-hidden ${
           isOpen ? "w-75 max-w-5/6" : "w-20"
         }`}
       >
@@ -81,7 +82,7 @@ export default function Nav() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-row items-center w-full h-fit pl-[19] py-4 rounded-2xl outline outline-sky-200 cursor-pointer hover:text-sky-400 hover:bg-sky-100 active:text-sky-400 active:bg-sky-50 active:scale-95 transition-all ease-out duration-300 ${
+                className={`flex flex-row items-center w-full h-fit pl-[19] py-4 rounded-2xl bg-white shadow-none shadow-sky-100 hover:shadow-md hover:-translate-y-1 cursor-pointer active:scale-95 active:text-sky-400 transition-[colors,box-shadow,translate] ease-out duration-300 ${
                   isActiveLink(item.href) ? "bg-sky-100 text-sky-500" : ""
                 }`}
               >
@@ -126,13 +127,8 @@ export default function Nav() {
           })}
         </div>
       </aside>
-      <div
-        className={`hidden md:block h-dvh bg-transparent shadow-2xl rounded-r-4xl shadow-sky-200  transition-[width] ease-out duration-300 ${
-          isOpen ? "md:w-75" : "md:w-20"
-        }`}
-      />
 
-      <nav className="fixed bottom-4 left-0 right-0 z-1000 bg-background shadow-2xl rounded-full mx-4 shadow-sky-200 border border-sky-100 p-2 block md:hidden pb-safe">
+      <nav className="fixed bottom-0 left-0 right-0 z-1000 bg-background shadow-2xl rounded-t-4xl shadow-sky-200 border border-sky-100 p-2 block md:hidden pb-safe">
         <div className="flex justify-around items-center w-full">
           {[...mainNavItems, ...secondaryNavItems].map((item) => {
             const Icon = item.icon;
@@ -142,14 +138,18 @@ export default function Nav() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-col items-center justify-center flex-1 p-2 rounded-full text-center transition-all duration-200 active:scale-90 ${
-                  isActive ? "text-sky-400 bg-sky-100 " : "text-accent"
-                }`}
+                className={`relative flex flex-col text-accent items-center justify-center flex-1 p-2  text-center transition-all duration-200 active:scale-90
+                  ${isActive ? "text-sky-400" : ""}`}
               >
                 <Icon size={24} />
                 <span className="text-[10px] font-medium mt-1 truncate w-full">
                   {item.label}
                 </span>
+                <div
+                  className={`-z-1 top-1.25 absolute h-7.5 w-full max-w-16 rounded-full ${
+                    isActive ? "bg-sky-100 " : ""
+                  }`}
+                ></div>
               </Link>
             );
           })}

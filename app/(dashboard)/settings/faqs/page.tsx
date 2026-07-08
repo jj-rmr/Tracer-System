@@ -71,7 +71,7 @@ export default function FAQsPage() {
             <div
               key={q.id}
               onClick={() => toggleDropdown(q.id)}
-              className="w-full lg:max-w-10/12 h-fit rounded-2xl p-4 flex flex-col items-start hover:bg-sky-100 border border-sky-200 cursor-pointer active:scale-95 active:bg-sky-100 transition-all ease-out duration-300"
+              className="w-full lg:max-w-2xl h-fit rounded-2xl p-4 flex flex-col items-start hover:bg-sky-100 border border-sky-200 cursor-pointer active:scale-95 active:bg-sky-100 transition-all ease-out duration-300"
             >
               <div className="flex flex-row justify-between w-full items-center">
                 <p className="font-semibold">{q.title}</p>
@@ -87,7 +87,7 @@ export default function FAQsPage() {
                   isOpen ? "max-h-40 mt-4 opacity-100" : "max-h-0 opacity-0"
                 }`}
               >
-                <div className="text-foreground">{q.content}</div>
+                <div className="text-foreground text-sm">{q.content}</div>
               </div>
             </div>
           );

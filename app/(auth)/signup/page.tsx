@@ -66,9 +66,9 @@ export default function SignUpPage() {
     }
 
     const formattedFullName = [
-      lastName.trim() + ",",
       firstName.trim(),
       middleName.trim(),
+      lastName.trim(),
       formattedExtension,
     ]
       .filter(Boolean)

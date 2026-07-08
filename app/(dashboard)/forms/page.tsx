@@ -16,7 +16,7 @@ export default function Forms() {
           <Link
             key={form.href}
             href={form.href}
-            className="flex flex-row gap-2 items-center w-full lg:max-w-10/12 h-fit border border-sky-200 hover:bg-sky-100 hover:text-sky-400 active:scale-95 active:bg-sky-100 active:text-sky-400 rounded-2xl transition-color duration-300 px-4 py-6"
+            className="flex flex-row gap-2 items-center w-full lg:max-w-10/12 h-fit bg-white shadow-none shadow-sky-100 border border-sky-50 hover:shadow-md hover:-translate-y-1 cursor-pointer active:scale-95 active:bg-sky-100 rounded-2xl transition-color duration-300 px-4 py-6"
           >
             <LuFileInput size={18} />
             <p className="font-semibold">{form.title}</p>

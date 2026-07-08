@@ -1,14 +1,10 @@
+//app/layout.tsx
 import type { Metadata } from "next";
 import { Montserrat, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import { createNextServerHelpers } from "@appwrite.io/react/server/next";
+import { cookies } from "next/headers";
 import { Providers } from "./providers";
-import { appwriteConfig, hasAppwriteConfig } from "./config/appwrite";
-
-const appwrite = {
-  endpoint: appwriteConfig.endpoint,
-  projectId: appwriteConfig.projectId,
-};
+import { appwriteConfig } from "./config/appwrite";
 
 const montserratSans = Montserrat({
   variable: "--font-montserrat-sans",
@@ -30,10 +26,10 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const helpers = hasAppwriteConfig()
-    ? createNextServerHelpers(appwrite)
-    : null;
-  const session = helpers ? await helpers.readSessionCookie() : null;
+  const cookieStore = await cookies();
+
+  const cookieName = `appwrite-session-${appwriteConfig.projectId}`;
+  const sessionToken = cookieStore.get(cookieName)?.value || null;
 
   return (
     <html
@@ -41,7 +37,7 @@ export default async function RootLayout({
       className={`${montserratSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="h-full w-full flex items-center justify-center">
-        <Providers session={session}>{children}</Providers>
+        <Providers session={sessionToken}>{children}</Providers>
       </body>
     </html>
   );

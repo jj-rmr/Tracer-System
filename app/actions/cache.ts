@@ -2,7 +2,7 @@
 
 import { createNextServerHelpers } from "@appwrite.io/react/server/next";
 import { Client, Account } from "node-appwrite";
-import { unstable_cache, updateTag } from "next/cache"; // Switched to updateTag
+import { unstable_cache, updateTag } from "next/cache";
 import { createHash } from "crypto";
 
 const appwriteConfig = {
@@ -24,7 +24,13 @@ const fetchUserFromAppwrite = unstable_cache(
     const account = new Account(client);
     try {
       const user = await account.get();
-      return user ? { name: user.name, email: user.email } : null;
+      return user
+        ? {
+            name: user.name,
+            email: user.email,
+            emailVerification: user.emailVerification,
+          }
+        : null;
     } catch {
       return null;
     }
@@ -48,7 +54,6 @@ export async function clearUserCache() {
 
   if (sessionToken) {
     const safeKey = getSafeCacheKey(sessionToken);
-
     updateTag(`user-profile-${safeKey}`);
   }
 }

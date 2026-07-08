@@ -1,6 +1,3 @@
-import { SignOutButton } from "@/components/SignOutButton";
-import Link from "next/link";
-
 export default function Settings() {
   const menuItems = [
     {
@@ -30,21 +27,11 @@ export default function Settings() {
 
       <div className="flex flex-col gap-2 mt-8 md:mt-12 items-center">
         {menuItems.map((item) => (
-          <Link
+          <input
             key={item.title}
-            href={item.href}
-            className="w-full lg:max-w-10/12 h-fit rounded-2xl p-4 flex flex-col items-start bg-white shadow-none shadow-sky-100 border border-sky-50 hover:shadow-md hover:-translate-y-1 cursor-pointer active:scale-95 active:bg-sky-100 transition-all ease-out duration-300"
-          >
-            <div className="flex flex-row justify-between w-full">
-              <p className="font-semibold">{item.title}</p>
-            </div>
-            <div className="mt-4 text-foreground">{item.description}</div>
-          </Link>
+            className="w-full lg:max-w-10/12 h-fit rounded-2xl p-4 flex flex-col items-start hover:bg-sky-100 border border-sky-200 cursor-pointer active:scale-95 active:bg-sky-100 transition-all ease-out duration-300"
+          ></input>
         ))}
-
-        <div className="mt-8">
-          <SignOutButton />
-        </div>
       </div>
     </>
   );

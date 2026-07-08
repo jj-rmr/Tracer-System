@@ -14,7 +14,6 @@ export default function ConfirmVerificationPage() {
   );
   const [errorMsg, setErrorMsg] = useState("");
 
-  // Track if verification has already been initiated to bypass Strict Mode double-runs
   const verificationStarted = useRef(false);
 
   useEffect(() => {
@@ -27,7 +26,6 @@ export default function ConfirmVerificationPage() {
       return;
     }
 
-    // If a request is already in flight or done, skip subsequent runs
     if (verificationStarted.current) return;
     verificationStarted.current = true;
 

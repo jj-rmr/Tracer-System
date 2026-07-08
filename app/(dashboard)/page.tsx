@@ -5,14 +5,13 @@ export default async function Page() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-6 bg-sky-100 rounded-2xl border border-sky-200">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 py-2 px-6 rounded-2xl">
         <div>
-          <h1 className="text-xl md:text-3xl font-bold tracking-tight text-sky-800">
+          <h1 className="text-xl lg:text-3xl font-bold tracking-tight text-sky-800">
             Welcome back, {user?.name || "Admin"}!
           </h1>
-          <p className="text-sm text-sky-400 mt-1">
-            Logged in as:{" "}
-            <span className="font-medium text-sky-600">{user?.email}</span>
+          <p className="text-sm text-sky-500 mt-1">
+            Logged in as: {user?.email}
           </p>
         </div>
       </div>
