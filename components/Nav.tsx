@@ -132,7 +132,7 @@ export default function Nav() {
           isOpen ? "md:w-75" : "md:w-20"
         }`}
       />
-      <nav className="fixed bottom-0 left-0 right-0 z-1000 bg-background shadow-[0_-12px_30px_-5px_rgba(0,0,0,0.1)] rounded-t-4xl shadow-sky-100 border border-sky-100 p-2 block md:hidden pb-safe">
+      <nav className="fixed bottom-0 left-0 right-0 z-1000 bg-background shadow-[0_-12px_30px_-5px_rgba(0,0,0,0.1)] rounded-t-4xl shadow-sky-100 border border-b-none border-sky-100 p-2 block md:hidden pb-safe">
         <div className="flex justify-around items-center w-full">
           {[...mainNavItems, ...secondaryNavItems].map((item) => {
             const Icon = item.icon;
