@@ -9,7 +9,7 @@ export default function Forms() {
   return (
     <>
       <h1 className="text-3xl font-bold">Forms</h1>
-      <p className="text-foreground">This is the Forms page.</p>
+      <p className="text-sm text-foreground">This is the Forms page.</p>
 
       <div className="flex flex-col gap-2 mt-8 md:mt-12 justify-center items-center">
         {FORMS_DATA.map((form) => (

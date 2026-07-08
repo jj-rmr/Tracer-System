@@ -7,7 +7,7 @@ export default async function Page() {
     <div className="space-y-8">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 py-2 px-6 rounded-2xl">
         <div>
-          <h1 className="text-xl lg:text-3xl font-bold tracking-tight text-sky-800">
+          <h1 className="text-xl lg:text-3xl font-bold tracking-tight text-accent">
             Welcome back, {user?.name || "Admin"}!
           </h1>
           <p className="text-sm text-sky-500 mt-1">

@@ -36,7 +36,7 @@ export default async function RootLayout({
       lang="en"
       className={`${montserratSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="h-full w-full flex items-center justify-center">
+      <body className="relative h-full w-full flex items-center justify-center">
         <Providers session={sessionToken}>{children}</Providers>
       </body>
     </html>

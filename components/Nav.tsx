@@ -38,13 +38,13 @@ export default function Nav() {
   return (
     <>
       <aside
-        className={`relative z-10 bg-white shadow-2xl rounded-r-4xl shadow-sky-200 hidden md:flex flex-col py-8 px-2 gap-3 h-svh transition-all ease-out duration-300 text-accent overflow-y-auto overflow-x-hidden ${
+        className={` fixed z-10 bg-white shadow-[12px_0_30px_-5px_rgba(0,0,0,0.1)] rounded-r-4xl shadow-sky-100 hidden md:flex flex-col py-8 px-2 gap-3 h-svh transition-all ease-out duration-300 text-accent overflow-y-auto overflow-x-hidden ${
           isOpen ? "w-75 max-w-5/6" : "w-20"
         }`}
       >
         <div
           onClick={() => setIsOpen(!isOpen)}
-          className={`right-6 p-1 rounded-lg absolute flex flex-row w-fit h-fit place-self-center gap-3 mt-3 text-sky-300 cursor-pointer hover:bg-sky-100 active:bg-sky-100 active:scale-95 transition-all ease-out duration-300
+          className={`right-6 p-1 rounded-lg absolute flex flex-row w-fit h-fit place-self-center gap-3 mt-3 text-sky-300 hover:text-sky-400 bg-white shadow-none shadow-sky-100 hover:shadow-md hover:-translate-y-1 cursor-pointer active:scale-95 active:text-sky-400 transition-all ease-out duration-300
             ${isOpen ? "top-7.5" : "top-1"}`}
         >
           <LuPanelLeftOpen
@@ -127,8 +127,12 @@ export default function Nav() {
           })}
         </div>
       </aside>
-
-      <nav className="fixed bottom-0 left-0 right-0 z-1000 bg-background shadow-2xl rounded-t-4xl shadow-sky-200 border border-sky-100 p-2 block md:hidden pb-safe">
+      <div
+        className={`hidden md:block h-dvh bg-transparent  transition-[width] ease-out duration-300 ${
+          isOpen ? "md:w-75" : "md:w-20"
+        }`}
+      />
+      <nav className="fixed bottom-0 left-0 right-0 z-1000 bg-background shadow-[0_-12px_30px_-5px_rgba(0,0,0,0.1)] rounded-t-4xl shadow-sky-100 border border-sky-100 p-2 block md:hidden pb-safe">
         <div className="flex justify-around items-center w-full">
           {[...mainNavItems, ...secondaryNavItems].map((item) => {
             const Icon = item.icon;

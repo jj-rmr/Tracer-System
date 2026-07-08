@@ -4,7 +4,8 @@
   --background: #f8fafc;
   --foreground: #45556c;
 
-  --accent: #055285;
+  /* --accent: #055285; */
+  --accent: #21455d;
   --surface: #b7ebee;
   interpolate-size: allow-keywords;
 }

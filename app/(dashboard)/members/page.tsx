@@ -30,12 +30,14 @@ export default async function MembersPage({ searchParams }: Props) {
   const hasNextPage = currentPage < totalPages;
   const hasPrevPage = currentPage > 1;
   return (
-    <div className="min-h-screen py-4 text-slate-900">
-      <div className="mx-auto max-w-5xl">
+    <div className="h-fit text-slate-900">
+      <div className="">
         <header className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Members</h1>
-            <p className="mt-2 text-sm text-slate-500">
+            <h1 className="text-3xl font-bold tracking-tight text-accent">
+              Members
+            </h1>
+            <p className="text-sm text-foreground">
               A list of members registered in the system.
             </p>
           </div>
