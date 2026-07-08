@@ -1,21 +1,10 @@
-import React, { useEffect, useState } from "react";
-import { Client, Databases } from "appwrite";
+"use client";
 
-// 1. Initialize your Appwrite Client
-const client = new Client()
-  .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!) // Replace with your Appwrite Endpoint
-  .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!); // Replace with your Project ID
-
-const databases = new Databases(client);
-
-// Type definitions matching your exact Appwrite schema attributes
-interface UserProfileDocument {
-  $id: string;
-  userId: string;
-  civilStatus: string;
-  $createdAt: string;
-  $updatedAt: string;
-}
+import { useEffect, useState, startTransition } from "react";
+import {
+  fetchUserRegistrations,
+  type UserProfileDocument,
+} from "@/app/actions/db";
 
 export default function UserDatabaseTable() {
   const [documents, setDocuments] = useState<UserProfileDocument[]>([]);
@@ -23,23 +12,16 @@ export default function UserDatabaseTable() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchRows() {
-      try {
-        setLoading(true);
-        const response = await databases.listDocuments(
-          process.env.NEXT_PUBLIC_APPWRITE_TRACER_DATABASE!,
-          process.env.NEXT_PUBLIC_APPWRITE_TRACER_FORM!,
-        );
-        setDocuments(response.documents as unknown as UserProfileDocument[]);
-      } catch (err: any) {
-        console.error("Appwrite fetch error:", err);
-        setError(err.message || "Failed to fetch data from Appwrite.");
-      } finally {
+    startTransition(() => {
+      fetchUserRegistrations().then((res) => {
+        if (res.error) {
+          setError(res.error);
+        } else if (res.data) {
+          setDocuments(res.data);
+        }
         setLoading(false);
-      }
-    }
-
-    fetchRows();
+      });
+    });
   }, []);
 
   if (loading) {
@@ -49,7 +31,7 @@ export default function UserDatabaseTable() {
           className="animate-spin h-6 w-6 mr-3 border-4 border-sky-200 border-t-sky-600 rounded-full"
           viewBox="0 0 24 24"
         ></svg>
-        <span>Fetching records...</span>
+        <span>Accessing Secure Server Registry...</span>
       </div>
     );
   }
@@ -60,7 +42,7 @@ export default function UserDatabaseTable() {
         className="p-4 mx-auto max-w-2xl text-sm text-red-800 rounded-2xl bg-red-50 border border-red-100 shadow-sm"
         role="alert"
       >
-        <span className="font-bold">Appwrite Sync Error:</span> {error}
+        <span className="font-bold">Security / System Error:</span> {error}
       </div>
     );
   }
@@ -75,14 +57,13 @@ export default function UserDatabaseTable() {
 
   return (
     <div className="w-full bg-white rounded-3xl border border-sky-100 shadow-[0_12px_30px_-5px_rgba(0,0,0,0.04)] shadow-sky-100/80 overflow-hidden">
-      {/* Header section */}
       <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/30 flex justify-between items-center">
         <div>
           <h2 className="text-lg font-bold text-slate-800 tracking-tight">
             User Registrations
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            Appwrite Collection Registry
+            Admin Server-Verified Gateway
           </p>
         </div>
         <span className="px-3 py-1 text-xs font-semibold text-sky-700 bg-sky-50 rounded-full border border-sky-100">
@@ -90,7 +71,6 @@ export default function UserDatabaseTable() {
         </span>
       </div>
 
-      {/* Scrollable Table View */}
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
@@ -118,14 +98,11 @@ export default function UserDatabaseTable() {
                 key={doc.$id}
                 className="hover:bg-sky-50/20 transition-colors group"
               >
-                {/* Core Attribute: User ID */}
                 <td className="p-4 text-sm font-semibold text-slate-700 select-all">
                   {doc.userId || (
                     <span className="text-slate-300 italic">None</span>
                   )}
                 </td>
-
-                {/* Core Attribute: Civil Status badge */}
                 <td className="p-4 text-sm">
                   <span
                     className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium uppercase tracking-wide
@@ -140,13 +117,9 @@ export default function UserDatabaseTable() {
                     {doc.civilStatus || "Unspecified"}
                   </span>
                 </td>
-
-                {/* Meta Attribute: Internal Document ID */}
                 <td className="p-4 text-xs font-mono text-slate-400 select-all group-hover:text-slate-600 transition-colors">
                   {doc.$id}
                 </td>
-
-                {/* Meta Attribute: Created date */}
                 <td className="p-4 text-sm text-slate-500 whitespace-nowrap">
                   {new Date(doc.$createdAt).toLocaleDateString(undefined, {
                     month: "short",
@@ -154,8 +127,6 @@ export default function UserDatabaseTable() {
                     year: "numeric",
                   })}
                 </td>
-
-                {/* Meta Attribute: Updated date */}
                 <td className="p-4 text-sm text-slate-400 whitespace-nowrap">
                   {new Date(doc.$updatedAt).toLocaleDateString(undefined, {
                     month: "short",
