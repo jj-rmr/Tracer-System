@@ -29,6 +29,7 @@ const fetchUserFromAppwrite = unstable_cache(
             name: user.name,
             email: user.email,
             emailVerification: user.emailVerification,
+            role: user.labels,
           }
         : null;
     } catch {

@@ -1,6 +1,5 @@
 "use client";
 import AppwriteDataTable from "@/components/AppwriteDataTable";
-import Link from "next/link";
 import { LuFileInput } from "react-icons/lu";
 
 const FORMS_DATA = [
@@ -14,7 +13,7 @@ export default function Forms() {
       <p className="text-sm   text-foreground">This is the Forms page.</p>
 
       <div className="flex flex-col gap-2 mt-8 md:mt-12 justify-center items-center">
-        {FORMS_DATA.map((form) => (
+        {/* {FORMS_DATA.map((form) => (
           <Link
             key={form.href}
             href={form.href}
@@ -23,7 +22,7 @@ export default function Forms() {
             <LuFileInput size={18} />
             <p className="font-semibold">{form.title}</p>
           </Link>
-        ))}
+        ))} */}
         <AppwriteDataTable />
       </div>
     </>
