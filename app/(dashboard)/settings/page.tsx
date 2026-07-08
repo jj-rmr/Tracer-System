@@ -38,7 +38,9 @@ export default function Settings() {
             <div className="flex flex-row justify-between w-full">
               <p className="font-semibold">{item.title}</p>
             </div>
-            <div className="mt-4 text-foreground">{item.description}</div>
+            <div className="text-sm mt-4 text-foreground">
+              {item.description}
+            </div>
           </Link>
         ))}
 

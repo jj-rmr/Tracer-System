@@ -99,7 +99,7 @@ export default async function MembersPage({ searchParams }: Props) {
                             },
                           )}
                         </td>
-                        <td className="whitespace-nowrap px-6 py-4 w-full text-sm">
+                        <td className="whitespace-nowrap px-6 py-4 text-sm">
                           {member.emailVerification ? (
                             <span className="inline-flex items-center gap-1.5 rounded-md bg-green-100 px-2 py-1 text-xs font-medium text-green-600 ring-1 ring-inset ring-green-600/10">
                               Verified
