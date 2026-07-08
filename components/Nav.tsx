@@ -82,7 +82,7 @@ export default function Nav() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-row items-center w-full h-fit pl-[19] py-4 rounded-2xl bg-white shadow-none shadow-sky-100 hover:shadow-md hover:-translate-y-1 cursor-pointer active:scale-95 active:text-sky-400 transition-[colors,box-shadow,translate] ease-out duration-300 ${
+                className={`flex flex-row items-center w-full h-fit pl-[19] py-4 rounded-2xl bg-white shadow-none shadow-sky-100 hover:shadow-md hover:-translate-y-1 cursor-pointer active:scale-95 active:text-sky-400 transition-all ease-out duration-300 ${
                   isActiveLink(item.href) ? "bg-sky-100 text-sky-500" : ""
                 }`}
               >
