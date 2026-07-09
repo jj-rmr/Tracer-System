@@ -37,7 +37,10 @@ export async function proxy(request: NextRequest) {
     const isVerified = user.emailVerification === true;
 
     if (!isVerified) {
-      if (pathname !== "/verify-email") {
+      if (
+        pathname !== "/confirm-verification" &&
+        pathname !== "/verify-email"
+      ) {
         return NextResponse.redirect(new URL("/verify-email", request.url));
       }
       return NextResponse.next();
