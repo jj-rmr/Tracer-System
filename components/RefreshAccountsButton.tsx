@@ -2,19 +2,19 @@
 
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
-import { clearMembersCache } from "@/app/actions/members";
+import { clearAccountsCache } from "@/app/actions/accounts";
 
-export function RefreshMembersButton() {
+export function RefreshAccountsButton() {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   const handleRefresh = () => {
     startTransition(async () => {
       try {
-        await clearMembersCache();
+        await clearAccountsCache();
         router.refresh();
       } catch (error) {
-        console.error("Failed to refresh members directory:", error);
+        console.error("Failed to refresh accounts directory:", error);
       }
     });
   };

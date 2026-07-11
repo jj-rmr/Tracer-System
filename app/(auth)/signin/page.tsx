@@ -1,21 +1,21 @@
 "use client";
 
 import React, { useState } from "react";
-import { useSignIn } from "@appwrite.io/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+
 import { SignInButton } from "@/components/SignInButton";
 
 export default function SignInPage() {
   const router = useRouter();
 
-  const { emailPassword, isPending: isSignInPending } = useSignIn();
+  const [isPending, setIsPending] = useState(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
 
@@ -31,39 +31,46 @@ export default function SignInPage() {
       return;
     }
 
-    emailPassword({
-      email,
-      password,
-      onSuccess: async (data: any) => {
-        if (data?.emailVerification === false) {
-          router.refresh();
-          router.push("/verify-email");
-          return;
-        }
+    setIsPending(true);
 
-        router.refresh();
-        router.replace("/");
-      },
-      onError: (err: any) => {
-        const errorMessage = err?.message?.toLowerCase() || "";
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          password,
+        }),
+      });
 
-        if (
-          err?.code === 409 ||
-          errorMessage.includes("already exists") ||
-          errorMessage.includes("registered")
-        ) {
-          setError(
-            "An account with this email already exists. Please go to the Sign In page to access your account or verify your email.",
-          );
-          return;
-        }
+      const data = await response.json();
 
-        setError(
-          err?.message || "Failed to sign in. Please check your credentials.",
-        );
-      },
-    });
-  };
+      if (!response.ok) {
+        setError(data.message ?? "Failed to sign in.");
+        return;
+      }
+
+      // Refresh so the App Router sees the new cookie
+      router.refresh();
+
+      // We can check email verification after login
+      const meResponse = await fetch("/api/auth/me");
+      const me = await meResponse.json();
+
+      if (me.success && me.user && me.user.emailVerification === false) {
+        router.replace("/verify-email");
+        return;
+      }
+
+      router.replace("/");
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setIsPending(false);
+    }
+  }
 
   return (
     <div className="w-full max-w-2xl bg-white md:rounded-2xl md:shadow-xl md:border border-slate-100 p-8 md:p-10">
@@ -71,13 +78,14 @@ export default function SignInPage() {
         <h1 className="text-3xl font-bold text-slate-900 tracking-tight font-sans">
           Welcome Back
         </h1>
+
         <p className="text-sm text-slate-500 mt-2">
           Tracer System by ParSU Placement Unit
         </p>
       </div>
 
       {error && (
-        <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-sm text-red-600 animate-in fade-in duration-200">
+        <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-sm text-red-600">
           <div className="flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -91,6 +99,7 @@ export default function SignInPage() {
                 clipRule="evenodd"
               />
             </svg>
+
             <span>{error}</span>
           </div>
         </div>
@@ -104,13 +113,14 @@ export default function SignInPage() {
           >
             Email Address
           </label>
+
           <input
             id="email"
             type="email"
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            disabled={isSignInPending}
+            disabled={isPending}
             placeholder="name@parsu.edu.ph"
             className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition duration-150 disabled:opacity-60 bg-slate-50 focus:bg-white"
           />
@@ -125,19 +135,20 @@ export default function SignInPage() {
               Password
             </label>
           </div>
+
           <input
             id="password"
             type="password"
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            disabled={isSignInPending}
+            disabled={isPending}
             placeholder="••••••••"
             className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition duration-150 disabled:opacity-60 bg-slate-50 focus:bg-white"
           />
         </div>
 
-        <SignInButton isPending={isSignInPending} />
+        <SignInButton isPending={isPending} />
       </form>
 
       <p className="text-center text-sm text-slate-500 mt-8">

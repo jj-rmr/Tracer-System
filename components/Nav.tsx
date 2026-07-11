@@ -20,7 +20,7 @@ export default function Nav() {
   const mainNavItems = [
     { label: "Home", href: "/", icon: LuHouse },
     { label: "Forms", href: "/forms", icon: LuFileSpreadsheet },
-    { label: "Members", href: "/members", icon: LuUsersRound },
+    { label: "Accounts", href: "/accounts", icon: LuUsersRound },
   ];
 
   const secondaryNavItems = [
@@ -74,7 +74,9 @@ export default function Nav() {
             Tracer
           </h1>
         </div>
-
+        <div
+          className={`w-5 ml-5.5 bg-sky-200 rounded-full transition-[height,opacity] duration-300 ${isOpen ? `h-0 opacity-0` : `h-0.5 opacity-100`}`}
+        />
         <div className="flex flex-col w-full h-fit gap-2 mt-3">
           {mainNavItems.map((item) => {
             const Icon = item.icon;
@@ -82,7 +84,7 @@ export default function Nav() {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-row items-center w-full h-fit pl-[19] py-4 rounded-2xl bg-white shadow-none shadow-sky-100 hover:shadow-md hover:-translate-y-1 cursor-pointer active:scale-95 active:text-sky-400 transition-all ease-out duration-300 ${
+                className={`flex flex-row items-center w-full h-fit pl-[19] py-4 rounded-2xl shadow-none shadow-sky-100 hover:shadow-md hover:-translate-y-1 cursor-pointer active:scale-95 active:text-sky-400 transition-all ease-out duration-300 ${
                   isActiveLink(item.href) ? "bg-sky-100 text-sky-500" : ""
                 }`}
               >

@@ -1,58 +1,34 @@
-// proxy.ts
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { createNextServerHelpers } from "@appwrite.io/react/server/next";
+import { NextRequest, NextResponse } from "next/server";
 
-const authRoutes = ["/signin", "/signup"];
+import { AUTH_COOKIE } from "@/lib/auth";
 
-export async function proxy(request: NextRequest) {
+const AUTH_ROUTES = ["/signin", "/signup"];
+
+const VERIFY_ROUTES = ["/verify-email", "/confirm-verification"];
+
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const isAuthRoute = authRoutes.some((route) => pathname === route);
 
-  const helpers = createNextServerHelpers({
-    endpoint: process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!,
-    projectId: process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!,
-  });
+  const isAuthRoute = AUTH_ROUTES.includes(pathname);
+  const isVerifyRoute = VERIFY_ROUTES.includes(pathname);
 
-  const projectId = process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID || "";
-  const cookieName = `appwrite-session-${projectId}`;
-  const hasCookie = request.cookies.has(cookieName);
+  const hasSession = request.cookies.has(AUTH_COOKIE);
 
-  if (!hasCookie) {
-    if (!isAuthRoute && pathname !== "/verify-email") {
-      return NextResponse.redirect(new URL("/signin", request.url));
-    }
-    return NextResponse.next();
-  }
-
-  try {
-    const user = await helpers.getLoggedInUser();
-
-    if (!user) {
-      const response = NextResponse.redirect(new URL("/signin", request.url));
-      response.cookies.delete(cookieName);
-      return response;
-    }
-
-    const isVerified = user.emailVerification === true;
-
-    if (!isVerified) {
-      if (
-        pathname !== "/confirm-verification" &&
-        pathname !== "/verify-email"
-      ) {
-        return NextResponse.redirect(new URL("/verify-email", request.url));
-      }
+  // User is not logged in
+  if (!hasSession) {
+    // Allow access to public auth pages
+    if (isAuthRoute || isVerifyRoute) {
       return NextResponse.next();
     }
 
-    if (isAuthRoute || pathname === "/verify-email") {
-      return NextResponse.redirect(new URL("/", request.url));
-    }
-  } catch (error) {
-    const response = NextResponse.redirect(new URL("/signin", request.url));
-    response.cookies.delete(cookieName);
-    return response;
+    // Protect everything else
+    return NextResponse.redirect(new URL("/signin", request.url));
+  }
+
+  // User appears to be logged in
+  // Prevent access to auth pages
+  if (isAuthRoute) {
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   return NextResponse.next();

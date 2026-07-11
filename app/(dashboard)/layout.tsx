@@ -1,11 +1,23 @@
 // app/(dashboard)/layout.tsx
 import Nav from "@/components/Nav";
+import { getCurrentUser, getSessionCookie } from "@/lib/auth";
+import { redirect } from "next/navigation";
+
+const session = await getSessionCookie();
+const user = await getCurrentUser(session);
 
 export default async function DashboardLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  if (!user) {
+    redirect("/signin");
+  }
+
+  if (!user.emailVerification) {
+    redirect("/verify-email");
+  }
   return (
     <div className="flex flex-col md:flex-row h-dvh w-screen overflow-hidden">
       <Nav />

@@ -1,14 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
-import { useSignUp, useAppwrite } from "@appwrite.io/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function SignUpPage() {
   const router = useRouter();
-  const sdk = useAppwrite();
-  const { emailPassword, isPending: isSignUpPending } = useSignUp();
+
+  const [isPending, setIsPending] = useState(false);
+  const isProcessing = isPending;
 
   const [firstName, setFirstName] = useState("");
   const [middleName, setMiddleName] = useState("");
@@ -19,13 +19,7 @@ export default function SignUpPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const [pipelineStage, setPipelineStage] = useState<
-    "idle" | "creating" | "authenticating"
-  >("idle");
-
-  const isProcessing = isSignUpPending || pipelineStage !== "idle";
-
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
 
@@ -50,13 +44,13 @@ export default function SignUpPage() {
 
       if (isJrSr) {
         const cleanExt = ext.replace(/\.$/, "");
+
         formattedExtension =
           cleanExt.charAt(0).toUpperCase() +
           cleanExt.slice(1).toLowerCase() +
           ".";
       } else if (isRomanNumeral) {
-        const cleanExt = ext.replace(/\.$/, "");
-        formattedExtension = cleanExt.toUpperCase();
+        formattedExtension = ext.replace(/\.$/, "").toUpperCase();
       } else {
         setError(
           "Invalid Extension Name. Only Jr., Sr., or Roman numerals (I, II, III...) are allowed.",
@@ -65,43 +59,39 @@ export default function SignUpPage() {
       }
     }
 
-    const formattedFullName = [
-      firstName.trim(),
-      middleName.trim(),
-      lastName.trim(),
-      formattedExtension,
-    ]
-      .filter(Boolean)
-      .join(" ");
+    setIsPending(true);
 
-    setPipelineStage("creating");
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          firstName,
+          middleName,
+          lastName,
+          extensionName: formattedExtension,
+          email,
+          password,
+        }),
+      });
 
-    emailPassword({
-      name: formattedFullName,
-      email,
-      password,
-      onSuccess: async () => {
-        setPipelineStage("authenticating");
+      const data = await response.json();
 
-        try {
-          await sdk.account.createEmailPasswordSession(email, password);
+      if (!response.ok) {
+        setError(data.message ?? "Failed to create account.");
+        return;
+      }
 
-          router.refresh();
-          router.replace("/verify-email");
-        } catch (loginErr: any) {
-          console.error("Implicit login failed:", loginErr);
-          setPipelineStage("idle");
-          setError(
-            "Account created successfully, but we couldn't log you in automatically. Please go to the Sign In page.",
-          );
-        }
-      },
-      onError: (err: any) => {
-        setPipelineStage("idle");
-        setError(err?.message || "Failed to create account. Please try again.");
-      },
-    });
-  };
+      router.replace("/verify-email");
+      router.refresh();
+    } catch {
+      setError("Something went wrong. Please try again.");
+    } finally {
+      setIsPending(false);
+    }
+  }
 
   return (
     <div className="w-full max-w-2xl bg-white md:rounded-2xl md:shadow-xl md:border border-slate-100 p-8 md:p-10">
@@ -275,11 +265,8 @@ export default function SignUpPage() {
                   d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                 />
               </svg>
-              <span>
-                {pipelineStage === "creating"
-                  ? "Creating account..."
-                  : "Logging in & securing session..."}
-              </span>
+
+              <span>Creating account...</span>
             </>
           ) : (
             <span>Register Now</span>
