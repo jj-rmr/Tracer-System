@@ -14,19 +14,14 @@ export function proxy(request: NextRequest) {
 
   const hasSession = request.cookies.has(AUTH_COOKIE);
 
-  // User is not logged in
   if (!hasSession) {
-    // Allow access to public auth pages
     if (isAuthRoute || isVerifyRoute) {
       return NextResponse.next();
     }
 
-    // Protect everything else
     return NextResponse.redirect(new URL("/signin", request.url));
   }
 
-  // User appears to be logged in
-  // Prevent access to auth pages
   if (isAuthRoute) {
     return NextResponse.redirect(new URL("/", request.url));
   }

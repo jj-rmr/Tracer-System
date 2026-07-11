@@ -31,7 +31,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Format extension name
     let formattedExtension = "";
     const ext = extensionName?.trim() ?? "";
 
@@ -69,10 +68,8 @@ export async function POST(request: NextRequest) {
 
     const adminAccount = new Account(createAdminClient());
 
-    // Create account
     await adminAccount.create(ID.unique(), email, password, fullName);
 
-    // Automatically sign in
     const session = await adminAccount.createEmailPasswordSession(
       email,
       password,
