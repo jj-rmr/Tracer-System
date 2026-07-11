@@ -1,10 +1,6 @@
-import { getSessionUser } from "@/app/actions/cache";
-import AccountForm from "@/components/AccountForm";
 import Link from "next/link";
 
 export default async function AccountSettingsPage() {
-  const user = await getSessionUser();
-
   return (
     <div className="max-w-2xl mx-auto p-6">
       <Link
@@ -18,8 +14,6 @@ export default async function AccountSettingsPage() {
       <p className="text-slate-500 mb-6">
         Update your public profile information.
       </p>
-
-      <AccountForm initialUser={user} />
     </div>
   );
 }
