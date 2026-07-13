@@ -1,4 +1,4 @@
-export const AUTH_COOKIE = `a_session_${process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID}`;
+export const AUTH_COOKIE = `a_session_${process.env.APPWRITE_PROJECT_ID}`;
 
 export const COOKIE_OPTIONS = {
   httpOnly: true,

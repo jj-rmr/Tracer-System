@@ -2,7 +2,7 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { LuFileInput, LuSearch } from "react-icons/lu";
-import TracerTable from "@/components/TracerTable";
+import TracerTable from "@/components/admin/accounts/AccountsTable";
 
 export default function Forms() {
   const searchParams = useSearchParams();

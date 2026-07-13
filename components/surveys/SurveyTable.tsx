@@ -1,34 +1,26 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-interface UserProfileDocument {
-  $id: string;
-  userId: string;
-  fullName: string;
-  course: string;
-  civilStatus: string;
-  $createdAt: string;
-  $updatedAt: string;
-}
+// Adjust this path to wherever your types file is located
+import { Survey } from "@/types/survey";
 
 interface ServerDataResponse {
-  documents: UserProfileDocument[];
+  documents: Survey[];
   total: number;
 }
 
-interface TracerTableProps {
+interface SurveyTableProps {
   currentPage: number;
   searchQuery: string;
   onPageChange: (newPage: number) => void;
 }
 
-export default function TracerTable({
+export default function SurveyTable({
   currentPage,
   searchQuery,
   onPageChange,
-}: TracerTableProps) {
-  const [documents, setDocuments] = useState<UserProfileDocument[]>([]);
+}: SurveyTableProps) {
+  const [documents, setDocuments] = useState<Survey[]>([]);
   const [totalRows, setTotalRows] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,12 +33,14 @@ export default function TracerTable({
         setLoading(true);
         setError(null);
 
-        const url = `/api/user-profiles?page=${currentPage}&limit=${itemsPerPage}&search=${encodeURIComponent(searchQuery)}`;
+        const url =
+          `/api/admin/surveys?page=${currentPage}` +
+          `&limit=${itemsPerPage}` +
+          `&search=${encodeURIComponent(searchQuery)}`;
 
         const res = await fetch(url, {
-          method: "GET",
-          credentials: "include",
           cache: "no-store",
+          credentials: "include",
         });
 
         const data: ServerDataResponse = await res.json();
@@ -81,7 +75,7 @@ export default function TracerTable({
           className="animate-spin h-6 w-6 mr-3 border-4 border-sky-200 border-t-sky-600 rounded-full"
           viewBox="0 0 24 24"
         />
-        <span>Filtering tracer logs...</span>
+        <span>Filtering Survey logs...</span>
       </div>
     );
   }
@@ -109,19 +103,31 @@ export default function TracerTable({
     );
   }
 
+  const formatFullName = (doc: Survey) => {
+    const parts = [
+      doc.firstName,
+      doc.middleName,
+      doc.lastName,
+      doc.extensionName,
+    ]
+      .map((p) => p?.trim())
+      .filter(Boolean);
+    return parts.length > 0 ? parts.join(" ") : "None";
+  };
+
   return (
     <div className="w-full bg-white rounded-3xl border border-sky-100 shadow-[0_12px_30px_-5px_rgba(0,0,0,0.04)] shadow-sky-100/80 overflow-hidden">
       <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/30 flex justify-between items-center">
         <div>
           <h2 className="text-lg font-bold text-slate-800 tracking-tight">
-            Tracer Forms
+            Survey Forms
           </h2>
           <p className="text-xs text-slate-400 mt-0.5">
-            A collection of tracer forms.
+            A collection of survey forms containing personnel metadata.
           </p>
         </div>
         <span className="px-3 py-1 text-xs font-semibold text-sky-700 bg-sky-50 rounded-full border border-sky-100">
-          Found: {totalRows} records
+          Found: {totalRows} {totalRows > 1 ? "records" : "record"}
         </span>
       </div>
 
@@ -130,22 +136,22 @@ export default function TracerTable({
           <thead>
             <tr className="bg-slate-50/70 border-b border-slate-100">
               <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-400">
-                User ID
-              </th>
-              <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-400">
                 Full Name
               </th>
               <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-400">
-                Course
+                Sex
               </th>
               <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-400">
                 Civil Status
               </th>
               <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-400">
+                Employment Status
+              </th>
+              <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-400">
                 Created
               </th>
               <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-400">
-                Updated
+                Actions
               </th>
             </tr>
           </thead>
@@ -156,18 +162,11 @@ export default function TracerTable({
                 className="hover:bg-sky-50/20 transition-colors group"
               >
                 <td className="p-4 text-sm font-semibold text-slate-700">
-                  {doc.userId || (
-                    <span className="text-slate-300 italic">None</span>
-                  )}
+                  {formatFullName(doc)}
                 </td>
-                <td className="p-4 text-sm font-semibold text-slate-700">
-                  {doc.fullName || (
-                    <span className="text-slate-300 italic">None</span>
-                  )}
-                </td>
-                <td className="p-4 text-sm font-semibold text-slate-700">
-                  {doc.course || (
-                    <span className="text-slate-300 italic">None</span>
+                <td className="p-4 text-sm font-medium text-slate-600">
+                  {doc.sex || (
+                    <span className="text-slate-300 italic">Unspecified</span>
                   )}
                 </td>
                 <td className="p-4">
@@ -188,18 +187,26 @@ export default function TracerTable({
                                 : "bg-slate-100 text-slate-600"
                     }`}
                   >
-                    {doc.civilStatus === "SingleParent"
-                      ? "Single Parent"
-                      : doc.civilStatus === "WidowWidower"
-                        ? "Widow / Widower"
-                        : doc.civilStatus || "unspecified"}
+                    {doc.civilStatus || "unspecified"}
+                  </span>
+                </td>
+                <td className="p-4 text-sm font-medium text-slate-600">
+                  <span className="capitalize">
+                    {doc.employmentStatus || "unspecified"}
                   </span>
                 </td>
                 <td className="p-4 text-sm text-slate-500">
-                  {new Date(doc.$createdAt).toLocaleDateString()}
+                  {doc.createdAt
+                    ? new Date(doc.createdAt).toLocaleDateString()
+                    : "N/A"}
                 </td>
-                <td className="p-4 text-sm text-slate-500">
-                  {new Date(doc.$updatedAt).toLocaleDateString()}
+                <td className="p-4 text-sm">
+                  <button
+                    disabled
+                    className="text-xs font-semibold text-sky-600 bg-sky-50 hover:bg-sky-100 border border-sky-100 px-3 py-1 rounded-lg transition-colors cursor-not-allowed opacity-70"
+                  >
+                    View
+                  </button>
                 </td>
               </tr>
             ))}

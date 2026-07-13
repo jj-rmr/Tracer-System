@@ -12,10 +12,10 @@ interface ToastProps {
 }
 
 const toastStyles: Record<NonNullable<ToastProps["type"]>, string> = {
-  success: "border-green-400 bg-green-50/20 text-green-400",
-  warning: "border-amber-400 bg-amber-50/20 text-amber-400",
-  error: "border-red-400 bg-red-50/20 text-red-400",
-  info: "border-sky-400 bg-sky-50/20 text-sky-400",
+  success: "bg-green-400 text-white",
+  warning: "bg-amber-400 text-white",
+  error: "bg-red-400 text-white",
+  info: "bg-sky-400 text-white",
 };
 
 export function Toast({
@@ -30,7 +30,7 @@ export function Toast({
     "success" | "warning" | "error" | "info"
   >(type);
   const [isLargeScreen, setIsLargeScreen] = useState(
-    () => typeof window !== "undefined" && window.innerWidth >= 1024
+    () => typeof window !== "undefined" && window.innerWidth >= 1024,
   );
 
   useEffect(() => {
@@ -55,9 +55,6 @@ export function Toast({
   }, [type]);
 
   const getInitialPosition = () => {
-    if (isLargeScreen) {
-      return { y: 100, opacity: 0 };
-    }
     return { y: -100, opacity: 0 };
   };
 
@@ -66,9 +63,6 @@ export function Toast({
   };
 
   const getExitPosition = () => {
-    if (isLargeScreen) {
-      return { y: 100, opacity: 0 };
-    }
     return { y: -100, opacity: 0 };
   };
 
@@ -85,11 +79,9 @@ export function Toast({
           animate={getAnimatePosition()}
           exit={getExitPosition()}
           transition={{ duration: 0.3, ease: "backInOut" }}
-          className={`fixed ${
-            isLargeScreen
-              ? "bottom-4 right-8 max-w-sm"
-              : "top-4 left-1/2 -translate-x-1/2 w-full max-w-11/12"
-          } rounded-2xl border px-4 py-3 text-sm shadow-lg backdrop-blur-sm ${
+          className={`font-semibold fixed top-4 left-1/2 -translate-x-1/2 w-fit text-center  ${
+            isLargeScreen ? "max-w-sm" : "max-w-11/12"
+          } rounded-2xl px-4 py-3 text-sm shadow-lg ${
             toastStyles[toastType]
           } z-50`}
         >
@@ -98,4 +90,61 @@ export function Toast({
       )}
     </AnimatePresence>
   );
+}
+
+import { createContext, useContext, useCallback } from "react";
+
+type ToastType = "success" | "warning" | "error" | "info";
+
+interface ToastOptions {
+  message: string;
+  type?: ToastType;
+  duration?: number;
+}
+
+interface ToastContextType {
+  showToast: (options: ToastOptions) => void;
+}
+
+const ToastContext = createContext<ToastContextType | undefined>(undefined);
+
+export function ToastProvider({ children }: { children: React.ReactNode }) {
+  const [toast, setToast] = useState<ToastOptions | null>(null);
+
+  const showToast = useCallback(
+    ({ message, type = "success", duration = 3000 }: ToastOptions) => {
+      // Clear existing toast first to reset animations if triggered consecutively
+      setToast(null);
+      setTimeout(() => {
+        setToast({ message, type, duration });
+      }, 50);
+    },
+    [],
+  );
+
+  const handleClose = useCallback(() => {
+    setToast(null);
+  }, []);
+
+  return (
+    <ToastContext.Provider value={{ showToast }}>
+      {children}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          duration={toast.duration}
+          onClose={handleClose}
+        />
+      )}
+    </ToastContext.Provider>
+  );
+}
+
+export function useToast() {
+  const context = useContext(ToastContext);
+  if (!context) {
+    throw new Error("useToast must be used within a ToastProvider");
+  }
+  return context;
 }

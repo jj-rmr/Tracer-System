@@ -33,6 +33,10 @@ body {
   height: 100%;
 }
 
+button {
+  cursor: pointer;
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
