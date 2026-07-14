@@ -25,7 +25,11 @@ export function proxy(request: NextRequest) {
   if (isAuthRoute) {
     return NextResponse.redirect(new URL("/", request.url));
   }
-
+  console.log({
+    pathname,
+    hasSession,
+    cookies: request.cookies.getAll().map((c) => c.name),
+  });
   return NextResponse.next();
 }
 
