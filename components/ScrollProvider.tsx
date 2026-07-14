@@ -1,35 +1,31 @@
-"use client"; // This makes this file a Client Component
+"use client";
 
 import { useEffect, useRef } from "react";
 
-export default function ScrollProvider({
-  children,
-}: {
+interface Props {
   children: React.ReactNode;
-}) {
-  const mainRef = useRef<HTMLElement>(null);
+  className?: string;
+}
+
+export default function ScrollProvider({ children, className }: Props) {
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScrollToTop = () => {
-      if (mainRef.current) {
-        mainRef.current.scrollTo({
-          top: 0,
-          behavior: "smooth",
-        });
-      }
+      containerRef.current?.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
     };
 
-    // Listen for the custom step change event
     window.addEventListener("stepchanged", handleScrollToTop);
+
     return () => window.removeEventListener("stepchanged", handleScrollToTop);
   }, []);
 
   return (
-    <main
-      ref={mainRef}
-      className="flex-1 overflow-y-auto scrollbar-gutter-stable px-4"
-    >
+    <div ref={containerRef} className={className}>
       {children}
-    </main>
+    </div>
   );
 }

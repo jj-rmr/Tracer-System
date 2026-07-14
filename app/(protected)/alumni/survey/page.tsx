@@ -1,18 +1,12 @@
 // app/alumni/survey/page.tsx
 
-import { getCurrentUser, getSessionCookie } from "@/lib/auth";
+import { requireUser } from "@/lib/auth";
 import { getSurveyByUserId } from "@/lib/repositories/surveys.repository";
 import { defaultSurvey } from "@/lib/survey/defaults";
 import SurveyContainer from "@/components/surveys/SurveyContainer";
 
 export default async function SurveyPage() {
-  const session = await getSessionCookie();
-
-  if (!session) return null;
-
-  const user = await getCurrentUser(session);
-
-  if (!user) return null;
+  const { user } = await requireUser();
 
   const existingSurvey = await getSurveyByUserId(user.$id);
 

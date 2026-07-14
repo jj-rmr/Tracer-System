@@ -13,16 +13,10 @@ export async function POST() {
       const account = new Account(client);
 
       try {
-        // Delete the current Appwrite session
         await account.deleteSessions();
-      } catch {
-        // Session may already be invalid or expired.
-        // We still want to clear the browser cookie.
-      }
+      } catch {}
     }
-  } catch {
-    // Ignore any unexpected errors and continue clearing the cookie.
-  }
+  } catch {}
 
   const response = NextResponse.json({
     success: true,

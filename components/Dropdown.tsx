@@ -8,6 +8,7 @@ interface Option {
 
 interface DropdownProps {
   id: string;
+  disabled: boolean;
   label: string;
   value: string;
   onChange: (value: string) => void;
@@ -19,6 +20,7 @@ interface DropdownProps {
 
 export function Dropdown({
   id,
+  disabled,
   label,
   value,
   onChange,
@@ -72,7 +74,7 @@ export function Dropdown({
 
       <details
         ref={detailsRef}
-        open={isOpen}
+        open={isOpen && !disabled}
         className={`relative w-full rounded-2xl transition-all duration-300 ${
           isOpen
             ? "bg-sky-100 border-sky-400"

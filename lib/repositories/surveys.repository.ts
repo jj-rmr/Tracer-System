@@ -220,6 +220,16 @@ export async function getSurveyByUserId(userId: string) {
 
   return data ? fromDb(data) : null;
 }
+export async function getAllSurveys() {
+  const { data, error } = await supabase
+    .from("surveys")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) throw error;
+
+  return data.map(fromDb);
+}
 
 export async function updateSurvey(id: string, survey: Partial<Survey>) {
   const { data, error } = await supabase

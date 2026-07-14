@@ -11,12 +11,22 @@ interface Props {
   initialData: Survey;
   isNew: boolean;
   onSuccess?: () => void;
+  readOnly?: boolean;
 }
 
 export type FormErrors = Partial<Record<keyof Survey, string>>;
 
-export default function SurveyForm({ initialData, isNew, onSuccess }: Props) {
-  const [form, setForm] = useState<Survey>(initialData);
+export default function SurveyForm({
+  initialData,
+  isNew,
+  onSuccess,
+  readOnly = false,
+}: Props) {
+  const [form, setForm] = useState(initialData);
+
+  useEffect(() => {
+    setForm(initialData);
+  }, [initialData]);
   const [errors, setErrors] = useState<FormErrors>({});
   const [step, setStep] = useState(1);
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -33,7 +43,10 @@ export default function SurveyForm({ initialData, isNew, onSuccess }: Props) {
   ];
 
   function updateField<K extends keyof Survey>(field: K, value: Survey[K]) {
+    if (readOnly) return;
+
     setForm((prev) => ({ ...prev, [field]: value }));
+
     if (errors[field]) {
       setErrors((prev) => {
         const next = { ...prev };
@@ -202,7 +215,6 @@ export default function SurveyForm({ initialData, isNew, onSuccess }: Props) {
   async function handleStep(move: "forward" | "backward") {
     setStep((prev) => (move === "forward" ? prev + 1 : prev - 1));
 
-    // Dispatch a custom event to tell the window a step happened
     window.dispatchEvent(new Event("stepchanged"));
   }
 
@@ -212,7 +224,7 @@ export default function SurveyForm({ initialData, isNew, onSuccess }: Props) {
     setIsSubmitting(true);
 
     try {
-      const { id, $id, ...surveyData } = form as any;
+      const { id, userId, ...surveyData } = form as Survey;
 
       const response = await fetch("/api/alumni/survey", {
         method: isNew ? "POST" : "PATCH",
@@ -256,9 +268,9 @@ export default function SurveyForm({ initialData, isNew, onSuccess }: Props) {
   };
 
   return (
-    <div className="w-full max-w-5xl space-y-8">
+    <div className="w-5xl max-w-full space-y-8">
       {/* Progress */}
-      <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+      <div className="bg-slate-50 md:border border-slate-200 rounded-2xl md:p-4">
         <div className="flex justify-between text-sm font-medium text-slate-700">
           <span>
             Step {step} of {sections.length}
@@ -275,11 +287,12 @@ export default function SurveyForm({ initialData, isNew, onSuccess }: Props) {
         </div>
       </div>
       {/* Render Steps */}
-      <div className="min-h-100 bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+      <div className="min-h-100 bg-white md:border border-slate-200 rounded-2xl md:p-6 shadow-sm">
         {step === 1 && (
           <PersonalInfoStep
             form={form}
             errors={errors}
+            readOnly={readOnly}
             updateField={updateField}
           />
         )}
@@ -287,6 +300,7 @@ export default function SurveyForm({ initialData, isNew, onSuccess }: Props) {
           <EducationStep
             form={form}
             errors={errors}
+            readOnly={readOnly}
             updateField={updateField}
           />
         )}
@@ -294,6 +308,7 @@ export default function SurveyForm({ initialData, isNew, onSuccess }: Props) {
           <EmploymentStep
             form={form}
             errors={errors}
+            readOnly={readOnly}
             updateField={updateField}
           />
         )}
@@ -301,41 +316,47 @@ export default function SurveyForm({ initialData, isNew, onSuccess }: Props) {
           <JobHistoryStep
             form={form}
             errors={errors}
+            readOnly={readOnly}
             updateField={updateField}
           />
         )}
       </div>
       {/* Buttons */}
-      <div
-        className={`flex gap-4  flex-col-reverse md:flex-row items-stretch md:items-end ${step > 1 ? `justify-between` : `justify-end`}  border-t border-slate-200 pt-6`}
-      >
+      <div className="flex justify-between">
         {step > 1 && (
           <button
+            className="px-4 py-2 whitespace-nowrap disabled:bg-sky-200 bg-white text-slate-700 shadow-md border border-slate-200 text-sm rounded-xl font-semibold hover:bg-slate-50 transition-colors duration-300"
             onClick={() => handleStep("backward")}
-            className="border border-slate-300 rounded-xl px-6 py-3 font-medium text-slate-700"
           >
-            Previous Section
+            Previous
           </button>
         )}
 
-        {step === sections.length ? (
-          <button
-            onClick={handlePreSubmitCheck}
-            disabled={isSubmitting}
-            className="bg-sky-500 text-white font-medium rounded-xl px-6 py-3 hover:bg-sky-600 disabled:opacity-50 shadow-sm"
-          >
-            {isNew ? "Submit Survey" : "Update Survey"}
-          </button>
+        {!readOnly ? (
+          step === sections.length ? (
+            <button onClick={handlePreSubmitCheck}>
+              {isNew ? "Submit Survey" : "Update Survey"}
+            </button>
+          ) : (
+            <button
+              className="px-4 py-2 whitespace-nowrap disabled:bg-sky-200 bg-sky-500 text-white text-sm rounded-xl font-semibold hover:bg-sky-700 transition-colors duration-300"
+              onClick={() => validateStep(step) && handleStep("forward")}
+            >
+              Next Section
+            </button>
+          )
         ) : (
-          <button
-            onClick={() => validateStep(step) && handleStep("forward")}
-            className="bg-sky-500 text-white whitespace-nowrap font-medium rounded-xl px-6 py-3 hover:bg-sky-600 shadow-sm"
-          >
-            Next Section
-          </button>
+          step < sections.length && (
+            <button
+              className="px-4 py-2 whitespace-nowrap disabled:bg-sky-200 bg-sky-500 text-white text-sm rounded-xl font-semibold hover:bg-sky-700 transition-colors duration-300"
+              onClick={() => handleStep("forward")}
+            >
+              Next Section
+            </button>
+          )
         )}
-      </div>{" "}
-      {showSaveModal && (
+      </div>
+      {!readOnly && showSaveModal && (
         <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="w-full max-w-md p-6 bg-white rounded-2xl shadow-xl mx-4">
             <h3 className="text-lg font-semibold text-slate-900">
@@ -364,9 +385,11 @@ export default function SurveyForm({ initialData, isNew, onSuccess }: Props) {
                   ? isNew
                     ? "Creating Survey..."
                     : "Updating Survey..."
-                  : isNew
-                    ? "Submit Survey"
-                    : "Update Survey"}
+                  : readOnly
+                    ? "Close"
+                    : isNew
+                      ? "Submit Survey"
+                      : "Update Survey"}
               </button>
             </div>
           </div>
@@ -379,6 +402,7 @@ export default function SurveyForm({ initialData, isNew, onSuccess }: Props) {
 interface StepProps {
   form: Survey;
   errors: FormErrors;
+  readOnly: boolean;
   updateField: <K extends keyof Survey>(field: K, value: Survey[K]) => void;
 }
 
@@ -394,7 +418,7 @@ const styles = {
     "block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2",
 };
 
-function PersonalInfoStep({ form, errors, updateField }: StepProps) {
+function PersonalInfoStep({ form, errors, updateField, readOnly }: StepProps) {
   const handleArrayChange = (index: number, val: string) => {
     const list = [...form.contactNumbers];
     list[index] = val;
@@ -411,6 +435,7 @@ function PersonalInfoStep({ form, errors, updateField }: StepProps) {
         <div>
           <label className={styles.label}>First Name *</label>
           <input
+            disabled={readOnly}
             type="text"
             className={styles.input(!!errors.firstName)}
             value={form.firstName}
@@ -421,6 +446,7 @@ function PersonalInfoStep({ form, errors, updateField }: StepProps) {
         <div>
           <label className={styles.label}>Middle Name</label>
           <input
+            disabled={readOnly}
             type="text"
             className={styles.input(false)}
             value={form.middleName}
@@ -430,6 +456,7 @@ function PersonalInfoStep({ form, errors, updateField }: StepProps) {
         <div>
           <label className={styles.label}>Last Name *</label>
           <input
+            disabled={readOnly}
             type="text"
             className={styles.input(!!errors.lastName)}
             value={form.lastName}
@@ -440,6 +467,7 @@ function PersonalInfoStep({ form, errors, updateField }: StepProps) {
         <div>
           <label className={styles.label}>Extension Name</label>
           <input
+            disabled={readOnly}
             type="text"
             className={styles.input(false)}
             placeholder="e.g. Jr., III"
@@ -453,6 +481,7 @@ function PersonalInfoStep({ form, errors, updateField }: StepProps) {
         <div>
           <label className={styles.label}>Street</label>
           <input
+            disabled={readOnly}
             type="text"
             className={styles.input(false)}
             value={form.street}
@@ -463,6 +492,7 @@ function PersonalInfoStep({ form, errors, updateField }: StepProps) {
         <div>
           <label className={styles.label}>Barangay *</label>
           <input
+            disabled={readOnly}
             type="text"
             className={styles.input(!!errors.barangay)}
             value={form.barangay}
@@ -473,6 +503,7 @@ function PersonalInfoStep({ form, errors, updateField }: StepProps) {
         <div>
           <label className={styles.label}>Municipality *</label>
           <input
+            disabled={readOnly}
             type="text"
             className={styles.input(!!errors.municipality)}
             value={form.municipality}
@@ -483,6 +514,7 @@ function PersonalInfoStep({ form, errors, updateField }: StepProps) {
         <div>
           <label className={styles.label}>Province *</label>
           <input
+            disabled={readOnly}
             type="text"
             className={styles.input(!!errors.province)}
             value={form.province}
@@ -492,6 +524,7 @@ function PersonalInfoStep({ form, errors, updateField }: StepProps) {
         </div>
         <div>
           <Dropdown
+            disabled={readOnly}
             id="region"
             label="Region *"
             value={form.region}
@@ -530,6 +563,7 @@ function PersonalInfoStep({ form, errors, updateField }: StepProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <Dropdown
+            disabled={readOnly}
             id="civilStatus"
             label="Civil Status *"
             value={form.civilStatus}
@@ -549,6 +583,7 @@ function PersonalInfoStep({ form, errors, updateField }: StepProps) {
         </div>
         <div>
           <Dropdown
+            disabled={readOnly}
             id="sex"
             label="Sex *"
             value={form.sex}
@@ -571,41 +606,46 @@ function PersonalInfoStep({ form, errors, updateField }: StepProps) {
         {form.contactNumbers.map((num, i) => (
           <div key={i} className="flex items-center space-x-2">
             <input
+              disabled={readOnly}
               type="text"
               className={styles.input(!!errors.contactNumbers)}
               value={num}
               onChange={(e) => handleArrayChange(i, e.target.value)}
             />
-            <button
-              type="button"
-              className="px-3 py-2 text-sm border rounded-xl bg-slate-50 hover:bg-rose-50 hover:text-rose-600 transition"
-              onClick={() =>
-                updateField(
-                  "contactNumbers",
-                  form.contactNumbers.filter((_, idx) => idx !== i),
-                )
-              }
-            >
-              Remove
-            </button>
+            {!readOnly && (
+              <button
+                type="button"
+                className="px-3 py-2 text-sm border rounded-xl bg-slate-50 hover:bg-rose-50 hover:text-rose-600 transition"
+                onClick={() =>
+                  updateField(
+                    "contactNumbers",
+                    form.contactNumbers.filter((_, idx) => idx !== i),
+                  )
+                }
+              >
+                Remove
+              </button>
+            )}
           </div>
         ))}
-        <button
-          type="button"
-          className="text-xs font-semibold text-sky-600 flex items-center gap-2 py-2 pl-3 pr-4 hover:bg-sky-100 transition rounded-lg"
-          onClick={() =>
-            updateField("contactNumbers", [...form.contactNumbers, ""])
-          }
-        >
-          <LuPlus /> Add Contact Number
-        </button>
+        {!readOnly && (
+          <button
+            type="button"
+            className="text-xs font-semibold text-sky-600 flex items-center gap-2 py-2 pl-3 pr-4 hover:bg-sky-100 transition rounded-lg"
+            onClick={() =>
+              updateField("contactNumbers", [...form.contactNumbers, ""])
+            }
+          >
+            <LuPlus /> Add Contact Number
+          </button>
+        )}
         <ErrorMessage message={errors.contactNumbers} />
       </div>
     </div>
   );
 }
 
-function EducationStep({ form, errors, updateField }: StepProps) {
+function EducationStep({ form, errors, updateField, readOnly }: StepProps) {
   const handleArr = (
     field: "honors" | "trainings",
     idx: number,
@@ -623,6 +663,7 @@ function EducationStep({ form, errors, updateField }: StepProps) {
       <div>
         <label className={styles.label}>Year Graduated *</label>
         <input
+          disabled={readOnly}
           type="number"
           className={styles.input(!!errors.yearGraduated)}
           value={form.yearGraduated}
@@ -639,23 +680,26 @@ function EducationStep({ form, errors, updateField }: StepProps) {
         {form.honors.map((item, i) => (
           <div key={i} className="flex space-x-2">
             <input
+              disabled={readOnly}
               type="text"
               className={styles.input(false)}
               value={item}
               onChange={(e) => handleArr("honors", i, e.target.value)}
             />
-            <button
-              type="button"
-              className="px-3 py-2 border rounded-xl bg-slate-50 text-rose-600"
-              onClick={() =>
-                updateField(
-                  "honors",
-                  form.honors.filter((_, idx) => idx !== i),
-                )
-              }
-            >
-              Remove
-            </button>
+            {!readOnly && (
+              <button
+                type="button"
+                className="px-3 py-2 border rounded-xl bg-slate-50 text-rose-600"
+                onClick={() =>
+                  updateField(
+                    "honors",
+                    form.honors.filter((_, idx) => idx !== i),
+                  )
+                }
+              >
+                Remove
+              </button>
+            )}
           </div>
         ))}
         <button
@@ -673,23 +717,26 @@ function EducationStep({ form, errors, updateField }: StepProps) {
         {form.trainings.map((item, i) => (
           <div key={i} className="flex space-x-2">
             <input
+              disabled={readOnly}
               type="text"
               className={styles.input(false)}
               value={item}
               onChange={(e) => handleArr("trainings", i, e.target.value)}
             />
-            <button
-              type="button"
-              className="px-3 py-2 border rounded-xl bg-slate-50 text-rose-600"
-              onClick={() =>
-                updateField(
-                  "trainings",
-                  form.trainings.filter((_, idx) => idx !== i),
-                )
-              }
-            >
-              Remove
-            </button>
+            {!readOnly && (
+              <button
+                type="button"
+                className="px-3 py-2 border rounded-xl bg-slate-50 text-rose-600"
+                onClick={() =>
+                  updateField(
+                    "trainings",
+                    form.trainings.filter((_, idx) => idx !== i),
+                  )
+                }
+              >
+                Remove
+              </button>
+            )}
           </div>
         ))}
         <button
@@ -704,6 +751,7 @@ function EducationStep({ form, errors, updateField }: StepProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
         <div>
           <Dropdown
+            disabled={readOnly}
             id="advanceStudyDegree"
             label="Advanced Graduate Studies Degree"
             value={form.advanceStudyDegree}
@@ -719,6 +767,7 @@ function EducationStep({ form, errors, updateField }: StepProps) {
         </div>
         <div>
           <Dropdown
+            disabled={readOnly}
             id="advanceStudyReasons"
             label="Reason for Pursuing Graduate Studies"
             value={form.advanceStudyReasons}
@@ -741,6 +790,7 @@ function EducationStep({ form, errors, updateField }: StepProps) {
         <div>
           <label className={styles.label}>Specify Advanced Degree *</label>
           <input
+            disabled={readOnly}
             type="text"
             className={styles.input(!!errors.advanceStudyOther)}
             value={form.advanceStudyOther}
@@ -754,6 +804,7 @@ function EducationStep({ form, errors, updateField }: StepProps) {
         <div>
           <label className={styles.label}>Specify Reason *</label>
           <input
+            disabled={readOnly}
             type="text"
             className={styles.input(!!errors.advanceStudyReasonOther)}
             value={form.advanceStudyReasonOther}
@@ -768,7 +819,7 @@ function EducationStep({ form, errors, updateField }: StepProps) {
   );
 }
 
-function EmploymentStep({ form, errors, updateField }: StepProps) {
+function EmploymentStep({ form, errors, updateField, readOnly }: StepProps) {
   const unempOptions: any[] = [
     "Advance Study",
     "Family Concern",
@@ -802,6 +853,7 @@ function EmploymentStep({ form, errors, updateField }: StepProps) {
       <h3 className="text-xl font-bold text-slate-900">Employment Profile</h3>
 
       <Dropdown
+        disabled={readOnly}
         id="employmentStatus"
         label="Employment Status *"
         value={form.employmentStatus}
@@ -820,6 +872,7 @@ function EmploymentStep({ form, errors, updateField }: StepProps) {
         <div className="space-y-6 border-t pt-4 animate-fadeIn">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Dropdown
+              disabled={readOnly}
               id="presentEmploymentStatus"
               label="Present Employment Status *"
               value={form.presentEmploymentStatus}
@@ -842,6 +895,7 @@ function EmploymentStep({ form, errors, updateField }: StepProps) {
             <div>
               <label className={styles.label}>Present Occupation *</label>
               <input
+                disabled={readOnly}
                 type="text"
                 className={styles.input(!!errors.presentOccupation)}
                 value={form.presentOccupation}
@@ -857,6 +911,7 @@ function EmploymentStep({ form, errors, updateField }: StepProps) {
             <div>
               <label className={styles.label}>Company Name *</label>
               <input
+                disabled={readOnly}
                 type="text"
                 className={styles.input(!!errors.companyName)}
                 value={form.companyName}
@@ -867,6 +922,7 @@ function EmploymentStep({ form, errors, updateField }: StepProps) {
             <div>
               <label className={styles.label}>Company Address *</label>
               <input
+                disabled={readOnly}
                 type="text"
                 className={styles.input(!!errors.companyAddress)}
                 value={form.companyAddress}
@@ -878,6 +934,7 @@ function EmploymentStep({ form, errors, updateField }: StepProps) {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Dropdown
+              disabled={readOnly}
               id="businessIndustry"
               label="Business Industry *"
               value={form.businessIndustry}
@@ -910,6 +967,7 @@ function EmploymentStep({ form, errors, updateField }: StepProps) {
               hasError={!!errors.businessIndustry}
             />
             <Dropdown
+              disabled={readOnly}
               id="placeOfWork"
               label="Place of Work *"
               value={form.placeOfWork}
@@ -933,6 +991,7 @@ function EmploymentStep({ form, errors, updateField }: StepProps) {
               {form.employmentDocuments.map((doc, idx) => (
                 <div key={idx} className="flex space-x-2">
                   <input
+                    disabled={readOnly}
                     type="text"
                     className={styles.input(false)}
                     value={doc}
@@ -940,18 +999,20 @@ function EmploymentStep({ form, errors, updateField }: StepProps) {
                       handleDocArr("employmentDocuments", idx, e.target.value)
                     }
                   />
-                  <button
-                    type="button"
-                    className="px-3 py-2 border rounded-xl text-rose-600"
-                    onClick={() =>
-                      updateField(
-                        "employmentDocuments",
-                        form.employmentDocuments.filter((_, i) => i !== idx),
-                      )
-                    }
-                  >
-                    Remove
-                  </button>
+                  {!readOnly && (
+                    <button
+                      type="button"
+                      className="px-3 py-2 border rounded-xl text-rose-600"
+                      onClick={() =>
+                        updateField(
+                          "employmentDocuments",
+                          form.employmentDocuments.filter((_, i) => i !== idx),
+                        )
+                      }
+                    >
+                      Remove
+                    </button>
+                  )}
                 </div>
               ))}
               <button
@@ -975,6 +1036,7 @@ function EmploymentStep({ form, errors, updateField }: StepProps) {
               {form.awardDocuments.map((doc, idx) => (
                 <div key={idx} className="flex space-x-2">
                   <input
+                    disabled={readOnly}
                     type="text"
                     className={styles.input(false)}
                     value={doc}
@@ -982,18 +1044,20 @@ function EmploymentStep({ form, errors, updateField }: StepProps) {
                       handleDocArr("awardDocuments", idx, e.target.value)
                     }
                   />
-                  <button
-                    type="button"
-                    className="px-3 py-2 border rounded-xl text-rose-600"
-                    onClick={() =>
-                      updateField(
-                        "awardDocuments",
-                        form.awardDocuments.filter((_, i) => i !== idx),
-                      )
-                    }
-                  >
-                    Remove
-                  </button>
+                  {!readOnly && (
+                    <button
+                      type="button"
+                      className="px-3 py-2 border rounded-xl text-rose-600"
+                      onClick={() =>
+                        updateField(
+                          "awardDocuments",
+                          form.awardDocuments.filter((_, i) => i !== idx),
+                        )
+                      }
+                    >
+                      Remove
+                    </button>
+                  )}
                 </div>
               ))}
               <button
@@ -1021,6 +1085,7 @@ function EmploymentStep({ form, errors, updateField }: StepProps) {
                 className="flex items-center space-x-3 bg-sky-50 hover:bg-sky-100 hover:-translate-y-1 transition p-4 shadow-sm shadow-sky-100 rounded-xl cursor-pointer"
               >
                 <input
+                  disabled={readOnly}
                   type="checkbox"
                   checked={form.unemploymentReasons.includes(opt)}
                   onChange={() => toggleUnemploymentReason(opt)}
@@ -1036,6 +1101,7 @@ function EmploymentStep({ form, errors, updateField }: StepProps) {
             <div>
               <label className={styles.label}>Specify Other Reason *</label>
               <input
+                disabled={readOnly}
                 type="text"
                 className={styles.input(!!errors.unemploymentReasonOther)}
                 value={form.unemploymentReasonOther}
@@ -1052,7 +1118,7 @@ function EmploymentStep({ form, errors, updateField }: StepProps) {
   );
 }
 
-function JobHistoryStep({ form, errors, updateField }: StepProps) {
+function JobHistoryStep({ form, errors, updateField, readOnly }: StepProps) {
   const durations = [
     "Less than a month",
     "1-6 months",
@@ -1128,6 +1194,7 @@ function JobHistoryStep({ form, errors, updateField }: StepProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Dropdown
+          disabled={readOnly}
           id="isFirstJob"
           label="Is your current job your first job? *"
           value={
@@ -1147,6 +1214,7 @@ function JobHistoryStep({ form, errors, updateField }: StepProps) {
           hasError={!!errors.isFirstJob}
         />
         <Dropdown
+          disabled={readOnly}
           id="isFirstJobRelated"
           label="Is your first job related to your college course? *"
           value={
@@ -1177,6 +1245,7 @@ function JobHistoryStep({ form, errors, updateField }: StepProps) {
             {reasonsList.map((r) => (
               <label key={r} className="flex items-center space-x-2 text-sm">
                 <input
+                  disabled={readOnly}
                   type="checkbox"
                   checked={form.stayingReasons.includes(r as any)}
                   onChange={() => toggleList("stayingReasons", r)}
@@ -1188,6 +1257,7 @@ function JobHistoryStep({ form, errors, updateField }: StepProps) {
           <ErrorMessage message={errors.stayingReasons} />
           {form.stayingReasons.includes("Others") && (
             <input
+              disabled={readOnly}
               type="text"
               className={styles.input(!!errors.stayingReasonOther)}
               placeholder="Specify other reasons"
@@ -1222,6 +1292,7 @@ function JobHistoryStep({ form, errors, updateField }: StepProps) {
                     className="flex items-center space-x-2 text-sm"
                   >
                     <input
+                      disabled={readOnly}
                       type="checkbox"
                       checked={form.acceptingReasons.includes(r as any)}
                       onChange={() => toggleList("acceptingReasons", r)}
@@ -1233,6 +1304,7 @@ function JobHistoryStep({ form, errors, updateField }: StepProps) {
             <ErrorMessage message={errors.acceptingReasons} />
             {form.acceptingReasons.includes("Others") && (
               <input
+                disabled={readOnly}
                 type="text"
                 className={styles.input(!!errors.acceptingReasonOther)}
                 placeholder="Specify other"
@@ -1264,6 +1336,7 @@ function JobHistoryStep({ form, errors, updateField }: StepProps) {
                     className="flex items-center space-x-2 text-sm"
                   >
                     <input
+                      disabled={readOnly}
                       type="checkbox"
                       checked={form.changingReasons.includes(r as any)}
                       onChange={() => toggleList("changingReasons", r)}
@@ -1275,6 +1348,7 @@ function JobHistoryStep({ form, errors, updateField }: StepProps) {
             <ErrorMessage message={errors.changingReasons} />
             {form.changingReasons.includes("Others") && (
               <input
+                disabled={readOnly}
                 type="text"
                 className={styles.input(!!errors.changingReasonOther)}
                 placeholder="Specify other"
@@ -1293,6 +1367,7 @@ function JobHistoryStep({ form, errors, updateField }: StepProps) {
         <div>
           <label className={styles.label}>First Job Title *</label>
           <input
+            disabled={readOnly}
             type="text"
             className={styles.input(!!errors.firstJobTitle)}
             value={form.firstJobTitle}
@@ -1302,6 +1377,7 @@ function JobHistoryStep({ form, errors, updateField }: StepProps) {
         </div>
         <div>
           <Dropdown
+            disabled={readOnly}
             id="firstJobDuration"
             label="First Job Duration *"
             value={form.firstJobDuration}
@@ -1319,6 +1395,7 @@ function JobHistoryStep({ form, errors, updateField }: StepProps) {
           {form.firstJobDuration === "Others" && (
             <>
               <input
+                disabled={readOnly}
                 type="text"
                 className={`${styles.input(!!errors.firstJobDurationOther)} mt-2`}
                 value={form.firstJobDurationOther}
@@ -1332,6 +1409,7 @@ function JobHistoryStep({ form, errors, updateField }: StepProps) {
         </div>
         <div>
           <Dropdown
+            disabled={readOnly}
             id="firstJobSource"
             label="First Job Source *"
             value={form.firstJobSource}
@@ -1349,6 +1427,7 @@ function JobHistoryStep({ form, errors, updateField }: StepProps) {
           {form.firstJobSource === "Others" && (
             <>
               <input
+                disabled={readOnly}
                 type="text"
                 className={`${styles.input(!!errors.firstJobSourceOther)} mt-2`}
                 value={form.firstJobSourceOther}
@@ -1365,6 +1444,7 @@ function JobHistoryStep({ form, errors, updateField }: StepProps) {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
           <Dropdown
+            disabled={readOnly}
             id="firstJobLevel"
             label="First Job Level *"
             value={form.firstJobLevel}
@@ -1381,6 +1461,7 @@ function JobHistoryStep({ form, errors, updateField }: StepProps) {
         </div>
         <div>
           <Dropdown
+            disabled={readOnly}
             id="currentJobLevel"
             label="Current Job Level *"
             value={form.currentJobLevel}
@@ -1397,6 +1478,7 @@ function JobHistoryStep({ form, errors, updateField }: StepProps) {
         </div>
         <div>
           <Dropdown
+            disabled={readOnly}
             id="initialMonthlyIncome"
             label="Initial Monthly Income *"
             value={form.initialMonthlyIncome}
@@ -1414,6 +1496,7 @@ function JobHistoryStep({ form, errors, updateField }: StepProps) {
       </div>
       <div className="space-y-4 border-t pt-4">
         <Dropdown
+          disabled={readOnly}
           id="curriculumRelevant"
           label="Was the curriculum relevant to your employment? *"
           value={
@@ -1441,6 +1524,7 @@ function JobHistoryStep({ form, errors, updateField }: StepProps) {
             {compList.map((c) => (
               <label key={c} className="flex items-center space-x-2 text-sm">
                 <input
+                  disabled={readOnly}
                   type="checkbox"
                   checked={form.usefulCompetencies.includes(c as any)}
                   onChange={() => toggleList("usefulCompetencies", c)}
@@ -1452,6 +1536,7 @@ function JobHistoryStep({ form, errors, updateField }: StepProps) {
           <ErrorMessage message={errors.usefulCompetencies} />
           {form.usefulCompetencies.includes("Others") && (
             <input
+              disabled={readOnly}
               type="text"
               className={`${styles.input(!!errors.usefulCompetencyOther)} mt-2`}
               placeholder="Specify other competencies"

@@ -3,6 +3,10 @@
 import { useEffect, useState } from "react";
 // Adjust this path to wherever your types file is located
 import { Survey } from "@/types/survey";
+import ScrollProvider from "../ScrollProvider";
+import SurveyForm from "./SurveyForm";
+import { defaultSurvey } from "@/lib/survey/defaults";
+import { LuX } from "react-icons/lu";
 
 interface ServerDataResponse {
   documents: Survey[];
@@ -24,6 +28,8 @@ export default function SurveyTable({
   const [totalRows, setTotalRows] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [selectedSurvey, setSelectedSurvey] = useState<Survey | null>(null);
 
   const itemsPerPage = 10;
 
@@ -202,7 +208,7 @@ export default function SurveyTable({
                 </td>
                 <td className="p-4 text-sm">
                   <button
-                    disabled
+                    onClick={() => setSelectedSurvey(doc)}
                     className="text-xs font-semibold text-sky-600 bg-sky-50 hover:bg-sky-100 border border-sky-100 px-3 py-1 rounded-lg transition-colors cursor-not-allowed opacity-70"
                   >
                     View
@@ -213,6 +219,31 @@ export default function SurveyTable({
           </tbody>
         </table>
       </div>
+      {selectedSurvey && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm">
+          <div className="flex h-full w-full items-center justify-center p-6">
+            <div className="relative h-[95vh] w-fit overflow-hidden rounded-2xl bg-white shadow-2xl">
+              <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+                <h2 className="text-lg font-semibold">Edit Tracer Survey</h2>
+
+                <button
+                  onClick={() => setSelectedSurvey(null)}
+                  className="rounded-xl p-2 text-slate-500 hover:bg-slate-200"
+                >
+                  <LuX size={24} />
+                </button>
+              </div>
+              <ScrollProvider className="h-[calc(95vh-73px)] overflow-y-auto p-6">
+                <SurveyForm
+                  initialData={selectedSurvey}
+                  isNew={false}
+                  readOnly={true}
+                />
+              </ScrollProvider>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex items-center justify-between border-t border-slate-100 px-6 py-4 bg-slate-50/10 text-sm">
         <span className="text-slate-500">

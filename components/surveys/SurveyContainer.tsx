@@ -3,6 +3,8 @@
 import { useState } from "react";
 import SurveyForm from "./SurveyForm";
 import { Survey } from "@/types/survey";
+import ScrollProvider from "../ScrollProvider";
+import { LuX } from "react-icons/lu";
 
 interface Props {
   survey: Survey;
@@ -32,21 +34,31 @@ export default function SurveyContainer({
   if (isNew) {
     return (
       <div className="space-y-6">
-        {!open ? (
-          <div className="rounded-2xl bg-white p-8 text-center shadow-lg shadow-sky-100">
-            <h2 className="text-xl font-semibold">Tracer Survey</h2>
-            <p className="mt-2 text-sm text-slate-500">
-              You haven't submitted your tracer survey yet.
-            </p>
-            <button
-              onClick={() => setOpen(true)}
-              className="mt-6 rounded-lg bg-sky-600 px-5 py-2 text-white hover:bg-sky-700"
-            >
-              Create Survey
-            </button>
+        {open && (
+          <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm">
+            <div className="flex h-full w-full items-center justify-center p-6">
+              <div className="relative h-[95vh] w-full max-w-6xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+                <div className="flex items-center justify-between border-b border-sky-100 px-6 py-4">
+                  <h2 className="text-lg font-semibold">New Tracer Survey</h2>
+
+                  <button
+                    onClick={() => setShowCancelModal(true)}
+                    className="rounded-lg px-3 py-2 text-slate-500 hover:bg-slate-200"
+                  >
+                    <LuX size={24} />
+                  </button>
+                </div>
+
+                <div className="h-[calc(95vh-73px)] place-content-center overflow-y-auto p-6">
+                  <SurveyForm
+                    initialData={survey}
+                    isNew={true}
+                    onSuccess={handleSuccess}
+                  />
+                </div>
+              </div>
+            </div>
           </div>
-        ) : (
-          <SurveyForm initialData={survey} isNew onSuccess={handleSuccess} />
         )}
       </div>
     );
@@ -54,7 +66,7 @@ export default function SurveyContainer({
 
   return (
     <div className="space-y-6 w-full flex flex-col items-center relative">
-      <div className="w-full max-w-5xl rounded-2xl bg-white p-5 text-left shadow-lg shadow-sky-100">
+      <div className="w-full max-w-5xl rounded-2xl bg-white p-5 text-left shadow-lg shadow-slate-200">
         <div className="flex flex-col gap-2 lg:flex-row justify-center md:justify-between">
           <div>
             <p className="text-xs uppercase text-slate-500">Survey ID</p>
@@ -62,44 +74,58 @@ export default function SurveyContainer({
           </div>
           <div className="flex flex-col-reverse items-center justify-center lg:flex-row gap-4">
             <div className="text-left md:text-right inline-flex items-center gap-4 text-xs font-semibold tracking-wider uppercase">
-              <div className=" text-slate-400 divide-x-2 inline-flex">
+              <div className=" text-slate-400 divide-x-2 inline-flex text-[10px] md:text-xs">
                 <p className="pr-2">Updated</p>
                 <p className="pl-2 whitespace-nowrap">
                   {updatedAt
-                    ? new Date(updatedAt).toLocaleDateString("en-PH", {
+                    ? new Date(updatedAt).toLocaleString("en-PH", {
                         year: "numeric",
                         month: "long",
                         day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        second: "2-digit",
                       })
                     : "-"}
                 </p>
               </div>
             </div>
-            {open ? (
-              <button
-                onClick={() => setShowCancelModal(true)}
-                className="px-4 py-2 whitespace-nowrap bg-red-500 text-white w-full text-sm rounded-xl font-semibold cursor-pointer hover:bg-red-700 transition-colors duration-300"
-              >
-                Cancel Changes
-              </button>
-            ) : (
-              <button
-                onClick={() => setOpen(true)}
-                className="px-4 py-2 whitespace-nowrap bg-sky-500 text-white w-full text-sm rounded-xl font-semibold cursor-pointer hover:bg-sky-700 transition-colors duration-300"
-              >
-                Edit Form
-              </button>
-            )}
+
+            <button
+              onClick={() => setOpen(true)}
+              disabled={open}
+              className="px-4 py-2 whitespace-nowrap disabled:bg-sky-200 bg-sky-500 text-white w-full text-sm rounded-xl font-semibold hover:bg-sky-700 transition-colors duration-300"
+            >
+              Edit Form
+            </button>
           </div>
         </div>
       </div>
 
       {open && (
-        <SurveyForm
-          initialData={survey}
-          isNew={false}
-          onSuccess={handleSuccess}
-        />
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm">
+          <div className="flex h-full w-full items-center justify-center p-6">
+            <div className="relative h-[95vh] w-fit overflow-hidden rounded-2xl bg-white shadow-2xl">
+              <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+                <h2 className="text-lg font-semibold">Edit Tracer Survey</h2>
+
+                <button
+                  onClick={() => setShowCancelModal(true)}
+                  className="rounded-xl p-2 text-slate-500 hover:bg-slate-200"
+                >
+                  <LuX size={24} />
+                </button>
+              </div>
+              <ScrollProvider className="h-[calc(95vh-73px)] overflow-y-auto p-6">
+                <SurveyForm
+                  initialData={survey}
+                  isNew={false}
+                  onSuccess={handleSuccess}
+                />
+              </ScrollProvider>
+            </div>
+          </div>
+        </div>
       )}
 
       {showCancelModal && (
@@ -116,7 +142,7 @@ export default function SurveyContainer({
             <div className="mt-6 flex justify-end gap-3">
               <button
                 onClick={() => setShowCancelModal(false)}
-                className="px-4 py-2 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-200 transition-colors"
+                className="px-4 py-2 rounded-xl text-smxlon-m text-slate-700 hover:bg-slate-200 transition-colors"
               >
                 Keep Editing
               </button>

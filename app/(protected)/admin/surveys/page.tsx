@@ -15,7 +15,13 @@ export default function SurveyPage() {
 
           <p className="text-slate-500">View and manage alumni tracer forms.</p>
         </div>
-
+        <button
+          onClick={() => {
+            window.location.href = "/api/admin/surveys/export";
+          }}
+        >
+          Export CSV
+        </button>
         <input
           type="text"
           placeholder="Search..."
