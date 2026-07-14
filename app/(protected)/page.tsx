@@ -46,19 +46,10 @@
 
 import { redirect } from "next/navigation";
 
-import { getCurrentUser, getSessionCookie, getRole } from "@/lib/auth";
+import { requireVerifiedUser, getRole } from "@/lib/auth";
 
 export default async function ProtectedPage() {
-  const session = await getSessionCookie();
-  const user = await getCurrentUser(session);
-
-  if (!user) {
-    redirect("/signin");
-  }
-
-  if (!user.emailVerification) {
-    redirect("/verify-email");
-  }
+  const user = await requireVerifiedUser();
 
   const role = getRole(user);
 

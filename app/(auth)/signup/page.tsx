@@ -85,7 +85,6 @@ export default function SignUpPage() {
       }
 
       router.replace("/verify-email");
-      router.refresh();
     } catch {
       setError("Something went wrong. Please try again.");
     } finally {

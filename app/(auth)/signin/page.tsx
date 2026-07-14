@@ -51,11 +51,6 @@ export default function SignInPage() {
         setError(data.message ?? "Failed to sign in.");
         return;
       }
-
-      // Refresh so the App Router sees the new cookie
-      router.refresh();
-
-      // We can check email verification after login
       const meResponse = await fetch("/api/auth/me");
       const me = await meResponse.json();
 

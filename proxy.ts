@@ -12,7 +12,7 @@ export function proxy(request: NextRequest) {
   const isAuthRoute = AUTH_ROUTES.includes(pathname);
   const isVerifyRoute = VERIFY_ROUTES.includes(pathname);
 
-  const hasSession = request.cookies.has(AUTH_COOKIE);
+  const hasSession = !!request.cookies.get(AUTH_COOKIE)?.value;
 
   if (!hasSession) {
     if (isAuthRoute || isVerifyRoute) {
@@ -25,11 +25,6 @@ export function proxy(request: NextRequest) {
   if (isAuthRoute) {
     return NextResponse.redirect(new URL("/", request.url));
   }
-  console.log({
-    pathname,
-    hasSession,
-    cookies: request.cookies.getAll().map((c) => c.name),
-  });
   return NextResponse.next();
 }
 
