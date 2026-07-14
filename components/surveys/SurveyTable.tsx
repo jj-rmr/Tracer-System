@@ -224,7 +224,7 @@ export default function SurveyTable({
           <div className="flex h-full w-full items-center justify-center p-6">
             <div className="relative h-[95vh] w-fit overflow-hidden rounded-2xl bg-white shadow-2xl">
               <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
-                <h2 className="text-lg font-semibold">Edit Tracer Survey</h2>
+                <h2 className="text-lg font-semibold">View Tracer Survey</h2>
 
                 <button
                   onClick={() => setSelectedSurvey(null)}
