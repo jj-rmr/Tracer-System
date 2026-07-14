@@ -14,7 +14,7 @@ export async function requireUser() {
   const user = await getCurrentUser(session);
 
   if (!user) {
-    redirect("/signin");
+    redirect("/api/auth/session-expired");
   }
 
   return {

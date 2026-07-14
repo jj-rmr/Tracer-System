@@ -2,39 +2,36 @@ import { NextResponse } from "next/server";
 import { Account } from "node-appwrite";
 
 import { createSessionClient } from "@/lib/appwrite/session";
-import { getSessionCookie } from "@/lib/auth";
-import { AUTH_COOKIE } from "@/lib/auth";
+import { AUTH_COOKIE, COOKIE_OPTIONS, getSessionCookie } from "@/lib/auth";
 
 export async function POST() {
   try {
     const session = await getSessionCookie();
 
     if (session) {
-      try {
-        const client = createSessionClient(session);
-        const account = new Account(client);
+      const client = createSessionClient(session);
+      const account = new Account(client);
 
+      try {
         // Delete the current Appwrite session
-        await account.deleteSession("current");
+        await account.deleteSessions();
       } catch {
-        // Ignore if session is already invalid
+        // Session may already be invalid or expired.
+        // We still want to clear the browser cookie.
       }
     }
-
-    const response = NextResponse.json({
-      success: true,
-    });
-
-    response.cookies.delete(AUTH_COOKIE);
-
-    return response;
   } catch {
-    const response = NextResponse.json({
-      success: true,
-    });
-
-    response.cookies.delete(AUTH_COOKIE);
-
-    return response;
+    // Ignore any unexpected errors and continue clearing the cookie.
   }
+
+  const response = NextResponse.json({
+    success: true,
+  });
+
+  response.cookies.set(AUTH_COOKIE, "", {
+    ...COOKIE_OPTIONS,
+    maxAge: 0,
+  });
+
+  return response;
 }
