@@ -73,7 +73,7 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="w-full max-w-2xl bg-white md:rounded-2xl md:shadow-xl md:border border-slate-100 p-8 md:p-10">
+    <div className="w-full max-w-2xl bg-white md:rounded-2xl md:shadow-md md:border border-slate-100 p-8 md:p-10">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-slate-900 tracking-tight font-sans">
           Welcome Back

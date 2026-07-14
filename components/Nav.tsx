@@ -136,7 +136,7 @@ export default function Nav({ role }: NavProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center pl-4.75 py-4 rounded-2xl hover:shadow-md hover:-translate-y-1 active:scale-95 transition-all duration-300 ${
+                className={`flex items-center pl-4.75 py-4 rounded-2xl hover:shadow-md shadow-sky-100 hover:-translate-y-1 hover:text-sky-500 active:scale-95 transition-all duration-300 ${
                   isActiveLink(item.href) ? "bg-sky-100 text-sky-500" : ""
                 }`}
               >

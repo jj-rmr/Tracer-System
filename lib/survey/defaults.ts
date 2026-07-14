@@ -1,7 +1,7 @@
 import { Survey } from "@/types/survey";
 
 export const defaultSurvey: Survey = {
-  $id: "",
+  id: "",
 
   createdAt: "",
   updatedAt: "",
@@ -23,7 +23,7 @@ export const defaultSurvey: Survey = {
   civilStatus: "Single",
   sex: "",
 
-  yearGraduated: null,
+  yearGraduated: new Date().getFullYear(),
 
   honors: [],
   trainings: [],

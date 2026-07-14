@@ -33,8 +33,8 @@ export default async function SurveyPage() {
           userId: user.$id,
         }}
         isNew={!existingSurvey}
-        createdAt={existingSurvey?.createdAt}
-        surveyId={existingSurvey?.$id}
+        updatedAt={existingSurvey?.updatedAt}
+        surveyId={existingSurvey?.id}
       />
     </div>
   );

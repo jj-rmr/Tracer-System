@@ -100,21 +100,24 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const survey = await updateSurvey(existing.$id, body);
+    const survey = await updateSurvey(existing.id, body);
 
     return NextResponse.json({
       success: true,
       survey,
     });
   } catch (error: any) {
+    console.error(error);
+
     return NextResponse.json(
       {
         success: false,
-        message: error.message ?? "Failed to update survey.",
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
       },
-      {
-        status: 400,
-      },
+      { status: 400 },
     );
   }
 }

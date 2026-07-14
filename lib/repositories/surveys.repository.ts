@@ -3,11 +3,8 @@ import { Survey } from "@/types";
 
 function toDb(survey: Partial<Survey>) {
   return {
-    $id: survey.$id,
+    $id: survey.id,
     user_id: survey.userId,
-
-    created_at: survey.createdAt,
-    updated_at: survey.updatedAt,
 
     first_name: survey.firstName || null,
     middle_name: survey.middleName || null,
@@ -106,7 +103,7 @@ function toDb(survey: Partial<Survey>) {
 
 function fromDb(row: any): Survey {
   return {
-    $id: row.id,
+    id: row.id,
     userId: row.user_id,
 
     createdAt: row.created_at,

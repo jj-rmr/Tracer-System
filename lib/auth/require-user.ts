@@ -44,3 +44,11 @@ export async function requireUserRole(allowed: Role[]) {
 
   return user;
 }
+
+export async function requireAdmin() {
+  const { user } = await requireUser();
+
+  requireRole(user, ["Admin"]);
+
+  return user;
+}

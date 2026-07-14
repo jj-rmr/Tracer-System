@@ -1,4 +1,4 @@
-import { getCurrentUser, getSessionCookie } from "@/lib/auth";
+import { getCurrentUser, getRole, getSessionCookie } from "@/lib/auth";
 
 export default async function AdminPage() {
   const session = await getSessionCookie();
@@ -6,15 +6,26 @@ export default async function AdminPage() {
 
   if (!user) {
     return (
-      <div>
-        <h1>Unauthorized</h1>
+      <div className="flex flex-col gap-8 items-center justify-center">
+        <div className="text-center w-full max-w-5xl">
+          <h1 className="text-xl font-bold tracking-tight text-slate-900">
+            Unauthorized Access
+          </h1>
+        </div>
       </div>
     );
   }
 
   return (
-    <div>
-      <h1>Hello, {user.name}</h1>
+    <div className="flex flex-col gap-8 items-center justify-center">
+      <div className="text-center w-full max-w-5xl">
+        <h1 className="text-xl font-bold tracking-tight text-slate-900">
+          Welcome Back, {user.name}
+        </h1>
+        <p className="text-slate-600">
+          You are currently signed in as an admin.
+        </p>
+      </div>
     </div>
   );
 }

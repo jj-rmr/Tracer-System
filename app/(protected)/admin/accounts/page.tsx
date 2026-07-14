@@ -1,3 +1,4 @@
+// src/app/admin/accounts/page.tsx
 import { requireUser } from "@/lib/auth";
 import AccountsPageClient from "./AccountsPageClient";
 

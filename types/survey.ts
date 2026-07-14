@@ -1,7 +1,9 @@
+import { UUID } from "crypto";
+
 export interface Survey {
   // Ownership
   userId: string;
-  $id: string;
+  id: string;
 
   createdAt?: string;
   updatedAt?: string;
@@ -26,7 +28,7 @@ export interface Survey {
   sex: Sex;
 
   // Education
-  yearGraduated: number | null;
+  yearGraduated: number;
 
   honors: string[];
   trainings: string[];

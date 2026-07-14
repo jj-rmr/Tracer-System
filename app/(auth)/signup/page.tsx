@@ -94,7 +94,7 @@ export default function SignUpPage() {
   }
 
   return (
-    <div className="w-full max-w-2xl bg-white md:rounded-2xl md:shadow-xl md:border border-slate-100 p-8 md:p-10">
+    <div className="w-full max-w-2xl bg-white md:rounded-2xl md:shadow-md md:border border-slate-100 p-8 md:p-10">
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-slate-900 tracking-tight font-sans">
           Create Account
@@ -269,12 +269,17 @@ export default function SignUpPage() {
               <span>Creating account...</span>
             </>
           ) : (
-            <span>Register Now</span>
+            <span>Create Tracer Account</span>
           )}
         </button>
       </form>
-
-      <p className="text-center text-sm text-slate-500 mt-8">
+      <p className="text-center text-xs mt-4">
+        By creating an account, you certify that you are a graduate of Partido
+        State University and consent to the collection and use of your data
+        solely for this tracer study. Your information will be handled securely
+        in compliance with the Data Privacy Act.
+      </p>
+      <p className="text-center text-sm text-slate-500 mt-4">
         Already have an account?{" "}
         <Link
           href="/signin"

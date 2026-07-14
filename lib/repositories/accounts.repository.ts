@@ -21,6 +21,7 @@ export function formatAccount(user: any) {
     labels: user.labels ?? [],
 
     createdAt: user.$createdAt,
+    updatedAt: user.$updatedAt,
   };
 }
 

@@ -389,7 +389,7 @@ function ErrorMessage({ message }: { message?: string }) {
 
 const styles = {
   input: (err: boolean) =>
-    `w-full p-4 rounded-2xl border bg-white text-slate-950 text-sm focus:outline-none focus:ring-2 transition ${err ? "border-rose-400 focus:ring-rose-100" : "border-slate-300 focus:ring-sky-100 focus:border-sky-500"}`,
+    `w-full p-4 rounded-2xl border bg-white text-slate-950 text-sm focus:outline-none focus:ring-2 transition duration-300 ${err ? "border-rose-400 focus:ring-rose-100" : "border-sky-200 focus:ring-sky-100 focus:border-sky-500"}`,
   label:
     "block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2",
 };
@@ -625,12 +625,9 @@ function EducationStep({ form, errors, updateField }: StepProps) {
         <input
           type="number"
           className={styles.input(!!errors.yearGraduated)}
-          value={form.yearGraduated || ""}
+          value={form.yearGraduated}
           onChange={(e) =>
-            updateField(
-              "yearGraduated",
-              e.target.value ? parseInt(e.target.value) : null,
-            )
+            updateField("yearGraduated", parseInt(e.target.value))
           }
         />
         <ErrorMessage message={errors.yearGraduated} />
@@ -1365,7 +1362,7 @@ function JobHistoryStep({ form, errors, updateField }: StepProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
           <Dropdown
             id="firstJobLevel"
@@ -1383,41 +1380,38 @@ function JobHistoryStep({ form, errors, updateField }: StepProps) {
           <ErrorMessage message={errors.firstJobLevel} />
         </div>
         <div>
-          <label className={styles.label}>Current Job Level *</label>
-          <select
-            className={styles.input(!!errors.currentJobLevel)}
+          <Dropdown
+            id="currentJobLevel"
+            label="Current Job Level *"
             value={form.currentJobLevel}
-            onChange={(e) =>
-              updateField("currentJobLevel", e.target.value as any)
-            }
-          >
-            <option value="">Select</option>
-            {levels.map((l) => (
-              <option key={l} value={l}>
-                {l}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => updateField("currentJobLevel", val as any)}
+            options={levels.map((l) => ({
+              value: l,
+              label: l,
+            }))}
+            placeholder="Select"
+            required
+            hasError={!!errors.currentJobLevel}
+          />
+          <ErrorMessage message={errors.currentJobLevel} />
         </div>
         <div>
-          <label className={styles.label}>Initial Monthly Income *</label>
-          <select
-            className={styles.input(!!errors.initialMonthlyIncome)}
+          <Dropdown
+            id="initialMonthlyIncome"
+            label="Initial Monthly Income *"
             value={form.initialMonthlyIncome}
-            onChange={(e) =>
-              updateField("initialMonthlyIncome", e.target.value as any)
-            }
-          >
-            <option value="">Select</option>
-            {incomes.map((i) => (
-              <option key={i} value={i}>
-                {i}
-              </option>
-            ))}
-          </select>
+            onChange={(val) => updateField("initialMonthlyIncome", val as any)}
+            options={incomes.map((l) => ({
+              value: l,
+              label: l,
+            }))}
+            placeholder="Select"
+            required
+            hasError={!!errors.initialMonthlyIncome}
+          />
+          <ErrorMessage message={errors.initialMonthlyIncome} />
         </div>
       </div>
-
       <div className="space-y-4 border-t pt-4">
         <Dropdown
           id="curriculumRelevant"

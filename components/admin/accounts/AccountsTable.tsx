@@ -12,6 +12,7 @@ interface Account {
   role: Role;
   verified: boolean;
   createdAt: string;
+  updatedAt: string;
 }
 
 interface ServerDataResponse {
@@ -123,13 +124,13 @@ export default function AccountsTable({
   const totalPages = Math.max(1, Math.ceil(totalRows / itemsPerPage));
 
   return (
-    <div className="w-full bg-white rounded-3xl border border-sky-100 shadow-[0_12px_30px_-5px_rgba(0,0,0,0.04)] shadow-sky-100/80 overflow-hidden">
-      <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-sky-400">
+    <div className="text-sm w-full bg-white rounded-3xl border border-sky-100 shadow-[0_12px_30px_-5px_rgba(0,0,0,0.04)] shadow-sky-100/80 overflow-hidden">
+      <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-sky-200">
         <table className="w-full border-collapse text-left">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-100">
               <th className="p-4 text-xs uppercase tracking-wider text-slate-400">
-                Name
+                Full Name
               </th>
 
               <th className="p-4 text-xs uppercase tracking-wider text-slate-400">
@@ -146,6 +147,10 @@ export default function AccountsTable({
 
               <th className="p-4 text-xs uppercase tracking-wider text-slate-400">
                 Created
+              </th>
+
+              <th className="p-4 text-xs uppercase tracking-wider text-slate-400">
+                Updated
               </th>
 
               <th className="p-4 text-xs uppercase tracking-wider text-slate-400 text-center">
@@ -196,8 +201,20 @@ export default function AccountsTable({
                   </div>
                 </td>
 
-                <td className="p-4 text-sm text-slate-500">
-                  {new Date(account.createdAt).toLocaleDateString()}
+                <td className="p-4 text-xs text-slate-500 whitespace-nowrap">
+                  {new Date(account.createdAt).toLocaleDateString("en-PH", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </td>
+
+                <td className="p-4 text-xs text-slate-500 whitespace-nowrap">
+                  {new Date(account.updatedAt).toLocaleDateString("en-PH", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
                 </td>
 
                 <td className="p-4">
@@ -259,8 +276,8 @@ export default function AccountsTable({
         </table>
       </div>
 
-      <div className="flex items-center justify-between border-t border-slate-100 px-6 py-4 bg-slate-50/10 text-sm">
-        <span className="text-sky-600 py-2 px-4 bg-sky-100 rounded-lg">
+      <div className="flex items-center justify-between border-t border-slate-100 p-4 bg-slate-50/10 text-sm">
+        <span className="text-sky-600 py-2 px-4 bg-sky-50 rounded-">
           Showing <span className="font-semibold">{accounts.length}</span> of{" "}
           <span className="">
             <span className="font-semibold">{totalRows}</span> Accounts

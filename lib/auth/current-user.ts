@@ -1,7 +1,7 @@
 import { Account } from "node-appwrite";
 import { createSessionClient } from "@/lib/appwrite/session";
 
-export async function getCurrentUser(session: string | null | undefined) {
+export async function getCurrentUser(session: string | null) {
   if (!session) return null;
 
   const client = createSessionClient(session);

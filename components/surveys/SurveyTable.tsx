@@ -158,7 +158,7 @@ export default function SurveyTable({
           <tbody className="divide-y divide-slate-50">
             {documents.map((doc) => (
               <tr
-                key={doc.$id}
+                key={doc.id}
                 className="hover:bg-sky-50/20 transition-colors group"
               >
                 <td className="p-4 text-sm font-semibold text-slate-700">
