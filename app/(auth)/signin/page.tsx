@@ -54,11 +54,8 @@ export default function SignInPage() {
 
       const meResponse = await fetch("/api/auth/me");
       const me = await meResponse.json();
-      if (
-        me.success &&
-        me.data.user &&
-        me.data.user.emailVerification === false
-      ) {
+      console.log(me.data.emailVerification);
+      if (me.success && me.data && me.data.emailVerification === false) {
         router.replace("/verify-email");
         return;
       }
