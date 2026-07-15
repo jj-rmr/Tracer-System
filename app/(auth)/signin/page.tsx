@@ -54,11 +54,7 @@ export default function SignInPage() {
 
       const meResponse = await fetch("/api/auth/me");
       const me = await meResponse.json();
-      console.log(me.data.emailVerification);
-      if (me.success && me.data && me.data.emailVerification === false) {
-        router.replace("/verify-email");
-        return;
-      }
+
       const user = me.data;
       const labels = user?.labels ?? [];
 
@@ -66,8 +62,15 @@ export default function SignInPage() {
         (label: string) => label.toLowerCase() === "admin",
       );
 
+      // Handle special redirect (e.g. email verification) first
       if (redirect) {
         router.replace(decodeURIComponent(redirect));
+        return;
+      }
+
+      // Normal login flow
+      if (me.success && user && !user.emailVerification) {
+        router.replace("/verify-email");
         return;
       }
 
