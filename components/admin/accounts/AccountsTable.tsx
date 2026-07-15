@@ -37,6 +37,8 @@ export default function AccountsTable({
   const [totalRows, setTotalRows] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [accountToDelete, setAccountToDelete] = useState<string | null>(null);
 
   const router = useRouter();
 
@@ -90,6 +92,31 @@ export default function AccountsTable({
     return () => clearTimeout(timeout);
   }, [currentPage, searchQuery]);
 
+  const confirmDelete = async (id: string) => {
+    setShowDeleteModal(false);
+
+    try {
+      const res = await fetch(`/api/admin/accounts/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message ?? "Failed to delete account.");
+      }
+
+      setAccounts((prev) => prev.filter((a) => a.id !== id));
+      setTotalRows((prev) => prev - 1);
+
+      setAccountToDelete(null);
+
+      router.refresh();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
   if (loading) {
     return (
       <div className="flex justify-center items-center p-12 text-sky-600 font-medium w-full">
@@ -227,43 +254,9 @@ export default function AccountsTable({
                     </Link>
                     {account.id !== currentUserId && (
                       <button
-                        onClick={async () => {
-                          if (
-                            !confirm(
-                              `Delete ${account.name || "this account"}?`,
-                            )
-                          ) {
-                            return;
-                          }
-
-                          try {
-                            const res = await fetch(
-                              `/api/admin/accounts/${account.id}`,
-                              {
-                                method: "DELETE",
-                                credentials: "include",
-                              },
-                            );
-
-                            const data = await res.json();
-
-                            if (!res.ok) {
-                              throw new Error(
-                                data.message ?? "Failed to delete account.",
-                              );
-                            }
-
-                            setAccounts((prev) =>
-                              prev.filter((a) => a.id !== account.id),
-                            );
-                            setTotalRows((prev) => prev - 1);
-
-                            router.refresh();
-                          } catch (err: any) {
-                            alert(err.message);
-                          }
-                        }}
-                        className="rounded-lg bg-red-50 px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-100 transition cursor-pointer"
+                        type="button"
+                        onClick={() => setShowDeleteModal(true)}
+                        className="px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700 transition-colors"
                       >
                         Delete
                       </button>
@@ -275,7 +268,43 @@ export default function AccountsTable({
           </tbody>
         </table>
       </div>
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-md p-6 bg-white rounded-2xl shadow-xl mx-4">
+            <h3 className="text-lg font-semibold text-slate-900">
+              Delete Account?
+            </h3>
 
+            <p className="mt-2 text-sm text-slate-500">
+              Are you sure you want to permanently delete this account? This
+              action cannot be undone.
+            </p>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setAccountToDelete(null);
+                }}
+                className="px-4 py-2 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={() =>
+                  accountToDelete && confirmDelete(accountToDelete)
+                }
+                className="px-4 py-2 rounded-xl text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition-colors"
+              >
+                Delete Account
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="flex items-center justify-between border-t border-slate-100 p-4 bg-slate-50/10 text-sm">
         <span className="text-sky-600 py-2 px-4 bg-sky-50 rounded-">
           Showing <span className="font-semibold">{accounts.length}</span> of{" "}
