@@ -248,7 +248,7 @@ export default function AccountsTable({
                   <div className="flex justify-center gap-2">
                     <Link
                       href={`/admin/accounts/${account.id}`}
-                      className="rounded-lg bg-sky-50 px-3 py-1 text-xs font-medium text-sky-600 hover:bg-sky-100 transition"
+                      className="font-semibold px-4 py-2 rounded-xl bg-sky-100 text-sky-400 hover:bg-sky-200 transition-colors"
                     >
                       View
                     </Link>
@@ -256,7 +256,7 @@ export default function AccountsTable({
                       <button
                         type="button"
                         onClick={() => setShowDeleteModal(true)}
-                        className="px-4 py-2 rounded-xl bg-red-600 text-white hover:bg-red-700 transition-colors"
+                        className="font-semibold px-4 py-2 rounded-xl bg-red-100 text-red-400 hover:bg-red-200 transition-colors"
                       >
                         Delete
                       </button>
@@ -306,12 +306,18 @@ export default function AccountsTable({
         </div>
       )}
       <div className="flex items-center justify-between border-t border-slate-100 p-4 bg-slate-50/10 text-sm">
-        <span className="text-sky-600 py-2 px-4 bg-sky-50 rounded-">
-          Showing <span className="font-semibold">{accounts.length}</span> of{" "}
-          <span className="">
-            <span className="font-semibold">{totalRows}</span> Accounts
+        {totalRows > 1 ? (
+          <span className="text-sky-600 py-2 px-4 bg-sky-50 rounded-lg font-semibold">
+            Showing <span className="">{accounts.length}</span> of{" "}
+            <span className="">
+              <span className="">{totalRows}</span> Entries
+            </span>
           </span>
-        </span>
+        ) : (
+          <span className="text-sky-600 py-2 px-4 bg-sky-50 rounded-lg font-semibold">
+            Showing 1 Entry
+          </span>
+        )}
 
         <div className="flex gap-2">
           <button

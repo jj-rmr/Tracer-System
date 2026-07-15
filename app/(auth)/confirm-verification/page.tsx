@@ -2,10 +2,13 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { LuCheck, LuX } from "react-icons/lu";
 
 export default function ConfirmVerificationPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  const [sessionMismatch, setSessionMismatch] = useState(false);
 
   const [status, setStatus] = useState<"verifying" | "success" | "error">(
     "verifying",
@@ -20,7 +23,9 @@ export default function ConfirmVerificationPage() {
 
     if (!userId || !secret) {
       setStatus("error");
-      setErrorMsg("Invalid or missing verification tokens.");
+      setErrorMsg(
+        "This verification link is invalid or has expired. Please request a new verification email.",
+      );
       return;
     }
 
@@ -47,101 +52,164 @@ export default function ConfirmVerificationPage() {
             `/confirm-verification?userId=${userId}&secret=${secret}`,
           );
 
-          router.replace(`/sign-in?redirect=${redirect}`);
+          router.replace(`/signin?redirect=${redirect}`);
+          return;
+        }
+
+        if (response.status === 409 && data.code === "SESSION_MISMATCH") {
+          setSessionMismatch(true);
+          setStatus("error");
+          setErrorMsg(
+            "You're signed in to a different account. Sign out first, then sign in with the account that received this verification email.",
+          );
           return;
         }
 
         if (!response.ok) {
-          throw new Error(data.message);
+          throw new Error(
+            data.message ??
+              "We couldn't verify your email. Please try again or request a new verification email.",
+          );
         }
+
         setStatus("success");
 
-        setTimeout(() => {
-          router.replace("/");
+        setTimeout(async () => {
+          const meResponse = await fetch("/api/auth/me");
+          const me = await meResponse.json();
+
+          if (!me.success || !me.data) {
+            router.replace("/");
+            return;
+          }
+
+          const labels = me.data.labels ?? [];
+
+          const isAdmin = labels.some(
+            (label: string) => label.toLowerCase() === "admin",
+          );
+
+          router.replace(isAdmin ? "/admin" : "/alumni");
         }, 3000);
       } catch (error: any) {
         setStatus("error");
-        setErrorMsg(error?.message ?? "Failed to complete email verification.");
+        setErrorMsg(
+          error?.message ??
+            "Something went wrong while verifying your email. Please try again in a few moments.",
+        );
       }
     }
 
     completeVerification();
   }, [router, searchParams]);
 
+  async function handleSignOut() {
+    try {
+      await fetch("/api/auth/logout", {
+        method: "POST",
+      });
+
+      const redirect = encodeURIComponent(
+        window.location.pathname + window.location.search,
+      );
+
+      router.replace(`/signin?redirect=${redirect}`);
+    } catch {
+      setErrorMsg("We couldn't sign you out right now. Please try again.");
+    }
+  }
+
   return (
-    <div className="min-h-screen w-screen flex items-center justify-center bg-slate-50 p-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 text-center border border-slate-100">
-        {status === "verifying" && (
-          <>
-            <div className="animate-spin h-10 w-10 text-sky-500 border-4 border-slate-200 border-t-current rounded-full mx-auto mb-4" />
-            <h1 className="text-xl font-bold text-slate-900">
-              Confirming Verification...
-            </h1>
-            <p className="text-sm text-slate-500 mt-2">
-              Finishing up with Appwrite servers.
-            </p>
-          </>
+    <div className="w-full max-w-2xl bg-white md:rounded-2xl md:shadow-md md:border border-slate-100 px-4 py-8 text-center">
+      <div
+        className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 transition-colors duration-300 ${
+          status === "verifying"
+            ? "bg-sky-50 text-sky-400 animate-pulse"
+            : status === "success"
+              ? "bg-emerald-50 text-emerald-500"
+              : "bg-red-50 text-red-500"
+        }`}
+      >
+        {status === "verifying" ? (
+          <svg
+            className="animate-spin h-7 w-7"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              className="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              strokeWidth="4"
+            />
+            <path
+              className="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            />
+          </svg>
+        ) : status === "success" ? (
+          <LuCheck size={32} />
+        ) : (
+          <LuX size={32} />
         )}
+      </div>
 
-        {status === "success" && (
-          <>
-            <div className="w-12 h-12 bg-green-50 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-                className="w-6 h-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4.5 12.75l6 6 9-13.5"
-                />
-              </svg>
-            </div>
-            <h1 className="text-xl font-bold text-slate-900">
-              Account Verified!
-            </h1>
-            <p className="text-sm text-slate-500 mt-2">
-              Redirecting you to the dashboard...
-            </p>
-          </>
-        )}
+      <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+        {status === "verifying"
+          ? "Verifying Your Email..."
+          : status === "success"
+            ? "Email Verified!"
+            : sessionMismatch
+              ? "You're Signed In to Another Account"
+              : "Verification Unsuccessful"}
+      </h1>
 
-        {status === "error" && (
-          <>
-            <div className="w-12 h-12 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={2}
-                stroke="currentColor"
-                className="w-6 h-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+      <p className="text-sm text-slate-500 mt-3">
+        {status === "verifying"
+          ? "Please wait while we confirm your email address."
+          : status === "success"
+            ? "Your email has been verified successfully. You'll be redirected to your dashboard shortly."
+            : sessionMismatch
+              ? "To verify this email address, you'll need to sign out of your current account first."
+              : "We couldn't verify your email using this link."}
+      </p>
+
+      {status === "error" && (
+        <div className="mt-4 rounded-xl border border-red-100 bg-red-50 p-4">
+          <div className="flex items-center justify-center">
+            <div>
+              <h2 className="text-sm font-semibold text-red-700">
+                {sessionMismatch
+                  ? "Action Required"
+                  : "Verification Could Not Be Completed"}
+              </h2>
+              <p className="text-sm text-red-600 leading-relaxed">{errorMsg}</p>
             </div>
-            <h1 className="text-xl font-bold text-slate-900">
-              Verification Failed
-            </h1>
-            <p className="text-xs text-red-600 bg-red-50 p-3 rounded-xl border border-red-100 mt-3">
-              {errorMsg}
-            </p>
+          </div>
+        </div>
+      )}
+
+      <div className="mt-8 space-y-3">
+        {status === "error" &&
+          (sessionMismatch ? (
+            <button
+              onClick={handleSignOut}
+              className="w-full py-3 px-4 rounded-xl bg-sky-400 hover:bg-sky-500 text-white font-medium shadow-md shadow-sky-100 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            >
+              Sign Out and Continue
+            </button>
+          ) : (
             <button
               onClick={() => router.push("/verify-email")}
-              className="mt-6 text-sm text-sky-500 font-medium hover:underline cursor-pointer"
+              className="w-full py-3 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium transition cursor-pointer"
             >
-              Back to retry link
+              Back to Verify Email
             </button>
-          </>
-        )}
+          ))}
       </div>
     </div>
   );

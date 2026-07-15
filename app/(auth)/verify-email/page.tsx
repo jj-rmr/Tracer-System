@@ -87,7 +87,7 @@ export default function VerifyEmailPage() {
   }
 
   return (
-    <div className="w-full max-w-2xl bg-white md:rounded-2xl md:shadow-md md:border border-slate-100 px-4 py-8">
+    <div className="w-full max-w-2xl bg-white md:rounded-2xl md:shadow-md md:border border-slate-100 px-4 py-8 text-center">
       <div
         className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 transition-colors duration-300 ${
           sending

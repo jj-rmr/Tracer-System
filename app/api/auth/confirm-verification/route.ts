@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Account } from "node-appwrite";
 
-import { createSessionClient } from "@/lib/appwrite/session";
 import { getSessionCookie } from "@/lib/auth";
+import { createSessionClient } from "@/lib/appwrite/session";
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Missing verification tokens.",
+          code: "INVALID_REQUEST",
         },
         { status: 400 },
       );
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Unauthorized.",
+          code: "UNAUTHORIZED",
         },
         { status: 401 },
       );
@@ -32,7 +32,22 @@ export async function POST(request: NextRequest) {
 
     const account = new Account(createSessionClient(session));
 
-    await account.updateEmailVerification({ userId, secret });
+    const me = await account.get();
+
+    if (me.$id !== userId) {
+      return NextResponse.json(
+        {
+          success: false,
+          code: "SESSION_MISMATCH",
+        },
+        { status: 409 },
+      );
+    }
+
+    await account.updateEmailVerification({
+      userId,
+      secret,
+    });
 
     return NextResponse.json({
       success: true,
@@ -41,7 +56,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        message: error?.message ?? "Failed to verify email.",
+        code: "VERIFY_FAILED",
+        message: error?.message,
       },
       { status: 400 },
     );

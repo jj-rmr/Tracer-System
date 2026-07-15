@@ -209,7 +209,7 @@ export default function SurveyTable({
                 <td className="p-4 text-sm">
                   <button
                     onClick={() => setSelectedSurvey(doc)}
-                    className="text-xs font-semibold text-sky-600 bg-sky-50 hover:bg-sky-100 border border-sky-100 px-3 py-1 rounded-lg transition-colors cursor-not-allowed opacity-70"
+                    className="font-semibold px-4 py-2 rounded-xl bg-sky-100 text-sky-400 hover:bg-sky-200 transition-colors"
                   >
                     View
                   </button>
@@ -246,13 +246,18 @@ export default function SurveyTable({
       )}
 
       <div className="flex items-center justify-between border-t border-slate-100 px-6 py-4 bg-slate-50/10 text-sm">
-        <span className="text-slate-500">
-          Page
-          <span className="font-semibold text-slate-800">
-            {currentPage}
-          </span> of{" "}
-          <span className="font-semibold text-slate-800">{totalPages}</span>
-        </span>
+        {totalRows > 1 ? (
+          <span className="text-sky-600 py-2 px-4 bg-sky-50 rounded-lg font-semibold">
+            Showing <span className="">{documents.length}</span> of{" "}
+            <span className="">
+              <span className="">{totalRows}</span> Entries
+            </span>
+          </span>
+        ) : (
+          <span className="text-sky-600 py-2 px-4 bg-sky-50 rounded-lg font-semibold">
+            Showing 1 Entry
+          </span>
+        )}
         <div className="flex gap-2">
           <button
             onClick={() => onPageChange(currentPage - 1)}

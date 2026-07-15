@@ -1,6 +1,5 @@
 import Nav from "@/components/Nav";
 import { requireVerifiedUser, getRole } from "@/lib/auth";
-import ScrollProvider from "@/components/ScrollProvider"; // Import your new client wrapper
 
 export default async function DashboardLayout({
   children,

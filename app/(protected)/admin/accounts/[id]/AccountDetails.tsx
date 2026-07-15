@@ -35,6 +35,8 @@ export default function AccountDetails({ id, currentUserId }: Props) {
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
   const isCurrentUser = id === currentUserId;
 
   useEffect(() => {
@@ -89,8 +91,6 @@ export default function AccountDetails({ id, currentUserId }: Props) {
   }
 
   async function deleteAccount() {
-    if (!confirm("Delete this account? This cannot be undone.")) return;
-
     try {
       setDeleting(true);
       const res = await fetch(`/api/admin/accounts/${id}`, {
@@ -139,18 +139,10 @@ export default function AccountDetails({ id, currentUserId }: Props) {
       {/* Account Info Card */}
       <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
         <div className="flex items-start gap-4 justify-between flex-wrap">
-          <div className="flex-1 min-w-[250px]">
-            {editing ? (
-              <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-xl border border-dashed border-slate-300 bg-sky-50 px-4 py-2 text-2xl font-bold focus:outline-none focus:ring-2 focus:ring-sky-500"
-              />
-            ) : (
-              <h1 className="text-3xl font-bold text-slate-900">
-                {account.name}
-              </h1>
-            )}
+          <div className="flex-1 min-w-62.5">
+            <h1 className="text-3xl font-bold text-slate-900">
+              {account.name}
+            </h1>
             <p className="mt-2 text-slate-500">{account.email}</p>
           </div>
 
@@ -164,7 +156,6 @@ export default function AccountDetails({ id, currentUserId }: Props) {
             {account.verified ? "Verified" : "Pending"}
           </span>
         </div>
-
         <div className="mt-8 grid gap-6 sm:grid-cols-2 md:grid-cols-3 border-t border-slate-100 pt-6">
           <div>
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
@@ -208,45 +199,51 @@ export default function AccountDetails({ id, currentUserId }: Props) {
             </div>
           )}
         </div>
-
-        <div className="mt-8 flex gap-3 border-t border-slate-100 pt-6">
-          {editing ? (
-            <>
-              <button
-                onClick={save}
-                disabled={saving}
-                className="rounded-xl bg-sky-500 px-5 py-2 text-sm font-semibold text-white hover:bg-sky-600 disabled:opacity-50 cursor-pointer transition"
-              >
-                {saving ? "Saving..." : "Save"}
-              </button>
-              <button
-                onClick={() => {
-                  setEditing(false);
-                  setName(account.name);
-                }}
-                className="rounded-xl border border-slate-300 px-5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer transition"
-              >
-                Cancel
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() => setEditing(true)}
-              className="rounded-xl bg-sky-500 px-5 py-2 text-sm font-semibold text-white hover:bg-sky-600 cursor-pointer transition"
-            >
-              Edit Name
-            </button>
-          )}
+        <div className="mt-8 gap-3 border-t border-slate-100 pt-6">
           {!isCurrentUser && (
             <button
-              onClick={deleteAccount}
+              onClick={() => setShowDeleteModal(true)}
               disabled={deleting}
-              className="rounded-xl border border-red-300 px-5 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50 cursor-pointer transition ml-auto"
+              className="px-4 py-2 rounded-xl text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition-colors"
             >
-              {deleting ? "Deleting..." : "Delete Account"}
+              Delete Account
             </button>
           )}
         </div>
+        {showDeleteModal && (
+          <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="w-full max-w-md p-6 bg-white rounded-2xl shadow-xl mx-4">
+              <h3 className="text-lg font-semibold text-slate-900">
+                Delete Account?
+              </h3>
+
+              <p className="mt-2 text-sm text-slate-500">
+                Are you sure you want to permanently delete this account? This
+                action cannot be undone.
+              </p>
+
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                  }}
+                  className="px-4 py-2 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  onClick={deleteAccount}
+                  className="px-4 py-2 rounded-xl text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition-colors"
+                >
+                  {deleting ? "Deleting..." : "Delete Account"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Tracer Survey Section */}

@@ -62,13 +62,11 @@ export default function SignInPage() {
         (label: string) => label.toLowerCase() === "admin",
       );
 
-      // Handle special redirect (e.g. email verification) first
       if (redirect) {
         router.replace(decodeURIComponent(redirect));
         return;
       }
 
-      // Normal login flow
       if (me.success && user && !user.emailVerification) {
         router.replace("/verify-email");
         return;
@@ -76,7 +74,6 @@ export default function SignInPage() {
 
       router.replace(isAdmin ? "/admin" : "/alumni");
     } catch (err) {
-      console.error(err);
       setError("Unable to sign in right now. Please try again in a moment.");
     } finally {
       setIsPending(false);

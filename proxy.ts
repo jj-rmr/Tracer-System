@@ -7,7 +7,7 @@ const AUTH_ROUTES = ["/signin", "/signup"];
 const VERIFY_ROUTES = ["/verify-email", "/confirm-verification"];
 
 export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const { pathname, search } = request.nextUrl;
 
   const isAuthRoute = AUTH_ROUTES.includes(pathname);
   const isVerifyRoute = VERIFY_ROUTES.includes(pathname);
@@ -19,15 +19,24 @@ export function proxy(request: NextRequest) {
       return NextResponse.next();
     }
 
-    return NextResponse.redirect(new URL("/signin", request.url));
-  }
+    const signInUrl = new URL("/signin", request.url);
 
+    const redirect = pathname + search;
+
+    // Only preserve redirects for special flows
+    if (redirect.startsWith("/confirm-verification")) {
+      signInUrl.searchParams.set("redirect", redirect);
+    }
+
+    return NextResponse.redirect(signInUrl);
+  }
   if (isAuthRoute) {
     return NextResponse.redirect(new URL("/", request.url));
   }
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)"],
 };
