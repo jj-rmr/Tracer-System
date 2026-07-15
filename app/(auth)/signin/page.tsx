@@ -20,14 +20,12 @@ export default function SignInPage() {
     setError(null);
 
     if (!email || !password) {
-      setError("Please fill in all fields.");
+      setError("Please enter your email and password.");
       return;
     }
 
     if (!email.toLowerCase().endsWith("@parsu.edu.ph")) {
-      setError(
-        "Access denied. Only ParSU institutional email addresses are allowed.",
-      );
+      setError("Please use your ParSU email address to sign in.");
       return;
     }
 
@@ -46,11 +44,12 @@ export default function SignInPage() {
       });
 
       const data = await response.json();
-
+      console.log(data.message);
       if (!response.ok) {
-        setError(data.message ?? "Failed to sign in.");
+        setError("Incorrect email or password. Please try again.");
         return;
       }
+
       const meResponse = await fetch("/api/auth/me");
       const me = await meResponse.json();
 
@@ -58,10 +57,17 @@ export default function SignInPage() {
         router.replace("/verify-email");
         return;
       }
+      const user = me.data;
+      const labels = user?.labels ?? [];
 
-      router.replace("/");
-    } catch {
-      setError("Something went wrong. Please try again.");
+      const isAdmin = labels.some(
+        (label: string) => label.toLowerCase() === "admin",
+      );
+
+      router.replace(isAdmin ? "/admin" : "/alumni");
+    } catch (err) {
+      console.error(err);
+      setError("Unable to sign in right now. Please try again in a moment.");
     } finally {
       setIsPending(false);
     }

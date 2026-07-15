@@ -321,13 +321,13 @@ export default function SurveyForm({
         )}
       </div>
       {/* Buttons */}
-      <div className="flex justify-end gap-4">
+      <div className="flex flex-col-reverse md:flex-row justify-stretch md:justify-end gap-4">
         {step > 1 && (
           <button
             className="px-4 py-2 whitespace-nowrap disabled:bg-sky-200 bg-white text-slate-700 shadow-md border border-slate-200 text-sm rounded-xl font-semibold hover:bg-slate-200 transition-colors duration-300"
             onClick={() => handleStep("backward")}
           >
-            Previous
+            Previous Section
           </button>
         )}
 

@@ -247,22 +247,25 @@ export default function SurveyTable({
 
       <div className="flex items-center justify-between border-t border-slate-100 px-6 py-4 bg-slate-50/10 text-sm">
         <span className="text-slate-500">
-          Page{" "}
-          <span className="font-semibold text-slate-800">{currentPage}</span> of{" "}
+          Page
+          <span className="font-semibold text-slate-800">
+            {currentPage}
+          </span> of{" "}
           <span className="font-semibold text-slate-800">{totalPages}</span>
         </span>
         <div className="flex gap-2">
           <button
             onClick={() => onPageChange(currentPage - 1)}
             disabled={!hasPrevPage}
-            className={`rounded-xl border px-4 py-2 text-xs font-medium transition shadow-sm ${hasPrevPage ? "border-slate-300 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer" : "border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed"}`}
+            className={`px-4 py-2 whitespace-nowrap disabled:bg-sky-100 bg-white disabled:text-white shadow-md disabled:border-none disabled:shadow-none border border-slate-200 text-slate-700 text-sm rounded-xl font-semibold hover:bg-slate-200 transition-colors duration-300`}
           >
             Previous
           </button>
+
           <button
             onClick={() => onPageChange(currentPage + 1)}
             disabled={!hasNextPage}
-            className={`rounded-xl border px-4 py-2 text-xs font-medium transition shadow-sm ${hasNextPage ? "border-slate-300 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer" : "border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed"}`}
+            className={`px-4 py-2 whitespace-nowrap disabled:bg-sky-100 bg-sky-500 text-white text-sm rounded-xl font-semibold hover:bg-sky-700 transition-colors duration-300`}
           >
             Next
           </button>
