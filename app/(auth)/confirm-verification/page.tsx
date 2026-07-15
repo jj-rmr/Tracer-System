@@ -42,10 +42,18 @@ export default function ConfirmVerificationPage() {
 
         const data = await response.json();
 
+        if (response.status === 401) {
+          const redirect = encodeURIComponent(
+            `/confirm-verification?userId=${userId}&secret=${secret}`,
+          );
+
+          router.replace(`/sign-in?redirect=${redirect}`);
+          return;
+        }
+
         if (!response.ok) {
           throw new Error(data.message);
         }
-
         setStatus("success");
 
         setTimeout(() => {

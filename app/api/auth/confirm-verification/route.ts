@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Account } from "node-appwrite";
 
-import { createAdminClient } from "@/lib/appwrite/admin";
+import { createSessionClient } from "@/lib/appwrite/session";
+import { getSessionCookie } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,20 +18,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const account = new Account(createAdminClient());
+    const session = await getSessionCookie();
 
-    await account.updateEmailVerification({
-      userId,
-      secret,
-    });
+    if (!session) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Unauthorized.",
+        },
+        { status: 401 },
+      );
+    }
+
+    const account = new Account(createSessionClient(session));
+
+    await account.updateEmailVerification({ userId, secret });
 
     return NextResponse.json({
       success: true,
-      message: "Email verified successfully.",
     });
   } catch (error: any) {
-    console.error(error);
-
     return NextResponse.json(
       {
         success: false,

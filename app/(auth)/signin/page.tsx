@@ -1,13 +1,16 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { SignInButton } from "@/components/SignInButton";
 
 export default function SignInPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const redirect = searchParams.get("redirect");
 
   const [isPending, setIsPending] = useState(false);
 
@@ -44,7 +47,6 @@ export default function SignInPage() {
       });
 
       const data = await response.json();
-      console.log(data.message);
       if (!response.ok) {
         setError("Incorrect email or password. Please try again.");
         return;
@@ -52,8 +54,11 @@ export default function SignInPage() {
 
       const meResponse = await fetch("/api/auth/me");
       const me = await meResponse.json();
-
-      if (me.success && me.user && me.user.emailVerification === false) {
+      if (
+        me.success &&
+        me.data.user &&
+        me.data.user.emailVerification === false
+      ) {
         router.replace("/verify-email");
         return;
       }
@@ -63,6 +68,11 @@ export default function SignInPage() {
       const isAdmin = labels.some(
         (label: string) => label.toLowerCase() === "admin",
       );
+
+      if (redirect) {
+        router.replace(decodeURIComponent(redirect));
+        return;
+      }
 
       router.replace(isAdmin ? "/admin" : "/alumni");
     } catch (err) {
