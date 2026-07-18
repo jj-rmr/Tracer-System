@@ -138,7 +138,7 @@ export default function VerifyEmailPage() {
       </p>
 
       {error && (
-        <div className="mt-4 p-3 rounded-xl bg-red-50 border border-red-100 text-xs text-red-600 animate-in fade-in duration-200">
+        <div className="mt-4 p-3 rounded-xl bg-red-50 border border-red-100 text-xs text-red-500 animate-in fade-in duration-200">
           {error}
         </div>
       )}

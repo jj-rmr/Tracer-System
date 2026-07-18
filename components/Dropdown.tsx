@@ -29,132 +29,134 @@ export function Dropdown({
   required = false,
   hasError = false,
 }: DropdownProps) {
-  const detailsRef = useRef<HTMLDetailsElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
+
   const selectedOption = options.find((opt) => opt.value === value);
 
   useEffect(() => {
-    const handleOutsideClick = (event: Event) => {
+    const handleOutsideClick = (event: MouseEvent | TouchEvent) => {
       if (
-        detailsRef.current &&
-        !detailsRef.current.contains(event.target as Node)
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
       ) {
         setIsOpen(false);
       }
     };
 
     document.addEventListener("mousedown", handleOutsideClick);
-    document.addEventListener("touchend", handleOutsideClick);
+    document.addEventListener("touchstart", handleOutsideClick);
+
     return () => {
       document.removeEventListener("mousedown", handleOutsideClick);
-      document.removeEventListener("touchend", handleOutsideClick);
+      document.removeEventListener("touchstart", handleOutsideClick);
     };
   }, []);
 
-  const handleSummaryClick = (e: React.MouseEvent<HTMLElement>) => {
-    e.preventDefault();
-    setIsOpen(!isOpen);
-  };
-
-  const handleSelect = (val: string) => {
-    onChange(val);
+  const handleSelect = (option: Option) => {
+    onChange(option.value);
     setIsOpen(false);
   };
 
-  if (disabled) {
-    return (
-      <div className="flex flex-col w-full">
-        <p className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2">
-          {label}
-        </p>
-        <div className="list-none flex items-center text-slate-950 justify-between gap-2 overflow-hidden p-4 select-none leading-5 bg-slate-100 border border-sky-200 transition-all duration-300 rounded-2xl">
-          <span
-            className={`flex-1 text-sm truncate ${
-              !value ? "text-slate-950/50" : ""
-            }`}
-          >
-            {selectedOption ? selectedOption.label : placeholder}
+  return (
+    <div ref={dropdownRef} className="relative flex w-full flex-col">
+      <label
+        htmlFor={id}
+        className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-600"
+      >
+        {label}
+      </label>
+
+      {disabled ? (
+        <div className="flex items-center justify-between rounded-2xl bg-slate-200 px-4 py-3.5 text-sm text-slate-900">
+          <span className={!value ? "text-slate-400" : ""}>
+            {selectedOption?.label ?? placeholder}
           </span>
         </div>
-      </div>
-    );
-  } else {
-    return (
-      <div className="flex flex-col w-full">
-        <label
-          htmlFor={id}
-          className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2"
-        >
-          {label}
-        </label>
-
-        <details
-          ref={detailsRef}
-          open={isOpen}
-          className={`relative w-full rounded-2xl transition-all duration-300 ${
-            isOpen
-              ? "bg-sky-100 border-sky-400"
-              : hasError
-                ? "border-red-500 bg-red-50"
-                : "border-sky-200"
-          }`}
-        >
-          <summary
-            onClick={handleSummaryClick}
-            className="list-none flex items-center justify-between gap-2 overflow-hidden p-4 cursor-pointer select-none text-foreground leading-5 border focus:outline-none focus:ring-2 border-sky-200 focus:ring-sky-100 focus:border-sky-500 transition-all duration-300 rounded-2xl [&::-webkit-details-marker]:hidden"
+      ) : (
+        <>
+          <button
+            type="button"
+            aria-haspopup="listbox"
+            aria-expanded={isOpen}
+            onClick={() => setIsOpen((prev) => !prev)}
+            className={`
+              flex w-full items-center justify-between gap-3
+              rounded-2xl border bg-white px-4 py-3.5
+              text-left text-sm text-slate-900
+              shadow-sm transition-all duration-200
+              focus:outline-none focus:ring-4
+              ${
+                hasError
+                  ? "border-rose-400 focus:ring-rose-100"
+                  : "border-sky-200 hover:border-sky-300 hover:bg-sky-50/30 focus:border-sky-500 focus:ring-sky-100"
+              }
+            `}
           >
             <span
-              className={`flex-1 min-w-0 truncate ${
-                !value ? "text-foreground/50" : ""
+              className={`truncate ${
+                value ? "text-slate-900" : "text-slate-400"
               }`}
             >
-              {selectedOption ? selectedOption.label : placeholder}
+              {selectedOption?.label ?? placeholder}
             </span>
 
             <LuChevronDown
-              size={16}
-              className={`shrink-0 text-sky-400 transition-transform duration-300 ${
-                isOpen ? "rotate-180" : ""
+              size={18}
+              className={`shrink-0 text-slate-400 transition-all duration-200 ${
+                isOpen ? "rotate-180 text-sky-500" : ""
               }`}
             />
-          </summary>
+          </button>
 
-          <div
-            className="absolute left-0 right-0 mt-2 min-w-full w-fit bg-background border border-sky-200 rounded-2xl shadow-xl z-50 overflow-hidden max-h-48 overflow-y-auto scrollbar-none"
-            style={{ touchAction: "manipulation" }}
-          >
-            {options.map((opt) => (
-              <div
-                key={opt.value}
-                role="button"
-                tabIndex={0}
-                onClick={() => handleSelect(opt.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    handleSelect(opt.value);
-                  }
-                }}
-                className={`${selectedOption && `bg-sky-100 font-semibold`} text-left p-4 hover:bg-sky-100 transition-colors text-foreground cursor-pointer focus:bg-sky-100 focus:outline-none`}
-              >
-                {opt.label}
-              </div>
-            ))}
-          </div>
-        </details>
+          {isOpen && (
+            <div
+              role="listbox"
+              className="
+                absolute left-0 right-0 top-full mt-2
+                z-50
+                max-h-60 overflow-y-auto
+                rounded-2xl border border-sky-100
+                bg-white p-1.5
+                shadow-xl shadow-sky-100/50
+              "
+            >
+              {options.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="option"
+                  aria-selected={option.value === value}
+                  onClick={() => handleSelect(option)}
+                  className={`
+                    w-full rounded-xl px-4 py-3
+                    text-left text-sm
+                    transition-colors duration-150
+                    ${
+                      option.value === value
+                        ? "bg-sky-100 font-semibold text-sky-700"
+                        : "text-slate-700 hover:bg-sky-50"
+                    }
+                  `}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          )}
 
-        <input
-          id={id}
-          type="text"
-          name={id}
-          className="sr-only"
-          value={value}
-          required={required}
-          readOnly
-          tabIndex={-1}
-          aria-hidden="true"
-        />
-      </div>
-    );
-  }
+          <input
+            id={id}
+            name={id}
+            type="text"
+            value={value}
+            required={required}
+            readOnly
+            tabIndex={-1}
+            className="sr-only"
+          />
+        </>
+      )}
+    </div>
+  );
 }

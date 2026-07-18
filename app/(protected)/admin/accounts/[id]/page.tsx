@@ -1,5 +1,5 @@
 import { requireUser } from "@/lib/auth";
-import AccountDetails from "./AccountDetails";
+import AccountDetails from "@/components/admin/accounts/AccountDetails";
 
 export default async function AccountDetailsPage({
   params,

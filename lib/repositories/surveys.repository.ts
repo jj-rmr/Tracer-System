@@ -1,10 +1,12 @@
 import { supabase } from "@/lib/supabase/server";
 import { Survey } from "@/types";
+import { getSurveyDocuments } from "./survey-documents.repository";
 
 function toDb(survey: Partial<Survey>) {
+  const userId = survey.userId && survey.userId.trim() ? survey.userId : null;
+
   return {
-    $id: survey.id,
-    user_id: survey.userId,
+    user_id: userId,
 
     first_name: survey.firstName || null,
     middle_name: survey.middleName || null,
@@ -22,18 +24,20 @@ function toDb(survey: Partial<Survey>) {
     civil_status: survey.civilStatus || null,
     sex: survey.sex || null,
 
-    year_graduated: survey.yearGraduated ? Number(survey.yearGraduated) : null,
+    program: survey.program || null,
+    year_graduated:
+      survey.yearGraduated != null ? Number(survey.yearGraduated) : null,
 
     honors: survey.honors ?? [],
     trainings: survey.trainings ?? [],
 
-    advance_study_degree: survey.advanceStudyDegree || null,
+    advanced_study_degree: survey.advancedStudyDegree || null,
 
-    advance_study_other: survey.advanceStudyOther || null,
+    advanced_study_other: survey.advancedStudyOther || null,
 
-    advance_study_reasons: survey.advanceStudyReasons || null,
+    advanced_study_reasons: survey.advancedStudyReasons || null,
 
-    advance_study_reason_other: survey.advanceStudyReasonOther || null,
+    advanced_study_reason_other: survey.advancedStudyReasonOther || null,
 
     employment_status: survey.employmentStatus || null,
 
@@ -41,9 +45,9 @@ function toDb(survey: Partial<Survey>) {
 
     unemployment_reason_other: survey.unemploymentReasonOther || null,
 
-    present_employment_status: survey.presentEmploymentStatus || null,
+    current_employment_status: survey.currentEmploymentStatus || null,
 
-    present_occupation: survey.presentOccupation || null,
+    current_occupation: survey.currentOccupation || null,
 
     company_name: survey.companyName || null,
 
@@ -53,9 +57,8 @@ function toDb(survey: Partial<Survey>) {
 
     place_of_work: survey.placeOfWork || null,
 
-    employment_documents: survey.employmentDocuments ?? [],
-
-    award_documents: survey.awardDocuments ?? [],
+    graduate_folder_id: survey.graduateFolderId || null,
+    document_type: survey.documents?.length ? "upload" : "survey",
 
     is_first_job: survey.isFirstJob ?? false,
 
@@ -101,6 +104,227 @@ function toDb(survey: Partial<Survey>) {
   };
 }
 
+function toDbPatch(survey: Partial<Survey>) {
+  const payload: Record<string, unknown> = {};
+
+  if (survey.userId !== undefined) {
+    payload.user_id = survey.userId?.trim() || null;
+  }
+
+  if (survey.firstName !== undefined) {
+    payload.first_name = survey.firstName || null;
+  }
+
+  if (survey.middleName !== undefined) {
+    payload.middle_name = survey.middleName || null;
+  }
+
+  if (survey.lastName !== undefined) {
+    payload.last_name = survey.lastName || null;
+  }
+
+  if (survey.extensionName !== undefined) {
+    payload.extension_name = survey.extensionName || null;
+  }
+
+  if (survey.street !== undefined) {
+    payload.street = survey.street || null;
+  }
+
+  if (survey.barangay !== undefined) {
+    payload.barangay = survey.barangay || null;
+  }
+
+  if (survey.municipality !== undefined) {
+    payload.municipality = survey.municipality || null;
+  }
+
+  if (survey.province !== undefined) {
+    payload.province = survey.province || null;
+  }
+
+  if (survey.region !== undefined) {
+    payload.region = survey.region || null;
+  }
+
+  if (survey.contactNumbers !== undefined) {
+    payload.contact_numbers = survey.contactNumbers ?? [];
+  }
+
+  if (survey.civilStatus !== undefined) {
+    payload.civil_status = survey.civilStatus || null;
+  }
+
+  if (survey.sex !== undefined) {
+    payload.sex = survey.sex || null;
+  }
+
+  if (survey.program !== undefined) {
+    payload.program = survey.program || null;
+  }
+
+  if (survey.yearGraduated !== undefined) {
+    payload.year_graduated =
+      survey.yearGraduated != null ? Number(survey.yearGraduated) : null;
+  }
+
+  if (survey.honors !== undefined) {
+    payload.honors = survey.honors ?? [];
+  }
+
+  if (survey.trainings !== undefined) {
+    payload.trainings = survey.trainings ?? [];
+  }
+
+  if (survey.advancedStudyDegree !== undefined) {
+    payload.advanced_study_degree = survey.advancedStudyDegree || null;
+  }
+
+  if (survey.advancedStudyOther !== undefined) {
+    payload.advanced_study_other = survey.advancedStudyOther || null;
+  }
+
+  if (survey.advancedStudyReasons !== undefined) {
+    payload.advanced_study_reasons = survey.advancedStudyReasons || null;
+  }
+
+  if (survey.advancedStudyReasonOther !== undefined) {
+    payload.advanced_study_reason_other =
+      survey.advancedStudyReasonOther || null;
+  }
+
+  if (survey.employmentStatus !== undefined) {
+    payload.employment_status = survey.employmentStatus || null;
+  }
+
+  if (survey.unemploymentReasons !== undefined) {
+    payload.unemployment_reasons = survey.unemploymentReasons ?? [];
+  }
+
+  if (survey.unemploymentReasonOther !== undefined) {
+    payload.unemployment_reason_other = survey.unemploymentReasonOther || null;
+  }
+
+  if (survey.currentEmploymentStatus !== undefined) {
+    payload.current_employment_status = survey.currentEmploymentStatus || null;
+  }
+
+  if (survey.currentOccupation !== undefined) {
+    payload.current_occupation = survey.currentOccupation || null;
+  }
+
+  if (survey.companyName !== undefined) {
+    payload.company_name = survey.companyName || null;
+  }
+
+  if (survey.companyAddress !== undefined) {
+    payload.company_address = survey.companyAddress || null;
+  }
+
+  if (survey.businessIndustry !== undefined) {
+    payload.business_industry = survey.businessIndustry || null;
+  }
+
+  if (survey.placeOfWork !== undefined) {
+    payload.place_of_work = survey.placeOfWork || null;
+  }
+
+  if (survey.graduateFolderId !== undefined) {
+    payload.graduate_folder_id = survey.graduateFolderId || null;
+  }
+
+  if (survey.documents !== undefined) {
+    payload.document_type = survey.documents?.length ? "upload" : "survey";
+  }
+
+  if (survey.isFirstJob !== undefined) {
+    payload.is_first_job = survey.isFirstJob ?? false;
+  }
+
+  if (survey.isFirstJobRelated !== undefined) {
+    payload.is_first_job_related = survey.isFirstJobRelated ?? false;
+  }
+
+  if (survey.stayingReasons !== undefined) {
+    payload.staying_reasons = survey.stayingReasons ?? [];
+  }
+
+  if (survey.stayingReasonOther !== undefined) {
+    payload.staying_reason_other = survey.stayingReasonOther || null;
+  }
+
+  if (survey.acceptingReasons !== undefined) {
+    payload.accepting_reasons = survey.acceptingReasons ?? [];
+  }
+
+  if (survey.acceptingReasonOther !== undefined) {
+    payload.accepting_reason_other = survey.acceptingReasonOther || null;
+  }
+
+  if (survey.changingReasons !== undefined) {
+    payload.changing_reasons = survey.changingReasons ?? [];
+  }
+
+  if (survey.changingReasonOther !== undefined) {
+    payload.changing_reason_other = survey.changingReasonOther || null;
+  }
+
+  if (survey.firstJobDuration !== undefined) {
+    payload.first_job_duration = survey.firstJobDuration || null;
+  }
+
+  if (survey.firstJobDurationOther !== undefined) {
+    payload.first_job_duration_other = survey.firstJobDurationOther || null;
+  }
+
+  if (survey.firstJobSource !== undefined) {
+    payload.first_job_source = survey.firstJobSource || null;
+  }
+
+  if (survey.firstJobSourceOther !== undefined) {
+    payload.first_job_source_other = survey.firstJobSourceOther || null;
+  }
+
+  if (survey.firstJobSearchDuration !== undefined) {
+    payload.first_job_search_duration = survey.firstJobSearchDuration || null;
+  }
+
+  if (survey.firstJobSearchDurationOther !== undefined) {
+    payload.first_job_search_duration_other =
+      survey.firstJobSearchDurationOther || null;
+  }
+
+  if (survey.firstJobTitle !== undefined) {
+    payload.first_job_title = survey.firstJobTitle || null;
+  }
+
+  if (survey.firstJobLevel !== undefined) {
+    payload.first_job_level = survey.firstJobLevel || null;
+  }
+
+  if (survey.currentJobLevel !== undefined) {
+    payload.current_job_level = survey.currentJobLevel || null;
+  }
+
+  if (survey.initialMonthlyIncome !== undefined) {
+    payload.initial_monthly_income = survey.initialMonthlyIncome || null;
+  }
+
+  if (survey.curriculumRelevant !== undefined) {
+    payload.curriculum_relevant = survey.curriculumRelevant ?? false;
+  }
+
+  if (survey.usefulCompetencies !== undefined) {
+    payload.useful_competencies = survey.usefulCompetencies ?? [];
+  }
+
+  if (survey.usefulCompetencyOther !== undefined) {
+    payload.useful_competency_other = survey.usefulCompetencyOther || null;
+  }
+
+  return payload;
+}
+
 function fromDb(row: any): Survey {
   return {
     id: row.id,
@@ -125,22 +349,24 @@ function fromDb(row: any): Survey {
     civilStatus: row.civil_status ?? "Single",
     sex: row.sex ?? "",
 
+    program: row.program,
     yearGraduated: row.year_graduated,
 
     honors: row.honors ?? [],
     trainings: row.trainings ?? [],
 
-    advanceStudyDegree: row.advance_study_degree ?? "",
-    advanceStudyOther: row.advance_study_other ?? "",
-    advanceStudyReasons: row.advance_study_reasons ?? "",
-    advanceStudyReasonOther: row.advance_study_reason_other ?? "",
+    advancedStudyDegree: row.advanced_study_degree ?? "",
+    advancedStudyOther: row.advanced_study_other ?? "",
+
+    advancedStudyReasons: row.advanced_study_reasons ?? "",
+    advancedStudyReasonOther: row.advanced_study_reason_other ?? "",
 
     employmentStatus: row.employment_status ?? "",
-    unemploymentReasons: row.unemployment_reasons ?? [],
+    unemploymentReasons: row.unemployment_reasons,
     unemploymentReasonOther: row.unemployment_reason_other ?? "",
 
-    presentEmploymentStatus: row.present_employment_status ?? "",
-    presentOccupation: row.present_occupation ?? "",
+    currentEmploymentStatus: row.current_employment_status ?? "",
+    currentOccupation: row.current_occupation ?? "",
 
     companyName: row.company_name ?? "",
     companyAddress: row.company_address ?? "",
@@ -148,11 +374,10 @@ function fromDb(row: any): Survey {
     businessIndustry: row.business_industry ?? "",
     placeOfWork: row.place_of_work ?? "",
 
-    employmentDocuments: row.employment_documents ?? [],
-    awardDocuments: row.award_documents ?? [],
+    graduateFolderId: row.graduate_folder_id ?? "",
 
-    isFirstJob: row.is_first_job ?? false,
-    isFirstJobRelated: row.is_first_job_related ?? false,
+    isFirstJob: row.is_first_job,
+    isFirstJobRelated: row.is_first_job_related,
 
     stayingReasons: row.staying_reasons ?? [],
     stayingReasonOther: row.staying_reason_other ?? "",
@@ -178,19 +403,106 @@ function fromDb(row: any): Survey {
 
     initialMonthlyIncome: row.initial_monthly_income ?? "",
 
-    curriculumRelevant: row.curriculum_relevant ?? false,
+    curriculumRelevant: row.curriculum_relevant,
 
     usefulCompetencies: row.useful_competencies ?? [],
     usefulCompetencyOther: row.useful_competency_other ?? "",
+    documents: [],
+  };
+}
+
+function transformSurvey(survey: Partial<Survey>): Partial<Survey> {
+  return {
+    ...survey,
+
+    firstName: survey.firstName?.trim() ?? "",
+    middleName: survey.middleName?.trim() ?? "",
+    lastName: survey.lastName?.trim() ?? "",
+    extensionName: survey.extensionName?.trim() ?? "",
+
+    street: survey.street?.trim() ?? "",
+    barangay: survey.barangay?.trim() ?? "",
+    municipality: survey.municipality?.trim() ?? "",
+    province: survey.province?.trim() ?? "",
+    region: survey.region?.trim() ?? "",
+
+    companyName: survey.companyName?.trim() ?? "",
+    companyAddress: survey.companyAddress?.trim() ?? "",
+    currentOccupation: survey.currentOccupation?.trim() ?? "",
+
+    advancedStudyOther: survey.advancedStudyOther?.trim() ?? "",
+    advancedStudyReasonOther: survey.advancedStudyReasonOther?.trim() ?? "",
+
+    unemploymentReasonOther: survey.unemploymentReasonOther?.trim() ?? "",
+
+    stayingReasonOther: survey.stayingReasonOther?.trim() ?? "",
+    acceptingReasonOther: survey.acceptingReasonOther?.trim() ?? "",
+    changingReasonOther: survey.changingReasonOther?.trim() ?? "",
+
+    firstJobTitle: survey.firstJobTitle?.trim() ?? "",
+    firstJobDurationOther: survey.firstJobDurationOther?.trim() ?? "",
+    firstJobSourceOther: survey.firstJobSourceOther?.trim() ?? "",
+    firstJobSearchDurationOther:
+      survey.firstJobSearchDurationOther?.trim() ?? "",
+
+    usefulCompetencyOther: survey.usefulCompetencyOther?.trim() ?? "",
+
+    contactNumbers: survey.contactNumbers?.map((n) => n.trim()).filter(Boolean),
+
+    honors: survey.honors?.map((h) => h.trim()).filter(Boolean),
+
+    trainings: survey.trainings?.map((t) => t.trim()).filter(Boolean),
+
+    unemploymentReasons: survey.unemploymentReasons?.filter(Boolean),
+
+    stayingReasons: survey.stayingReasons?.filter(Boolean),
+
+    acceptingReasons: survey.acceptingReasons?.filter(Boolean),
+
+    changingReasons: survey.changingReasons?.filter(Boolean),
+
+    usefulCompetencies: survey.usefulCompetencies?.filter(Boolean),
+
+    yearGraduated:
+      survey.yearGraduated != null ? Number(survey.yearGraduated) : undefined,
   };
 }
 
 export async function createSurvey(survey: Survey) {
-  const { data, error } = await supabase
+  const transformed = transformSurvey(survey);
+  const payload = toDb(transformed);
+
+  if (!payload.user_id || !String(payload.user_id).trim()) {
+    throw new Error("Cannot create survey without a user_id");
+  }
+
+  console.log("Creating survey with payload:", payload);
+  console.log("BEFORE INSERT");
+  const { data: existingSurvey, error: existingError } = await supabase
     .from("surveys")
-    .insert(toDb(survey))
-    .select()
-    .single();
+    .select("id")
+    .eq("user_id", payload.user_id)
+    .maybeSingle();
+  console.log("AFTER INSERT");
+  if (existingError) throw existingError;
+
+  let data;
+  let error;
+
+  if (existingSurvey?.id) {
+    ({ data, error } = await supabase
+      .from("surveys")
+      .update(payload)
+      .eq("id", existingSurvey.id)
+      .select()
+      .single());
+  } else {
+    ({ data, error } = await supabase
+      .from("surveys")
+      .insert(payload)
+      .select()
+      .single());
+  }
 
   if (error) throw error;
 
@@ -206,7 +518,14 @@ export async function getSurveyById(id: string) {
 
   if (error) throw error;
 
-  return fromDb(data);
+  const survey = fromDb(data);
+
+  const documents = await getSurveyDocuments(id);
+
+  return {
+    ...survey,
+    documents,
+  };
 }
 
 export async function getSurveyByUserId(userId: string) {
@@ -218,8 +537,20 @@ export async function getSurveyByUserId(userId: string) {
 
   if (error) throw error;
 
-  return data ? fromDb(data) : null;
+  if (!data) {
+    return null;
+  }
+
+  const survey = fromDb(data);
+
+  const documents = await getSurveyDocuments(survey.id);
+
+  return {
+    ...survey,
+    documents,
+  };
 }
+
 export async function getAllSurveys() {
   const { data, error } = await supabase
     .from("surveys")
@@ -231,10 +562,28 @@ export async function getAllSurveys() {
   return data.map(fromDb);
 }
 
+// export async function updateSurvey(id: string, survey: Partial<Survey>) {
+//   const transformed = transformSurvey(survey);
+
+//   const { data, error } = await supabase
+//     .from("surveys")
+//     .update(toDb(transformed))
+//     .eq("id", id)
+//     .select()
+//     .single();
+
+//   if (error) throw error;
+
+//   return fromDb(data);
+// }
+
 export async function updateSurvey(id: string, survey: Partial<Survey>) {
+  const transformed = transformSurvey(survey);
+  const payload = toDbPatch(transformed);
+
   const { data, error } = await supabase
     .from("surveys")
-    .update(toDb(survey))
+    .update(payload)
     .eq("id", id)
     .select()
     .single();
@@ -277,74 +626,3 @@ export async function listSurveys(page: number, limit: number, search: string) {
     total: count ?? 0,
   };
 }
-
-// export async function getSurveyById(id: string) {
-//   const { data, error } = await supabase
-//     .from("surveys")
-//     .select("*")
-//     .eq("id", id)
-//     .single();
-
-//   if (error) throw error;
-
-//   return data;
-// }
-
-// export async function getSurveyByUserId(userId: string) {
-//   const { data, error } = await supabase
-//     .from("surveys")
-//     .select("*")
-//     .eq("user_id", userId)
-//     .maybeSingle();
-
-//   if (error) throw error;
-
-//   return data;
-// }
-
-// export async function updateSurvey(id: string, survey: Partial<Survey>) {
-//   const { data, error } = await supabase
-//     .from("surveys")
-//     .update(toDb(survey))
-//     .eq("id", id)
-//     .select()
-//     .single();
-
-//   if (error) throw error;
-
-//   return data;
-// }
-
-// export async function deleteSurvey(id: string) {
-//   const { error } = await supabase.from("surveys").delete().eq("id", id);
-
-//   if (error) throw error;
-// }
-
-// export async function listSurveys(page: number, limit: number, search: string) {
-//   let query = supabase.from("surveys").select("*", { count: "exact" });
-
-//   if (search.trim()) {
-//     query = query.or(
-//       [
-//         `first_name.ilike.%${search}%`,
-//         `middle_name.ilike.%${search}%`,
-//         `last_name.ilike.%${search}%`,
-//       ].join(","),
-//     );
-//   }
-
-//   const from = (page - 1) * limit;
-//   const to = from + limit - 1;
-
-//   const { data, count, error } = await query
-//     .order("created_at", { ascending: false })
-//     .range(from, to);
-
-//   if (error) throw error;
-
-//   return {
-//     documents: data ?? [],
-//     total: count ?? 0,
-//   };
-// }

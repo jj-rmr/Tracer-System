@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Role } from "@/types";
+import { useToast } from "@/components/Toast";
 
 interface Account {
   id: string;
@@ -36,20 +37,30 @@ export default function AccountsTable({
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [totalRows, setTotalRows] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [showLoading, setShowLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState<string | null>(null);
 
   const router = useRouter();
+  const { showToast } = useToast();
 
   const itemsPerPage = 10;
 
   useEffect(() => {
-    async function fetchAccounts() {
-      try {
-        setLoading(true);
-        setError(null);
+    let cancelled = false;
 
+    async function fetchAccounts() {
+      setLoading(true);
+      setError(null);
+
+      const loadingTimer = setTimeout(() => {
+        if (!cancelled) {
+          setShowLoading(true);
+        }
+      }, 200);
+
+      try {
         const res = await fetch("/api/admin/accounts", {
           cache: "no-store",
           credentials: "include",
@@ -73,6 +84,8 @@ export default function AccountsTable({
           );
         }
 
+        if (cancelled) return;
+
         setTotalRows(filtered.length);
 
         const start = (currentPage - 1) * itemsPerPage;
@@ -80,16 +93,25 @@ export default function AccountsTable({
 
         setAccounts(filtered.slice(start, end));
       } catch (err: any) {
-        console.error(err);
-        setError(err.message);
+        if (!cancelled) {
+          console.error(err);
+          setError(err.message);
+        }
       } finally {
-        setLoading(false);
+        clearTimeout(loadingTimer);
+
+        if (!cancelled) {
+          setLoading(false);
+          setShowLoading(false);
+        }
       }
     }
 
-    const timeout = setTimeout(fetchAccounts, 300);
+    fetchAccounts();
 
-    return () => clearTimeout(timeout);
+    return () => {
+      cancelled = true;
+    };
   }, [currentPage, searchQuery]);
 
   const confirmDelete = async (id: string) => {
@@ -108,16 +130,26 @@ export default function AccountsTable({
       }
 
       setAccounts((prev) => prev.filter((a) => a.id !== id));
-      setTotalRows((prev) => prev - 1);
-
+      setTotalRows((prev) => Math.max(0, prev - 1));
       setAccountToDelete(null);
+
+      showToast({
+        message: "Account deleted successfully.",
+        type: "success",
+      });
 
       router.refresh();
     } catch (err: any) {
-      alert(err.message);
+      showToast({
+        message: err.message || "Failed to delete account.",
+        type: "error",
+      });
+
+      setAccountToDelete(null);
     }
   };
-  if (loading) {
+
+  if (loading && showLoading) {
     return (
       <div className="flex justify-center items-center p-12 text-sky-600 font-medium w-full">
         <svg
@@ -132,7 +164,7 @@ export default function AccountsTable({
   if (error) {
     return (
       <div
-        className="p-4 w-full text-sm text-red-800 rounded-2xl bg-red-50 border border-red-100 shadow-sm"
+        className="p-4 w-full text-sm text-red-500 rounded-2xl bg-red-50 border border-red-100 shadow-sm"
         role="alert"
       >
         <span className="font-bold">Error:</span> {error}
@@ -163,7 +195,6 @@ export default function AccountsTable({
               <th className="p-4 text-xs uppercase tracking-wider text-slate-400">
                 Email
               </th>
-
               <th className="p-4 text-xs uppercase tracking-wider text-slate-400 text-center">
                 Role
               </th>
@@ -204,7 +235,7 @@ export default function AccountsTable({
                   <div className="flex items-center justify-center">
                     <span
                       className={`inline-flex rounded-md px-2.5 py-1 text-xs font-medium ${
-                        account.role === "Admin"
+                        account.role === "admin"
                           ? "bg-violet-50 text-violet-700 border border-violet-100"
                           : "bg-sky-50 text-sky-700 border border-sky-100"
                       }`}
@@ -219,8 +250,8 @@ export default function AccountsTable({
                     <span
                       className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium ${
                         account.verified
-                          ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                          : "bg-red-50 text-red-700 border border-red-100"
+                          ? "bg-emerald-50 text-emerald-500 border border-emerald-100"
+                          : "bg-red-50 text-red-500 border border-red-100"
                       }`}
                     >
                       {account.verified ? "Verified" : "Pending"}
@@ -255,7 +286,10 @@ export default function AccountsTable({
                     {account.id !== currentUserId && (
                       <button
                         type="button"
-                        onClick={() => setShowDeleteModal(true)}
+                        onClick={() => {
+                          setAccountToDelete(account.id);
+                          setShowDeleteModal(true);
+                        }}
                         className="font-semibold px-4 py-2 rounded-xl bg-red-100 text-red-400 hover:bg-red-200 transition-colors"
                       >
                         Delete
@@ -294,10 +328,11 @@ export default function AccountsTable({
 
               <button
                 type="button"
-                onClick={() =>
-                  accountToDelete && confirmDelete(accountToDelete)
-                }
-                className="px-4 py-2 rounded-xl text-sm font-medium bg-red-600 text-white hover:bg-red-700 transition-colors"
+                onClick={() => {
+                  if (!accountToDelete) return;
+                  confirmDelete(accountToDelete);
+                }}
+                className="px-4 py-2 rounded-xl text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
               >
                 Delete Account
               </button>

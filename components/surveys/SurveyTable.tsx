@@ -1,16 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-// Adjust this path to wherever your types file is located
 import { Survey } from "@/types/survey";
-import ScrollProvider from "../ScrollProvider";
+import ScrollProvider from "@/components/ScrollProvider";
 import SurveyForm from "./SurveyForm";
-import { defaultSurvey } from "@/lib/survey/defaults";
 import { LuX } from "react-icons/lu";
+import { useToast } from "@/components/Toast";
+import { useRouter } from "next/navigation";
 
 interface ServerDataResponse {
+  success: boolean;
   documents: Survey[];
   total: number;
+  message?: string;
 }
 
 interface SurveyTableProps {
@@ -27,54 +29,162 @@ export default function SurveyTable({
   const [documents, setDocuments] = useState<Survey[]>([]);
   const [totalRows, setTotalRows] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [showLoading, setShowLoading] = useState(true);
+
   const [error, setError] = useState<string | null>(null);
 
-  const [selectedSurvey, setSelectedSurvey] = useState<Survey | null>(null);
+  const [selectedSurveyId, setSelectedSurveyId] = useState<string | null>(null);
+  const [loadingSurvey, setLoadingSurvey] = useState(false);
+  const [showSurveyLoading, setShowSurveyLoading] = useState(false);
+  const [surveyData, setSurveyData] = useState<Survey | null>(null);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [surveyToDelete, setSurveyToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const { showToast } = useToast();
+  const router = useRouter();
 
   const itemsPerPage = 10;
 
   useEffect(() => {
-    async function fetchRows() {
+    if (!selectedSurveyId) return;
+
+    async function fetchSurvey() {
       try {
-        setLoading(true);
-        setError(null);
+        setLoadingSurvey(true);
 
-        const url =
-          `/api/admin/surveys?page=${currentPage}` +
-          `&limit=${itemsPerPage}` +
-          `&search=${encodeURIComponent(searchQuery)}`;
+        const loadingTimer = setTimeout(() => {
+          setShowSurveyLoading(true);
+        }, 200);
 
-        const res = await fetch(url, {
-          cache: "no-store",
-          credentials: "include",
-        });
+        try {
+          const res = await fetch(`/api/admin/surveys/${selectedSurveyId}`, {
+            credentials: "include",
+          });
+
+          const data = await res.json();
+
+          if (!res.ok) {
+            throw new Error(data.message ?? "Failed to load survey.");
+          }
+
+          setSurveyData(data.survey);
+        } catch (err: any) {
+          console.error(err);
+
+          showToast({
+            message: err.message || "Failed to load survey.",
+            type: "error",
+          });
+
+          setSelectedSurveyId(null);
+          setSurveyData(null);
+        } finally {
+          clearTimeout(loadingTimer);
+
+          setLoadingSurvey(false);
+          setShowSurveyLoading(false);
+        }
+      } finally {
+        setLoadingSurvey(false);
+      }
+    }
+
+    fetchSurvey();
+  }, [selectedSurveyId]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchSurveys() {
+      setLoading(true);
+      setError(null);
+
+      const loadingTimer = setTimeout(() => {
+        if (!cancelled) {
+          setShowLoading(true);
+        }
+      }, 200);
+
+      try {
+        const res = await fetch(
+          `/api/admin/surveys?page=${currentPage}&limit=${itemsPerPage}&search=${encodeURIComponent(searchQuery)}`,
+          {
+            cache: "no-store",
+            credentials: "include",
+          },
+        );
 
         const data: ServerDataResponse = await res.json();
 
         if (!res.ok) {
-          throw new Error(
-            (data as any).message ?? "Failed to fetch Appwrite documents.",
-          );
+          throw new Error(data.message ?? "Failed to load surveys.");
         }
 
-        setDocuments(data.documents || []);
-        setTotalRows(data.total || 0);
+        if (!cancelled) {
+          setDocuments(data.documents);
+          setTotalRows(data.total);
+        }
       } catch (err: any) {
-        console.error(err);
-        setError(err.message);
+        if (!cancelled) {
+          setError(err.message);
+        }
       } finally {
-        setLoading(false);
+        clearTimeout(loadingTimer);
+
+        if (!cancelled) {
+          setLoading(false);
+          setShowLoading(false);
+        }
       }
     }
 
-    const delayDebounceFn = setTimeout(() => {
-      fetchRows();
-    }, 500);
+    fetchSurveys();
 
-    return () => clearTimeout(delayDebounceFn);
+    return () => {
+      cancelled = true;
+    };
   }, [currentPage, searchQuery]);
 
-  if (loading) {
+  const confirmDelete = async (id: string) => {
+    setIsDeleting(true);
+
+    try {
+      const res = await fetch(`/api/admin/surveys/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message ?? "Failed to delete survey.");
+      }
+
+      setDocuments((prev) => prev.filter((survey) => survey.id !== id));
+      setTotalRows((prev) => Math.max(0, prev - 1));
+
+      setSurveyToDelete(null);
+      setShowDeleteModal(false);
+
+      showToast({
+        message: "Survey deleted successfully.",
+        type: "success",
+      });
+
+      router.refresh();
+    } catch (err: any) {
+      showToast({
+        message: err.message || "Failed to delete survey.",
+        type: "error",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  if (loading && showLoading) {
     return (
       <div className="flex justify-center items-center p-12 text-sky-600 font-medium w-full">
         <svg
@@ -89,10 +199,10 @@ export default function SurveyTable({
   if (error) {
     return (
       <div
-        className="p-4 w-full text-sm text-red-800 rounded-2xl bg-red-50 border border-red-100 shadow-sm"
+        className="p-4 w-full text-sm text-red-500 rounded-2xl bg-red-50 border border-red-100 shadow-sm"
         role="alert"
       >
-        <span className="font-bold">Appwrite Sync Error:</span> {error}
+        <span className="font-bold">Error:</span> {error}
       </div>
     );
   }
@@ -104,7 +214,27 @@ export default function SurveyTable({
   if (totalRows === 0) {
     return (
       <div className="text-center w-full p-12 text-slate-400 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
-        No tracking records match your current search query.
+        {searchQuery.trim() ? (
+          <>
+            <h3 className="text-base font-semibold text-slate-600">
+              No matching surveys found
+            </h3>
+            <p className="mt-2 text-sm text-slate-400">
+              Try adjusting your search terms or clear the search to view all
+              survey records.
+            </p>
+          </>
+        ) : (
+          <>
+            <h3 className="text-base font-semibold text-slate-600">
+              No survey records yet
+            </h3>
+            <p className="mt-2 text-sm text-slate-400">
+              Survey submissions will appear here once alumni complete the
+              tracer survey.
+            </p>
+          </>
+        )}
       </div>
     );
   }
@@ -123,20 +253,6 @@ export default function SurveyTable({
 
   return (
     <div className="w-full bg-white rounded-3xl border border-sky-100 shadow-[0_12px_30px_-5px_rgba(0,0,0,0.04)] shadow-sky-100/80 overflow-hidden">
-      <div className="px-6 py-5 border-b border-slate-100 bg-slate-50/30 flex justify-between items-center">
-        <div>
-          <h2 className="text-lg font-bold text-slate-800 tracking-tight">
-            Survey Forms
-          </h2>
-          <p className="text-xs text-slate-400 mt-0.5">
-            A collection of survey forms containing personnel metadata.
-          </p>
-        </div>
-        <span className="px-3 py-1 text-xs font-semibold text-sky-700 bg-sky-50 rounded-full border border-sky-100">
-          Found: {totalRows} {totalRows > 1 ? "records" : "record"}
-        </span>
-      </div>
-
       <div className="overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
@@ -206,39 +322,73 @@ export default function SurveyTable({
                     ? new Date(doc.createdAt).toLocaleDateString()
                     : "N/A"}
                 </td>
+
                 <td className="p-4 text-sm">
-                  <button
-                    onClick={() => setSelectedSurvey(doc)}
-                    className="font-semibold px-4 py-2 rounded-xl bg-sky-100 text-sky-400 hover:bg-sky-200 transition-colors"
-                  >
-                    View
-                  </button>
+                  <div className="flex justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedSurveyId(doc.id)}
+                      className="font-semibold px-4 py-2 rounded-xl bg-sky-100 text-sky-400 hover:bg-sky-200 transition-colors"
+                    >
+                      View
+                    </button>
+
+                    <button
+                      type="button"
+                      disabled={isDeleting}
+                      onClick={() => {
+                        setSurveyToDelete(doc.id);
+                        setShowDeleteModal(true);
+                      }}
+                      className="font-semibold px-4 py-2 rounded-xl bg-red-100 text-red-400 hover:bg-red-200 transition-colors"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      {selectedSurvey && (
+      {selectedSurveyId && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm">
-          <div className="flex h-full w-full items-center justify-center p-6">
-            <div className="relative h-[95vh] w-fit overflow-hidden rounded-2xl bg-white shadow-2xl">
+          <div className="flex h-full items-center justify-center p-6">
+            <div className="relative flex h-[95vh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
               <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
                 <h2 className="text-lg font-semibold">View Tracer Survey</h2>
 
                 <button
-                  onClick={() => setSelectedSurvey(null)}
+                  onClick={() => {
+                    setSelectedSurveyId(null);
+                    setSurveyData(null);
+                  }}
                   className="rounded-xl p-2 text-slate-500 hover:bg-slate-200"
                 >
                   <LuX size={24} />
                 </button>
               </div>
-              <ScrollProvider className="h-[calc(95vh-73px)] overflow-y-auto p-6">
-                <SurveyForm
-                  initialData={selectedSurvey}
-                  isNew={false}
-                  readOnly={true}
-                />
+
+              <ScrollProvider className="flex-1 overflow-y-auto p-6">
+                {loadingSurvey && showSurveyLoading ? (
+                  <div className="flex h-full items-center justify-center gap-2">
+                    <svg
+                      className="h-6 w-6 animate-spin rounded-full border-4 border-sky-200 border-t-sky-600"
+                      viewBox="0 0 24 24"
+                    />
+                    <span>Loading survey...</span>
+                  </div>
+                ) : (
+                  <div className="mx-auto w-full max-w-5xl">
+                    {surveyData && (
+                      <SurveyForm
+                        initialData={surveyData}
+                        isNew={false}
+                        readOnly
+                      />
+                    )}
+                  </div>
+                )}
               </ScrollProvider>
             </div>
           </div>
@@ -276,6 +426,46 @@ export default function SurveyTable({
           </button>
         </div>
       </div>
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl mx-4">
+            <h3 className="text-lg font-semibold text-slate-900">
+              Delete Survey?
+            </h3>
+
+            <p className="mt-2 text-sm text-slate-500">
+              Are you sure you want to permanently delete this survey? This
+              action cannot be undone.
+            </p>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setSurveyToDelete(null);
+                }}
+                className="px-4 py-2 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => {
+                  if (!surveyToDelete) return;
+                  confirmDelete(surveyToDelete);
+                }}
+                className="px-4 py-2 rounded-xl text-sm font-medium bg-red-500 text-white hover:bg-red-600 disabled:opacity-50"
+              >
+                {isDeleting ? "Deleting..." : "Delete Survey"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

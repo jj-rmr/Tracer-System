@@ -1,21 +1,9 @@
-import { getCurrentUser, getSessionCookie } from "@/lib/auth";
+import { requireUserRole } from "@/lib/auth";
+import { ROLES } from "@/types";
 import Image from "next/image";
 
 export default async function AlumniPage() {
-  const session = await getSessionCookie();
-  const user = await getCurrentUser(session);
-
-  if (!user) {
-    return (
-      <div className="flex flex-col gap-8 items-center justify-center">
-        <div className="text-center w-full max-w-5xl">
-          <h1 className="text-xl font-bold tracking-tight text-slate-900">
-            Unauthorized Access
-          </h1>
-        </div>
-      </div>
-    );
-  }
+  const user = await requireUserRole([ROLES.ALUMNI]);
 
   return (
     // <div className="flex flex-col gap-8 items-center justify-center">
@@ -42,16 +30,16 @@ export default async function AlumniPage() {
             alt="Placement Unit Logo"
             width={512}
             height={512}
-            className="h-auto w-full"
+            className="h-auto w-full shadow-2xl rounded-full"
             priority
           />
         </div>
 
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-          Welcome Back, {user.name}
+        <h1 className="text-base md:text-3xl font-bold tracking-tight text-slate-900">
+          Welcome Back, {user?.name}
         </h1>
 
-        <p className="mt-2 text-lg text-slate-600">
+        <p className="md:mt-2 text-sm md:text-lg text-slate-600">
           You are currently signed in as an alumni.
         </p>
       </div>

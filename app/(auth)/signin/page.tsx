@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { SignInButton } from "@/components/SignInButton";
+import { Role, ROLES } from "@/types";
 
 export default function SignInPage() {
   const router = useRouter();
@@ -58,9 +59,7 @@ export default function SignInPage() {
       const user = me.data;
       const labels = user?.labels ?? [];
 
-      const isAdmin = labels.some(
-        (label: string) => label.toLowerCase() === "admin",
-      );
+      const isAdmin = labels.some((label: Role) => label === ROLES.ADMIN);
 
       if (redirect) {
         router.replace(decodeURIComponent(redirect));
@@ -93,7 +92,7 @@ export default function SignInPage() {
       </div>
 
       {error && (
-        <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-sm text-red-600">
+        <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-sm text-red-500">
           <div className="flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"

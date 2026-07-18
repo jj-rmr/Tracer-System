@@ -4,12 +4,13 @@ import { requireUser } from "@/lib/auth";
 import { requireRole } from "@/lib/auth/roles";
 
 import { listSurveys } from "@/lib/repositories/surveys.repository";
+import { ROLES } from "@/types";
 
 export async function GET(request: NextRequest) {
   try {
     const { user } = await requireUser();
 
-    requireRole(user, ["Admin"]);
+    requireRole(user, [ROLES.ADMIN]);
 
     const { searchParams } = new URL(request.url);
 

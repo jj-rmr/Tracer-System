@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Dropdown } from "@/components/Dropdown";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -104,7 +105,7 @@ export default function SignUpPage() {
       </div>
 
       {error && (
-        <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-sm text-red-600 animate-in fade-in duration-200">
+        <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-sm text-red-500 animate-in fade-in duration-200">
           <div className="flex items-center gap-2">
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -199,7 +200,6 @@ export default function SignUpPage() {
             />
           </div>
         </div>
-
         <div>
           <label
             htmlFor="email"

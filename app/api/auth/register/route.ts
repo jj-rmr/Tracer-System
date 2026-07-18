@@ -1,9 +1,10 @@
-import { ID, Account } from "node-appwrite";
+import { ID, Account, Users } from "node-appwrite";
 import { NextRequest, NextResponse } from "next/server";
 
 import { createAdminClient } from "@/lib/appwrite/admin";
 import { createSessionClient } from "@/lib/appwrite/session";
 import { AUTH_COOKIE, COOKIE_OPTIONS } from "@/lib/auth";
+import { ROLES } from "@/types/auth";
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,6 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     let formattedExtension = "";
+
     const ext = extensionName?.trim() ?? "";
 
     if (ext) {
@@ -66,23 +68,49 @@ export async function POST(request: NextRequest) {
       .filter(Boolean)
       .join(" ");
 
-    const adminAccount = new Account(createAdminClient());
+    const adminClient = createAdminClient();
 
-    await adminAccount.create(ID.unique(), email, password, fullName);
+    const adminAccount = new Account(adminClient);
+    const users = new Users(adminClient);
 
+    // Create account
+    const createdUser = await adminAccount.create(
+      ID.unique(),
+      email,
+      password,
+      fullName,
+    );
+
+    // Assign default role FIRST
+    await users.updateLabels(createdUser.$id, [ROLES.ALUMNI]);
+    // Add user preferences
+    await users.updatePrefs(createdUser.$id, {
+      firstName,
+      middleName,
+      lastName,
+      extensionName,
+    });
+    // Verify labels
+    const updatedUser = await users.get(createdUser.$id);
+
+    // Create session after role assignment
     const session = await adminAccount.createEmailPasswordSession(
       email,
       password,
     );
 
-    // Fetch authenticated user
     const sessionAccount = new Account(createSessionClient(session.secret));
 
     const user = await sessionAccount.get();
 
+    console.log("REGISTERED USER:", {
+      id: user.$id,
+      labels: updatedUser.labels,
+    });
+
     const response = NextResponse.json({
       success: true,
-      user,
+      user: updatedUser,
     });
 
     response.cookies.set(AUTH_COOKIE, session.secret, {

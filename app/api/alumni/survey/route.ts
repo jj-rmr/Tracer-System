@@ -4,17 +4,17 @@ import {
   getSurveyByUserId,
   updateSurvey,
 } from "@/lib/repositories/surveys.repository";
-import { requireUser } from "@/lib/auth";
-import { requireRole } from "@/lib/auth/roles";
+import { requireUser, requireRole } from "@/lib/auth";
+import { ROLES } from "@/types";
 
 export async function GET() {
   try {
     const { user } = await requireUser();
 
-    requireRole(user, ["Alumni"]);
+    requireRole(user, [ROLES.ALUMNI]);
 
     const survey = await getSurveyByUserId(user.$id);
-
+    console.log("SURVEY WITH DOCUMENTS:", survey);
     return NextResponse.json({
       success: true,
       survey,
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
   try {
     const { user } = await requireUser();
 
-    requireRole(user, ["Alumni"]);
+    requireRole(user, [ROLES.ALUMNI]);
 
     const body = await request.json();
 
@@ -82,7 +82,7 @@ export async function PATCH(request: NextRequest) {
   try {
     const { user } = await requireUser();
 
-    requireRole(user, ["Alumni"]);
+    requireRole(user, [ROLES.ALUMNI]);
 
     const body = await request.json();
 

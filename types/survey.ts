@@ -1,4 +1,4 @@
-import { UUID } from "crypto";
+import { SurveyDocument } from "./survey-document";
 
 export interface Survey {
   // Ownership
@@ -28,17 +28,18 @@ export interface Survey {
   sex: Sex;
 
   // Education
+  program: string;
   yearGraduated: number;
 
   honors: string[];
   trainings: string[];
 
   // Graduate Studies
-  advanceStudyDegree: AdvanceStudyDegree;
-  advanceStudyOther: string;
+  advancedStudyDegree: AdvancedStudyDegree;
+  advancedStudyOther: string;
 
-  advanceStudyReasons: AdvanceStudyReason;
-  advanceStudyReasonOther: string;
+  advancedStudyReasons: AdvancedStudyReason;
+  advancedStudyReasonOther: string;
 
   // Employment
   employmentStatus: EmploymentStatus;
@@ -46,9 +47,9 @@ export interface Survey {
   unemploymentReasons: UnemploymentReason[];
   unemploymentReasonOther: string;
 
-  presentEmploymentStatus: PresentEmploymentStatus;
+  currentEmploymentStatus: CurrentEmploymentStatus;
 
-  presentOccupation: string;
+  currentOccupation: string;
 
   companyName: string;
   companyAddress: string;
@@ -57,8 +58,8 @@ export interface Survey {
 
   placeOfWork: PlaceOfWork;
 
-  employmentDocuments: string[];
-  awardDocuments: string[];
+  graduateFolderId: string;
+  documents: SurveyDocument[];
 
   // First Job
   isFirstJob: boolean;
@@ -105,9 +106,9 @@ export type CivilStatus =
 
 export type Sex = "" | "Male" | "Female";
 
-export type AdvanceStudyDegree = "" | "MS" | "MA" | "Others";
+export type AdvancedStudyDegree = "" | "MS" | "MA" | "Others";
 
-export type AdvanceStudyReason =
+export type AdvancedStudyReason =
   | ""
   | "For Promotion"
   | "Professional Development"
@@ -124,7 +125,7 @@ export type UnemploymentReason =
   | "Did Not Look For Job"
   | "Others";
 
-export type PresentEmploymentStatus =
+export type CurrentEmploymentStatus =
   | ""
   | "Regular/Permanent"
   | "Temporary"

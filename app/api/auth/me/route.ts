@@ -10,3 +10,9 @@ export async function GET() {
     return fail("Unauthorized", 401);
   }
 }
+
+export async function requireUserId() {
+  const { user } = await requireUser();
+
+  return user.$id;
+}

@@ -7,11 +7,11 @@ import type {
   Survey,
   CivilStatus,
   Sex,
-  AdvanceStudyDegree,
-  AdvanceStudyReason,
+  AdvancedStudyDegree,
+  AdvancedStudyReason,
   EmploymentStatus,
   UnemploymentReason,
-  PresentEmploymentStatus,
+  CurrentEmploymentStatus,
   BusinessIndustry,
   PlaceOfWork,
   StayingReason,
@@ -296,11 +296,11 @@ export default function SurveyDetails({ id }: Props) {
             <label className="text-sm font-medium">Advanced Study Degree</label>
             <select
               className="mt-1 w-full rounded-xl border p-2.5 text-sm bg-white"
-              value={survey.advanceStudyDegree}
+              value={survey.advancedStudyDegree}
               onChange={(e) =>
                 setSurvey({
                   ...survey,
-                  advanceStudyDegree: e.target.value as AdvanceStudyDegree,
+                  advancedStudyDegree: e.target.value as AdvancedStudyDegree,
                 })
               }
             >
@@ -310,16 +310,16 @@ export default function SurveyDetails({ id }: Props) {
               <option value="Others">Others</option>
             </select>
           </div>
-          {survey.advanceStudyDegree === "Others" && (
+          {survey.advancedStudyDegree === "Others" && (
             <div>
               <label className="text-sm font-medium">
                 Specify Other Degree
               </label>
               <input
                 className="mt-1 w-full rounded-xl border p-2.5 text-sm"
-                value={survey.advanceStudyOther || ""}
+                value={survey.advancedStudyOther || ""}
                 onChange={(e) =>
-                  setSurvey({ ...survey, advanceStudyOther: e.target.value })
+                  setSurvey({ ...survey, advancedStudyOther: e.target.value })
                 }
               />
             </div>
@@ -357,16 +357,16 @@ export default function SurveyDetails({ id }: Props) {
 
           <div>
             <label className="text-sm font-medium">
-              Present Employment Status Type
+              Current Employment Status Type
             </label>
             <select
               className="mt-1 w-full rounded-xl border p-2.5 text-sm bg-white"
-              value={survey.presentEmploymentStatus}
+              value={survey.currentEmploymentStatus}
               onChange={(e) =>
                 setSurvey({
                   ...survey,
-                  presentEmploymentStatus: e.target
-                    .value as PresentEmploymentStatus,
+                  currentEmploymentStatus: e.target
+                    .value as CurrentEmploymentStatus,
                 })
               }
             >
@@ -389,9 +389,9 @@ export default function SurveyDetails({ id }: Props) {
             </label>
             <input
               className="mt-1 w-full rounded-xl border p-2.5 text-sm"
-              value={survey.presentOccupation || ""}
+              value={survey.currentOccupation || ""}
               onChange={(e) =>
-                setSurvey({ ...survey, presentOccupation: e.target.value })
+                setSurvey({ ...survey, currentOccupation: e.target.value })
               }
             />
           </div>
@@ -465,7 +465,7 @@ export default function SurveyDetails({ id }: Props) {
       <div className="flex gap-3 justify-end border-t pt-4">
         <button
           onClick={remove}
-          className="rounded-xl bg-red-100 px-5 py-3 text-sm font-semibold text-red-600 hover:bg-red-200 transition"
+          className="rounded-xl bg-red-100 px-5 py-3 text-sm font-semibold text-red-500 hover:bg-red-200 transition"
         >
           Delete Record
         </button>

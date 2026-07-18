@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { Survey } from "@/types/survey";
-import { useToast } from "../Toast";
-import { Dropdown } from "../Dropdown";
+import { useToast } from "@/components/Toast";
+import { Dropdown } from "@/components/Dropdown";
 import { useRouter } from "next/navigation";
-import { LuPlus } from "react-icons/lu";
+import { ArrayInput } from "@/components/ArrayInput";
+import { PROGRAMS } from "@/types/program";
 
 interface Props {
   initialData: Survey;
@@ -61,170 +62,216 @@ export default function SurveyForm({
 
     if (currentStep === 1) {
       if (!form.firstName.trim())
-        newErrors.firstName = "First name is required.";
-      if (!form.lastName.trim()) newErrors.lastName = "Last name is required.";
-      if (!form.barangay.trim()) newErrors.barangay = "Barangay is required.";
+        newErrors.firstName = "Please enter your first name.";
+      if (!form.lastName.trim())
+        newErrors.lastName = "Please enter your last name.";
+      if (!form.barangay.trim())
+        newErrors.barangay = "Please enter your barangay.";
       if (!form.municipality.trim())
-        newErrors.municipality = "Municipality is required.";
-      if (!form.province.trim()) newErrors.province = "Province is required.";
-      if (!form.region.trim()) newErrors.region = "Region is required.";
+        newErrors.municipality = "Please enter your municipality or city.";
+      if (!form.province.trim())
+        newErrors.province = "Please enter your province.";
+      if (!form.region.trim()) newErrors.region = "Please select your region.";
       if (!form.civilStatus)
-        newErrors.civilStatus = "Civil status is required.";
-      if (!form.sex) newErrors.sex = "Sex configuration required.";
+        newErrors.civilStatus = "Please select your civil status.";
+      if (!form.sex) newErrors.sex = "Please select your sex.";
       if (
         form.contactNumbers.length === 0 ||
         form.contactNumbers.some((n) => !n.trim())
       ) {
-        newErrors.contactNumbers = "Provide at least one valid contact number.";
+        newErrors.contactNumbers =
+          "Please provide at least one valid contact number.";
       }
     }
 
     if (currentStep === 2) {
+      if (!form.program) {
+        newErrors.program =
+          "Please select the degree program you graduated from.";
+      }
       if (!form.yearGraduated) {
-        newErrors.yearGraduated = "Graduation year is required.";
+        newErrors.yearGraduated = "Please enter your year of graduation.";
       } else if (
         form.yearGraduated < 1900 ||
         form.yearGraduated > new Date().getFullYear()
       ) {
-        newErrors.yearGraduated = "Enter a valid graduation year.";
+        newErrors.yearGraduated = "Please enter a valid graduation year.";
       }
       if (
-        form.advanceStudyDegree === "Others" &&
-        !form.advanceStudyOther.trim()
+        form.advancedStudyDegree === "Others" &&
+        !form.advancedStudyOther.trim()
       ) {
-        newErrors.advanceStudyOther = "Specify other advanced degree details.";
+        newErrors.advancedStudyOther = "Please specify your graduate degree.";
       }
       if (
-        form.advanceStudyReasons === "Others" &&
-        !form.advanceStudyReasonOther.trim()
+        form.advancedStudyReasons === "Others" &&
+        !form.advancedStudyReasonOther.trim()
       ) {
-        newErrors.advanceStudyReasonOther =
-          "Specify other reasons for advanced study.";
+        newErrors.advancedStudyReasonOther =
+          "Please specify your reason for pursuing graduate studies.";
       }
     }
 
     if (currentStep === 3) {
       if (!form.employmentStatus)
-        newErrors.employmentStatus = "Employment status is required.";
+        newErrors.employmentStatus =
+          "Please select your current employment status.";
 
       if (form.employmentStatus === "Yes") {
-        if (!form.presentEmploymentStatus)
-          newErrors.presentEmploymentStatus = "Present status required.";
-        if (!form.presentOccupation.trim())
-          newErrors.presentOccupation = "Occupation field required.";
+        if (!form.currentEmploymentStatus)
+          newErrors.currentEmploymentStatus =
+            "Please select your present employment status.";
+        if (!form.currentOccupation.trim())
+          newErrors.currentOccupation = "Please enter your current occupation.";
         if (!form.companyName.trim())
-          newErrors.companyName = "Company name required.";
+          newErrors.companyName =
+            "Please enter your company or employer's name.";
         if (!form.companyAddress.trim())
-          newErrors.companyAddress = "Company address required.";
+          newErrors.companyAddress =
+            "Please enter your company or employer's address.";
         if (!form.businessIndustry)
-          newErrors.businessIndustry = "Business industry choice required.";
+          newErrors.businessIndustry =
+            "Please select your employer's industry.";
         if (!form.placeOfWork)
-          newErrors.placeOfWork = "Place of work choice required.";
+          newErrors.placeOfWork =
+            "Please select whether you work locally or abroad.";
       } else {
         if (form.unemploymentReasons.length === 0) {
           newErrors.unemploymentReasons =
-            "Select at least one unemployment reason.";
+            "Please select at least one reason for your unemployment.";
         }
         if (
           form.unemploymentReasons.includes("Others") &&
           !form.unemploymentReasonOther.trim()
         ) {
           newErrors.unemploymentReasonOther =
-            "Please specify the other reason.";
+            "Please specify your other reason for unemployment.";
         }
       }
     }
 
     if (currentStep === 4) {
       if (form.isFirstJob === undefined || form.isFirstJob === null)
-        newErrors.isFirstJob = "Specify if first job.";
+        newErrors.isFirstJob =
+          "Please indicate whether your current job is your first job.";
       if (
         form.isFirstJobRelated === undefined ||
         form.isFirstJobRelated === null
       )
-        newErrors.isFirstJobRelated = "Specify if first job was related.";
+        newErrors.isFirstJobRelated =
+          "Please indicate whether your first job was related to your degree program.";
       if (form.isFirstJob) {
         if (form.stayingReasons.length === 0)
-          newErrors.stayingReasons = "Select at least one reason.";
+          newErrors.stayingReasons =
+            "Please select at least one reason for staying in your first job.";
         if (
           form.stayingReasons.includes("Others") &&
           !form.stayingReasonOther.trim()
         )
-          newErrors.stayingReasonOther = "Specify other staying reason.";
+          newErrors.stayingReasonOther =
+            "Please specify your other reason for staying in your first job.";
       } else {
         if (form.acceptingReasons.length === 0)
-          newErrors.acceptingReasons = "Select at least one reason.";
+          newErrors.acceptingReasons =
+            "Please select at least one reason for accepting your first first job.";
         if (
           form.acceptingReasons.includes("Others") &&
           !form.acceptingReasonOther.trim()
         )
-          newErrors.acceptingReasonOther = "Specify other accepting reason.";
+          newErrors.acceptingReasonOther =
+            "Please specify your other reason for accepting your first first job.";
         if (form.changingReasons.length === 0)
-          newErrors.changingReasons = "Select at least one reason.";
+          newErrors.changingReasons =
+            "Please select at least one reason for changing jobs";
         if (
           form.changingReasons.includes("Others") &&
           !form.changingReasonOther.trim()
         )
-          newErrors.changingReasonOther = "Specify other changing reason.";
+          newErrors.changingReasonOther =
+            "Please specify your other reason for changing jobs.";
       }
       if (!form.firstJobTitle.trim())
-        newErrors.firstJobTitle = "First job title required.";
+        newErrors.firstJobTitle = "Please enter the title of your first job.";
       if (!form.firstJobDuration)
-        newErrors.firstJobDuration = "First job duration required.";
+        newErrors.firstJobDuration =
+          "Please select how long you stayed in your first job.";
       if (
         form.firstJobDuration === "Others" &&
         !form.firstJobDurationOther.trim()
       )
-        newErrors.firstJobDurationOther = "Specify other duration.";
+        newErrors.firstJobDurationOther =
+          "Please specify the duration of your first job.";
       if (!form.firstJobSource)
-        newErrors.firstJobSource = "First job source required.";
+        newErrors.firstJobSource =
+          "Please select how you found your first job.";
       if (form.firstJobSource === "Others" && !form.firstJobSourceOther.trim())
-        newErrors.firstJobSourceOther = "Specify other source.";
+        newErrors.firstJobSourceOther =
+          "Please specify how you found your first job.";
       if (!form.firstJobSearchDuration)
-        newErrors.firstJobSearchDuration = "Search duration required.";
+        newErrors.firstJobSearchDuration =
+          "Please select how long it took you to find your first job.";
       if (
         form.firstJobSearchDuration === "Others" &&
         !form.firstJobSearchDurationOther.trim()
       )
         newErrors.firstJobSearchDurationOther =
-          "Specify other search duration.";
+          "Please specify how long it took you to find your first job.";
       if (!form.firstJobLevel)
-        newErrors.firstJobLevel = "First job level required.";
+        newErrors.firstJobLevel = "Please select the level of your first job.";
       if (!form.currentJobLevel)
-        newErrors.currentJobLevel = "Current job level required.";
+        newErrors.currentJobLevel = "Please select your current job level.";
       if (!form.initialMonthlyIncome)
-        newErrors.initialMonthlyIncome = "Monthly income tier required.";
+        newErrors.initialMonthlyIncome =
+          "Please select your initial monthly income range.";
       if (
         form.curriculumRelevant === undefined ||
         form.curriculumRelevant === null
       )
-        newErrors.curriculumRelevant = "Curriculum relevance check required.";
+        newErrors.curriculumRelevant =
+          "Please indicate whether your curriculum was relevant to your employment.";
       if (form.usefulCompetencies.length === 0)
-        newErrors.usefulCompetencies = "Select at least one competency.";
+        newErrors.usefulCompetencies =
+          "Please select at least one competency that has been useful in your career.";
       if (
         form.usefulCompetencies.includes("Others") &&
         !form.usefulCompetencyOther.trim()
       )
-        newErrors.usefulCompetencyOther = "Specify other competencies.";
+        newErrors.usefulCompetencyOther =
+          "Please specify the other competency you found useful.";
     }
-
+    if (Object.keys(newErrors).length > 0) {
+      showToast({
+        message: Object.values(newErrors)[0]!,
+        type: "error",
+      });
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }
 
-  async function handleStep(move: "forward" | "backward") {
+  function handleStep(move: "forward" | "backward") {
     setStep((prev) => (move === "forward" ? prev + 1 : prev - 1));
 
     window.dispatchEvent(new Event("stepchanged"));
   }
 
   async function save() {
-    if (!validateStep(4)) return;
+    console.log("save() called");
+
+    const valid = validateStep(4);
+    console.log("validateStep(4):", valid);
+
+    if (!valid) {
+      console.log("Errors:", errors);
+      return;
+    }
 
     setIsSubmitting(true);
 
     try {
-      const { id, userId, ...surveyData } = form as Survey;
+      console.log("Sending request...");
+
+      const { id: _, userId: __, ...surveyData } = form;
 
       const response = await fetch("/api/alumni/survey", {
         method: isNew ? "POST" : "PATCH",
@@ -234,11 +281,10 @@ export default function SurveyForm({
         body: JSON.stringify(surveyData),
       });
 
-      const data = await response.json();
+      console.log("Response:", response.status);
 
-      if (!response.ok) {
-        throw new Error(data.message || "Something went wrong.");
-      }
+      const data = await response.json();
+      console.log(data);
 
       onSuccess?.();
       setShowSaveModal(false);
@@ -261,14 +307,14 @@ export default function SurveyForm({
     }
   }
 
-  // Form submit button intercepts and opens the confirmation modal
-  const handlePreSubmitCheck = (e: React.FormEvent) => {
-    e.preventDefault();
-    setShowSaveModal(true);
+  const handlePreSubmitCheck = () => {
+    if (validateStep(4)) {
+      setShowSaveModal(true);
+    }
   };
 
   return (
-    <div className="w-5xl max-w-full space-y-4">
+    <div className="space-y-4">
       <div className="bg-slate-50 md:border border-slate-200 rounded-2xl md:p-4">
         <div className="flex justify-between text-sm font-medium text-slate-700">
           <span>
@@ -333,7 +379,10 @@ export default function SurveyForm({
 
         {!readOnly ? (
           step === sections.length ? (
-            <button onClick={handlePreSubmitCheck}>
+            <button
+              className="px-4 py-2 whitespace-nowrap disabled:bg-sky-200 bg-sky-500 text-white text-sm rounded-xl font-semibold hover:bg-sky-700 transition-colors duration-300"
+              onClick={handlePreSubmitCheck}
+            >
               {isNew ? "Submit Survey" : "Update Survey"}
             </button>
           ) : (
@@ -412,18 +461,12 @@ function ErrorMessage({ message }: { message?: string }) {
 
 const styles = {
   input: (err: boolean, disabled: boolean) =>
-    `w-full p-4 rounded-2xl border text-slate-950 text-sm focus:outline-none focus:ring-2 transition duration-300 ${err ? "border-rose-400 focus:ring-rose-100" : disabled ? "bg-slate-100 border-sky-200" : "bg-white border-sky-200 focus:ring-sky-100 focus:border-sky-500"}`,
+    `w-full p-4 rounded-2xl border text-slate-950 text-sm focus:outline-none focus:ring-2 transition duration-300 ${err ? "border-rose-400 focus:ring-rose-100" : disabled ? "bg-slate-200 border-none" : "bg-slate-200 border-sky-200 focus:ring-sky-100 focus:border-sky-500"}`,
   label:
     "block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2",
 };
 
 function PersonalInfoStep({ form, errors, updateField, readOnly }: StepProps) {
-  const handleArrayChange = (index: number, val: string) => {
-    const list = [...form.contactNumbers];
-    list[index] = val;
-    updateField("contactNumbers", list);
-  };
-
   return (
     <div className="space-y-6">
       <h3 className="text-xl font-bold text-slate-900">
@@ -599,45 +642,18 @@ function PersonalInfoStep({ form, errors, updateField, readOnly }: StepProps) {
         </div>
       </div>
 
-      {/* Aggregated String Arrays Container */}
       <div className="space-y-3">
-        <label className={styles.label}>Contact Numbers *</label>
-        {form.contactNumbers.map((num, i) => (
-          <div key={i} className="flex items-center space-x-2">
-            <input
-              disabled={readOnly}
-              type="text"
-              className={styles.input(!!errors.contactNumbers, readOnly)}
-              value={num}
-              onChange={(e) => handleArrayChange(i, e.target.value)}
-            />
-            {!readOnly && (
-              <button
-                type="button"
-                className="px-3 py-2 text-sm border rounded-xl bg-slate-50 hover:bg-rose-50 hover:text-rose-600 transition"
-                onClick={() =>
-                  updateField(
-                    "contactNumbers",
-                    form.contactNumbers.filter((_, idx) => idx !== i),
-                  )
-                }
-              >
-                Remove
-              </button>
-            )}
-          </div>
-        ))}
-        {!readOnly && (
-          <button
-            type="button"
-            className="text-xs font-semibold text-sky-600 flex items-center gap-2 py-2 pl-3 pr-4 hover:bg-sky-100 transition rounded-lg"
-            onClick={() =>
-              updateField("contactNumbers", [...form.contactNumbers, ""])
-            }
-          >
-            <LuPlus /> Add Contact Number
-          </button>
-        )}
+        <ArrayInput
+          value={form.contactNumbers}
+          onChange={(items) => updateField("contactNumbers", items)}
+          label="Contact Numbers"
+          fieldName="contactNumbers"
+          addButtonLabel="Add Contact Number"
+          placeholder="09XXXXXXXXX"
+          required
+          readOnly={readOnly}
+          hasError={!!errors.contactNumbers}
+        />
         <ErrorMessage message={errors.contactNumbers} />
       </div>
     </div>
@@ -645,129 +661,69 @@ function PersonalInfoStep({ form, errors, updateField, readOnly }: StepProps) {
 }
 
 function EducationStep({ form, errors, updateField, readOnly }: StepProps) {
-  const handleArr = (
-    field: "honors" | "trainings",
-    idx: number,
-    val: string,
-  ) => {
-    const list = [...form[field]];
-    list[idx] = val;
-    updateField(field, list);
-  };
-
   return (
     <div className="space-y-6">
       <h3 className="text-xl font-bold text-slate-900">Academic Background</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pb-4 border-b border-slate-100">
+        <div>
+          <Dropdown
+            id="program"
+            disabled={readOnly}
+            label="Program"
+            value={form.program}
+            onChange={(value) => updateField("program", value)}
+            options={PROGRAMS}
+            hasError={!!errors.program}
+            required
+          />
+          <ErrorMessage message={errors.program} />
+        </div>
 
-      <div>
-        <label className={styles.label}>Year Graduated *</label>
-        <input
-          disabled={readOnly}
-          type="number"
-          className={styles.input(!!errors.yearGraduated, readOnly)}
-          value={form.yearGraduated}
-          onChange={(e) =>
-            updateField("yearGraduated", parseInt(e.target.value))
-          }
-        />
-        <ErrorMessage message={errors.yearGraduated} />
+        <div>
+          <label className={styles.label}>Year Graduated *</label>
+          <input
+            disabled={readOnly}
+            type="number"
+            className={styles.input(!!errors.yearGraduated, readOnly)}
+            value={form.yearGraduated}
+            onChange={(e) => {
+              const value = e.target.value;
+
+              updateField("yearGraduated", value === "" ? 0 : Number(value));
+            }}
+          />
+          <ErrorMessage message={errors.yearGraduated} />
+        </div>
       </div>
 
-      {/* Honors List */}
-      <div className="space-y-3">
-        <label className={styles.label}>Academic Honors/Awards Received</label>
-        {form.honors.map((item, i) => (
-          <div key={i} className="flex space-x-2">
-            <input
-              disabled={readOnly}
-              type="text"
-              className={styles.input(false, readOnly)}
-              value={item}
-              onChange={(e) => handleArr("honors", i, e.target.value)}
-            />
-            {!readOnly && (
-              <button
-                type="button"
-                className="px-3 py-2 border rounded-xl bg-slate-50 text-rose-600"
-                onClick={() =>
-                  updateField(
-                    "honors",
-                    form.honors.filter((_, idx) => idx !== i),
-                  )
-                }
-              >
-                Remove
-              </button>
-            )}
-          </div>
-        ))}
-        {!readOnly ? (
-          <button
-            type="button"
-            className="text-xs font-semibold text-sky-600 flex items-center gap-2 py-2 pl-3 pr-4 hover:bg-sky-100 transition rounded-lg"
-            onClick={() => updateField("honors", [...form.honors, ""])}
-          >
-            <LuPlus /> Add Honor / Award
-          </button>
-        ) : (
-          <span className="text-xs text-slate-600 flex items-center gap-2 py-2 pl-3 pr-4 rounded-lg">
-            None
-          </span>
-        )}
-      </div>
+      <ArrayInput
+        value={form.honors}
+        onChange={(items) => updateField("honors", items)}
+        label="Academic Honors / Awards Received"
+        fieldName="honors"
+        addButtonLabel="Add Honor / Award"
+        placeholder="e.g. Cum Laude"
+        readOnly={readOnly}
+      />
 
-      {/* Trainings List */}
-      <div className="space-y-3">
-        <label className={styles.label}>Professional Trainings Attended</label>
-        {form.trainings.map((item, i) => (
-          <div key={i} className="flex space-x-2">
-            <input
-              disabled={readOnly}
-              type="text"
-              className={styles.input(false, readOnly)}
-              value={item}
-              onChange={(e) => handleArr("trainings", i, e.target.value)}
-            />
-            {!readOnly && (
-              <button
-                type="button"
-                className="px-3 py-2 border rounded-xl bg-slate-50 text-rose-600"
-                onClick={() =>
-                  updateField(
-                    "trainings",
-                    form.trainings.filter((_, idx) => idx !== i),
-                  )
-                }
-              >
-                Remove
-              </button>
-            )}
-          </div>
-        ))}
-
-        {!readOnly ? (
-          <button
-            type="button"
-            className="text-xs font-semibold text-sky-600 flex items-center gap-2 py-2 pl-3 pr-4 hover:bg-sky-100 transition rounded-lg"
-            onClick={() => updateField("trainings", [...form.trainings, ""])}
-          >
-            + Add Training
-          </button>
-        ) : (
-          <span className="text-xs text-slate-600 flex items-center gap-2 py-2 pl-3 pr-4 rounded-lg">
-            None
-          </span>
-        )}
-      </div>
+      <ArrayInput
+        value={form.trainings}
+        onChange={(items) => updateField("trainings", items)}
+        label="Professional Trainings Attended"
+        fieldName="trainings"
+        addButtonLabel="Add Training"
+        placeholder="e.g. Web Development Bootcamp"
+        readOnly={readOnly}
+      />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
         <div>
           <Dropdown
             disabled={readOnly}
-            id="advanceStudyDegree"
+            id="advancedStudyDegree"
             label="Advanced Graduate Studies Degree"
-            value={form.advanceStudyDegree}
-            onChange={(val) => updateField("advanceStudyDegree", val as any)}
+            value={form.advancedStudyDegree}
+            onChange={(val) => updateField("advancedStudyDegree", val as any)}
             options={[
               { value: "MS", label: "MS" },
               { value: "MA", label: "MA" },
@@ -780,10 +736,10 @@ function EducationStep({ form, errors, updateField, readOnly }: StepProps) {
         <div>
           <Dropdown
             disabled={readOnly}
-            id="advanceStudyReasons"
+            id="advancedStudyReasons"
             label="Reason for Pursuing Graduate Studies"
-            value={form.advanceStudyReasons}
-            onChange={(val) => updateField("advanceStudyReasons", val as any)}
+            value={form.advancedStudyReasons}
+            onChange={(val) => updateField("advancedStudyReasons", val as any)}
             options={[
               { value: "For Promotion", label: "For Promotion" },
               {
@@ -798,33 +754,36 @@ function EducationStep({ form, errors, updateField, readOnly }: StepProps) {
         </div>
       </div>
 
-      {form.advanceStudyDegree === "Others" && (
+      {form.advancedStudyDegree === "Others" && (
         <div>
           <label className={styles.label}>Specify Advanced Degree *</label>
           <input
             disabled={readOnly}
             type="text"
-            className={styles.input(!!errors.advanceStudyOther, readOnly)}
-            value={form.advanceStudyOther}
-            onChange={(e) => updateField("advanceStudyOther", e.target.value)}
+            className={styles.input(!!errors.advancedStudyOther, readOnly)}
+            value={form.advancedStudyOther}
+            onChange={(e) => updateField("advancedStudyOther", e.target.value)}
           />
-          <ErrorMessage message={errors.advanceStudyOther} />
+          <ErrorMessage message={errors.advancedStudyOther} />
         </div>
       )}
 
-      {form.advanceStudyReasons === "Others" && (
+      {form.advancedStudyReasons === "Others" && (
         <div>
           <label className={styles.label}>Specify Reason *</label>
           <input
             disabled={readOnly}
             type="text"
-            className={styles.input(!!errors.advanceStudyReasonOther, readOnly)}
-            value={form.advanceStudyReasonOther}
+            className={styles.input(
+              !!errors.advancedStudyReasonOther,
+              readOnly,
+            )}
+            value={form.advancedStudyReasonOther}
             onChange={(e) =>
-              updateField("advanceStudyReasonOther", e.target.value)
+              updateField("advancedStudyReasonOther", e.target.value)
             }
           />
-          <ErrorMessage message={errors.advanceStudyReasonOther} />
+          <ErrorMessage message={errors.advancedStudyReasonOther} />
         </div>
       )}
     </div>
@@ -848,16 +807,6 @@ function EmploymentStep({ form, errors, updateField, readOnly }: StepProps) {
     if (idx > -1) list.splice(idx, 1);
     else list.push(reason);
     updateField("unemploymentReasons", list);
-  };
-
-  const handleDocArr = (
-    field: "employmentDocuments" | "awardDocuments",
-    idx: number,
-    val: string,
-  ) => {
-    const list = [...form[field]];
-    list[idx] = val;
-    updateField(field, list);
   };
 
   return (
@@ -885,11 +834,11 @@ function EmploymentStep({ form, errors, updateField, readOnly }: StepProps) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Dropdown
               disabled={readOnly}
-              id="presentEmploymentStatus"
+              id="currentEmploymentStatus"
               label="Present Employment Status *"
-              value={form.presentEmploymentStatus}
+              value={form.currentEmploymentStatus}
               onChange={(val) =>
-                updateField("presentEmploymentStatus", val as any)
+                updateField("currentEmploymentStatus", val as any)
               }
               options={[
                 { value: "Regular/Permanent", label: "Regular/Permanent" },
@@ -902,20 +851,20 @@ function EmploymentStep({ form, errors, updateField, readOnly }: StepProps) {
               ]}
               placeholder="Select"
               required
-              hasError={!!errors.presentEmploymentStatus}
+              hasError={!!errors.currentEmploymentStatus}
             />
             <div>
               <label className={styles.label}>Present Occupation *</label>
               <input
                 disabled={readOnly}
                 type="text"
-                className={styles.input(!!errors.presentOccupation, readOnly)}
-                value={form.presentOccupation}
+                className={styles.input(!!errors.currentOccupation, readOnly)}
+                value={form.currentOccupation}
                 onChange={(e) =>
-                  updateField("presentOccupation", e.target.value)
+                  updateField("currentOccupation", e.target.value)
                 }
               />
-              <ErrorMessage message={errors.presentOccupation} />
+              <ErrorMessage message={errors.currentOccupation} />
             </div>
           </div>
 
@@ -994,94 +943,12 @@ function EmploymentStep({ form, errors, updateField, readOnly }: StepProps) {
             />
           </div>
 
-          {/* Verification documents paths */}
+          {/* Verification documents are handled through the upload workflow */}
           <div className="space-y-4 border-t pt-4">
-            <div className="space-y-2">
-              <label className={styles.label}>
-                Employment Verification Documents (URLs/Reference Strings)
-              </label>
-              {form.employmentDocuments.map((doc, idx) => (
-                <div key={idx} className="flex space-x-2">
-                  <input
-                    disabled={readOnly}
-                    type="text"
-                    className={styles.input(false, readOnly)}
-                    value={doc}
-                    onChange={(e) =>
-                      handleDocArr("employmentDocuments", idx, e.target.value)
-                    }
-                  />
-                  {!readOnly && (
-                    <button
-                      type="button"
-                      className="px-3 py-2 border rounded-xl text-rose-600"
-                      onClick={() =>
-                        updateField(
-                          "employmentDocuments",
-                          form.employmentDocuments.filter((_, i) => i !== idx),
-                        )
-                      }
-                    >
-                      Remove
-                    </button>
-                  )}
-                </div>
-              ))}
-              <button
-                type="button"
-                className="text-xs font-semibold text-sky-600"
-                onClick={() =>
-                  updateField("employmentDocuments", [
-                    ...form.employmentDocuments,
-                    "",
-                  ])
-                }
-              >
-                + Add Document Reference
-              </button>
-            </div>
-
-            <div className="space-y-2">
-              <label className={styles.label}>
-                Awards Verification Documents
-              </label>
-              {form.awardDocuments.map((doc, idx) => (
-                <div key={idx} className="flex space-x-2">
-                  <input
-                    disabled={readOnly}
-                    type="text"
-                    className={styles.input(false, readOnly)}
-                    value={doc}
-                    onChange={(e) =>
-                      handleDocArr("awardDocuments", idx, e.target.value)
-                    }
-                  />
-                  {!readOnly && (
-                    <button
-                      type="button"
-                      className="px-3 py-2 border rounded-xl text-rose-600"
-                      onClick={() =>
-                        updateField(
-                          "awardDocuments",
-                          form.awardDocuments.filter((_, i) => i !== idx),
-                        )
-                      }
-                    >
-                      Remove
-                    </button>
-                  )}
-                </div>
-              ))}
-              <button
-                type="button"
-                className="text-xs font-semibold text-sky-600"
-                onClick={() =>
-                  updateField("awardDocuments", [...form.awardDocuments, ""])
-                }
-              >
-                + Add Award Reference
-              </button>
-            </div>
+            <p className="text-sm text-slate-600">
+              Verification documents are uploaded through the document upload
+              flow and stored separately.
+            </p>
           </div>
         </div>
       )}
@@ -1392,6 +1259,43 @@ function JobHistoryStep({ form, errors, updateField, readOnly }: StepProps) {
             onChange={(e) => updateField("firstJobTitle", e.target.value)}
           />
           <ErrorMessage message={errors.firstJobTitle} />
+        </div>
+        <div>
+          <Dropdown
+            disabled={readOnly}
+            id="firstJobSearchDuration"
+            label="First Job Search Duration *"
+            value={form.firstJobSearchDuration}
+            onChange={(val) =>
+              updateField("firstJobSearchDuration", val as any)
+            }
+            options={durations.map((d) => ({
+              value: d,
+              label: d,
+            }))}
+            placeholder="Select"
+            required
+            hasError={!!errors.firstJobSearchDuration}
+          />
+          <ErrorMessage message={errors.firstJobSearchDuration} />
+
+          {form.firstJobSearchDuration === "Others" && (
+            <>
+              <input
+                disabled={readOnly}
+                type="text"
+                className={`${styles.input(
+                  !!errors.firstJobSearchDurationOther,
+                  readOnly,
+                )} mt-2`}
+                value={form.firstJobSearchDurationOther}
+                onChange={(e) =>
+                  updateField("firstJobSearchDurationOther", e.target.value)
+                }
+              />
+              <ErrorMessage message={errors.firstJobSearchDurationOther} />
+            </>
+          )}
         </div>
         <div>
           <Dropdown

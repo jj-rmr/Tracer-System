@@ -10,6 +10,7 @@ import {
   updateSurvey,
   deleteSurvey,
 } from "@/lib/repositories/surveys.repository";
+import { ROLES } from "@/types";
 
 interface Props {
   params: Promise<{
@@ -21,7 +22,7 @@ export async function GET(request: NextRequest, { params }: Props) {
   try {
     const { user } = await requireUser();
 
-    requireRole(user, ["Admin"]);
+    requireRole(user, [ROLES.ADMIN]);
 
     const { id } = await params;
 
@@ -50,7 +51,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
   try {
     const { user } = await requireUser();
 
-    requireRole(user, ["Admin"]);
+    requireRole(user, [ROLES.ADMIN]);
 
     const { id } = await params;
 
@@ -83,7 +84,7 @@ export async function DELETE(request: NextRequest, { params }: Props) {
   try {
     const { user } = await requireUser();
 
-    requireRole(user, ["Admin"]);
+    requireRole(user, [ROLES.ADMIN]);
 
     const { id } = await params;
 

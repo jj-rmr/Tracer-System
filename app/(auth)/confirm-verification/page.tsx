@@ -182,12 +182,12 @@ export default function ConfirmVerificationPage() {
         <div className="mt-4 rounded-xl border border-red-100 bg-red-50 p-4">
           <div className="flex items-center justify-center">
             <div>
-              <h2 className="text-sm font-semibold text-red-700">
+              <h2 className="text-sm font-semibold text-red-500">
                 {sessionMismatch
                   ? "Action Required"
                   : "Verification Could Not Be Completed"}
               </h2>
-              <p className="text-sm text-red-600 leading-relaxed">{errorMsg}</p>
+              <p className="text-sm text-red-500 leading-relaxed">{errorMsg}</p>
             </div>
           </div>
         </div>

@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 
 import { getCurrentUser } from "./current-user";
 import { getSessionCookie } from "./cookies";
-import { requireRole, type Role } from "./roles";
+import { requireRole } from "./roles";
+import { Role, ROLES } from "@/types";
 
 export async function requireUser() {
   const session = await getSessionCookie();
@@ -39,7 +40,7 @@ export async function requireUserRole(allowed: Role[]) {
   try {
     requireRole(user, allowed);
   } catch {
-    redirect("/");
+    redirect("/unauthorized");
   }
 
   return user;
@@ -48,7 +49,7 @@ export async function requireUserRole(allowed: Role[]) {
 export async function requireAdmin() {
   const { user } = await requireUser();
 
-  requireRole(user, ["Admin"]);
+  requireRole(user, [ROLES.ADMIN]);
 
   return user;
 }

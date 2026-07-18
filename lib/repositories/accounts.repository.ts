@@ -1,6 +1,7 @@
 import { Users } from "node-appwrite";
 
 import { createAdminClient } from "@/lib/appwrite/admin";
+import { ROLES } from "@/types";
 
 function getUsersService() {
   const client = createAdminClient();
@@ -14,7 +15,7 @@ export function formatAccount(user: any) {
     name: user.name,
     email: user.email,
 
-    role: user.labels?.includes("Admin") ? "admin" : "alumni",
+    role: user.labels.includes(ROLES.ADMIN) ? "admin" : "alumni",
 
     verified: user.emailVerification,
 
@@ -39,6 +40,14 @@ export async function getAccount(id: string) {
   const user = await users.get(id);
 
   return formatAccount(user);
+}
+
+export async function getAllAccounts() {
+  const users = getUsersService();
+
+  const response = await users.list();
+
+  return response.users.map(formatAccount);
 }
 
 export async function updateAccountName(id: string, name: string) {

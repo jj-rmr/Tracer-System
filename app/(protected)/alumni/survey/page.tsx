@@ -29,6 +29,7 @@ export default async function SurveyPage() {
         isNew={!existingSurvey}
         updatedAt={existingSurvey?.updatedAt}
         surveyId={existingSurvey?.id}
+        readOnly={false}
       />
     </div>
   );

@@ -26,7 +26,7 @@ export default function Nav({ role }: NavProps) {
 
   const adminNavItems = [
     {
-      label: "Dashboard",
+      label: "Home",
       href: "/admin",
       icon: LuHouse,
     },
@@ -56,7 +56,7 @@ export default function Nav({ role }: NavProps) {
   ];
 
   const secondaryNavItems =
-    role === "Admin"
+    role === "admin"
       ? [
           {
             label: "Settings",
@@ -72,7 +72,7 @@ export default function Nav({ role }: NavProps) {
           },
         ];
 
-  const mainNavItems = role === "Admin" ? adminNavItems : alumniNavItems;
+  const mainNavItems = role === "admin" ? adminNavItems : alumniNavItems;
 
   const isActiveLink = (href: string) => {
     const allNavItems = [...mainNavItems, ...secondaryNavItems].map(
@@ -89,13 +89,13 @@ export default function Nav({ role }: NavProps) {
   return (
     <>
       <aside
-        className={`fixed z-10 bg-white shadow-[12px_0_30px_-5px_rgba(0,0,0,0.1)] rounded-r-4xl shadow-sky-100 hidden md:flex flex-col py-8 px-2 gap-3 h-svh transition-all ease-out duration-300 text-accent overflow-y-auto overflow-x-hidden ${
+        className={`fixed z-10 bg-white shadow-[12px_0_30px_-5px_rgba(0,0,0,0.1)] rounded-r-4xl shadow-slate-200 hidden md:flex flex-col py-8 px-2 gap-3 h-svh transition-all ease-out duration-300 text-accent overflow-y-auto overflow-x-hidden ${
           isOpen ? "w-75 max-w-5/6" : "w-20"
         }`}
       >
         <div
           onClick={() => setIsOpen(!isOpen)}
-          className={`right-6 p-1 rounded-lg absolute flex w-fit h-fit gap-3 mt-3 text-sky-300 hover:text-sky-400 bg-white hover:shadow-md hover:-translate-y-1 cursor-pointer active:scale-95 active:text-sky-400 transition-all duration-300 ${
+          className={`right-6 p-1 rounded-lg absolute flex w-fit h-fit gap-3 mt-3 text-sky-300 hover:text-sky-400 bg-white hover:shadow-md shadow-slate-200 hover:-translate-y-1 cursor-pointer active:scale-95 active:text-sky-400 transition-all duration-300 ${
             isOpen ? "top-7.5" : "top-1"
           }`}
         >
@@ -111,11 +111,11 @@ export default function Nav({ role }: NavProps) {
             isOpen ? "mt-0" : "mt-4"
           }`}
         >
-          <LuUserRoundSearch size={32} />
+          <LuUserRoundSearch size={32} className="shrink-0" />
 
           <h1
             className={`text-3xl font-bold whitespace-nowrap transition-all duration-300 ${
-              isOpen ? "opacity-100" : "opacity-0 w-0 overflow-hidden"
+              isOpen ? "opacity-100" : "opacity-0 overflow-hidden"
             }`}
           >
             Tracer
@@ -136,17 +136,17 @@ export default function Nav({ role }: NavProps) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center pl-4.75 py-4 rounded-2xl hover:shadow-md shadow-sky-100 hover:-translate-y-1 hover:text-sky-500 active:scale-95 transition-all duration-300 ${
-                  isActiveLink(item.href) ? "bg-sky-100 text-sky-500" : ""
+                className={`flex items-center pl-4.75 py-4 rounded-2xl  active:scale-95 transition-all duration-300 ${
+                  isActiveLink(item.href)
+                    ? "bg-sky-100 text-sky-500"
+                    : "hover:shadow-md shadow-slate-200 hover:-translate-y-1 hover:text-sky-500"
                 }`}
               >
-                <Icon size={24} />
+                <Icon size={24} className="shrink-0" />
 
                 <span
                   className={`font-semibold whitespace-nowrap transition-all duration-300 ${
-                    isOpen
-                      ? "ml-3 opacity-100"
-                      : "opacity-0 w-0 overflow-hidden"
+                    isOpen ? "ml-3 opacity-100" : "opacity-0 overflow-hidden"
                   }`}
                 >
                   {item.label}
@@ -168,13 +168,11 @@ export default function Nav({ role }: NavProps) {
                   isActiveLink(item.href) ? "text-sky-500" : ""
                 }`}
               >
-                <Icon size={18} />
+                <Icon size={18} className="shrink-0" />
 
                 <span
                   className={`text-sm font-medium whitespace-nowrap transition-all duration-300 ${
-                    isOpen
-                      ? "ml-3 opacity-100"
-                      : "opacity-0 w-0 overflow-hidden"
+                    isOpen ? "ml-3 opacity-100" : "opacity-0 overflow-hidden"
                   }`}
                 >
                   {item.label}

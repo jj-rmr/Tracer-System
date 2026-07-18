@@ -8,7 +8,6 @@ import {
   getAccount,
   updateAccountName,
 } from "@/lib/repositories/accounts.repository";
-// Import your survey repository to fetch them together
 import { getSurveyByUserId } from "@/lib/repositories/surveys.repository";
 
 async function authorize(): Promise<

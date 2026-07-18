@@ -12,10 +12,10 @@ interface ToastProps {
 }
 
 const toastStyles: Record<NonNullable<ToastProps["type"]>, string> = {
-  success: "bg-green-400 text-white",
-  warning: "bg-amber-400 text-white",
-  error: "bg-red-400 text-white",
-  info: "bg-sky-400 text-white",
+  success: "bg-green-500 text-white",
+  warning: "bg-amber-500 text-white",
+  error: "bg-red-500 text-white",
+  info: "bg-sky-500 text-white",
 };
 
 export function Toast({

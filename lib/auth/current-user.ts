@@ -9,7 +9,8 @@ export async function getCurrentUser(session: string | null) {
 
   try {
     return await account.get();
-  } catch {
+  } catch (error) {
+    console.error("Appwrite session validation failed:", error);
     return null;
   }
 }

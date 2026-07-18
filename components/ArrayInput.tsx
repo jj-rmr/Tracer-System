@@ -8,7 +8,29 @@ interface ArrayInputProps {
   addButtonLabel?: string;
   placeholder?: string;
   required?: boolean;
+  readOnly?: boolean;
+  hasError?: boolean;
 }
+
+const styles = {
+  input: (err: boolean, disabled: boolean) =>
+    `w-full p-4 rounded-2xl border text-slate-950 text-sm transition duration-300 focus:outline-none focus:ring-2 ${
+      err
+        ? "border-rose-400 focus:ring-rose-100"
+        : disabled
+          ? "bg-slate-200 border-none"
+          : "bg-white border-sky-200 focus:ring-sky-100 focus:border-sky-500"
+    }`,
+
+  label:
+    "block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2",
+
+  removeButton:
+    "p-3 rounded-xl border border-rose-300 text-rose-500 transition duration-300 hover:bg-rose-50 focus:outline-none focus:ring-2 focus:ring-rose-100 focus:border-rose-400",
+
+  addButton:
+    "inline-flex items-center gap-2 py-2 px-3 text-xs font-semibold text-sky-600 rounded-lg transition duration-300 hover:bg-sky-100 focus:outline-none focus:ring-2 focus:ring-sky-200 border border-transparent focus:border-sky-400",
+};
 
 export function ArrayInput({
   value,
@@ -18,6 +40,8 @@ export function ArrayInput({
   addButtonLabel = "Add Item",
   placeholder,
   required = false,
+  readOnly = false,
+  hasError = false,
 }: ArrayInputProps) {
   const handleAddItem = () => {
     onChange([...value, ""]);
@@ -30,46 +54,51 @@ export function ArrayInput({
   };
 
   const handleRemoveItem = (index: number) => {
-    const updatedItems = value.filter((_, i) => i !== index);
-    onChange(updatedItems);
+    onChange(value.filter((_, i) => i !== index));
   };
 
   return (
-    <div className="flex flex-col gap-1 w-full">
-      <label className="font-semibold text-accent">
+    <div className="w-full space-y-3">
+      <label className={styles.label}>
         {label}
-        {required && <span className="text-rose-500">*</span>}
+        {required && " *"}
       </label>
-      <div className="flex flex-col gap-2">
-        {value.map((item, index) => (
-          <div key={index} className="flex gap-2 items-center w-full">
-            <input
-              type="text"
-              name={`${fieldName}-${index}`}
-              value={item}
-              onChange={(e) => handleItemChange(index, e.target.value)}
-              placeholder={placeholder || `${label} ${index + 1}`}
-              className="text-foreground placeholder:text-foreground/50 flex-1 rounded-2xl p-4 border border-sky-200 focus:outline-none focus:border-sky-400 bg-transparent transition-all duration-300"
-            />
+
+      {value.map((item, index) => (
+        <div key={index} className="flex items-center gap-2">
+          <input
+            disabled={readOnly}
+            type="text"
+            name={`${fieldName}-${index}`}
+            value={item}
+            onChange={(e) => handleItemChange(index, e.target.value)}
+            placeholder={placeholder ?? `${label} ${index + 1}`}
+            className={styles.input(hasError, readOnly)}
+          />
+
+          {!readOnly && (
             <button
               type="button"
               onClick={() => handleRemoveItem(index)}
-              className="p-3 rounded-2xl border border-rose-300 hover:bg-rose-50 text-rose-500 transition-all duration-300 flex items-center justify-center cursor-pointer"
+              className={styles.removeButton}
               aria-label={`Remove ${fieldName} ${index + 1}`}
             >
               <LuX size={18} />
             </button>
-          </div>
-        ))}
+          )}
+        </div>
+      ))}
+
+      {!readOnly && (
         <button
           type="button"
           onClick={handleAddItem}
-          className="flex gap-2 items-center p-4 rounded-2xl border border-dashed border-sky-300 hover:bg-sky-50 text-sky-600 transition-all duration-300 font-semibold cursor-pointer"
+          className={styles.addButton}
         >
-          <LuPlus size={18} />
+          <LuPlus size={16} />
           {addButtonLabel}
         </button>
-      </div>
+      )}
     </div>
   );
 }

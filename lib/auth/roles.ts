@@ -1,15 +1,18 @@
 // lib/auth/roles.ts
 
 import { Models } from "node-appwrite";
+import { Role, ROLES } from "@/types";
 
-export type Role = "Admin" | "Alumni";
-
-export function getRole(user: Models.User<Models.Preferences>): Role {
-  if (user.labels.includes("Admin")) {
-    return "Admin";
+export function getRole(user: Models.User<Models.Preferences>): Role | null {
+  if (user.labels.includes(ROLES.ADMIN)) {
+    return ROLES.ADMIN;
   }
 
-  return "Alumni";
+  if (user.labels.includes(ROLES.ALUMNI)) {
+    return ROLES.ALUMNI;
+  }
+
+  return null;
 }
 
 export function requireRole(
@@ -18,7 +21,7 @@ export function requireRole(
 ) {
   const role = getRole(user);
 
-  if (!allowed.includes(role)) {
+  if (!role || !allowed.includes(role)) {
     throw new Error("Forbidden");
   }
 
@@ -26,9 +29,9 @@ export function requireRole(
 }
 
 export function isAdmin(user: Models.User<Models.Preferences>) {
-  return user.labels.includes("Admin");
+  return user.labels.includes(ROLES.ADMIN);
 }
 
 export function isAlumni(user: Models.User<Models.Preferences>) {
-  return user.labels.includes("Alumni");
+  return user.labels.includes(ROLES.ALUMNI);
 }

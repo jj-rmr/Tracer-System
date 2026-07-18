@@ -9,7 +9,7 @@ export default function SurveyPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between flex-wrap">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between flex-wrap">
         <div>
           <h1 className="text-3xl font-bold text-slate-800">Survey Entries</h1>
 
