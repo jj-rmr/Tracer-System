@@ -114,7 +114,7 @@ export default function Nav({ role }: NavProps) {
           <LuUserRoundSearch size={32} className="shrink-0" />
 
           <h1
-            className={`text-3xl font-bold whitespace-nowrap transition-all duration-300 ${
+            className={`text-3xl font-semibold tracking-tight whitespace-nowrap transition-all duration-300 ${
               isOpen ? "opacity-100" : "opacity-0 overflow-hidden"
             }`}
           >

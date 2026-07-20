@@ -1,5 +1,6 @@
 import { Survey } from "@/types";
 import { createFolder } from "./folders";
+import { drive } from "../google-drive";
 import { updateSurvey } from "@/lib/repositories/surveys.repository";
 
 function getGraduateFolderName(survey: Survey) {
@@ -17,7 +18,22 @@ export async function getOrCreateGraduateFolder(
   survey: Survey,
 ): Promise<string> {
   if (survey.graduateFolderId) {
-    return survey.graduateFolderId;
+    try {
+      const folder = await drive.files.get({
+        fileId: survey.graduateFolderId,
+        fields: "id,mimeType,trashed",
+      });
+
+      if (
+        folder.data.id &&
+        folder.data.mimeType === "application/vnd.google-apps.folder" &&
+        !folder.data.trashed
+      ) {
+        return folder.data.id;
+      }
+    } catch {
+      // Stored folder no longer exists. A new one will be created below.
+    }
   }
 
   const folder = await createFolder(getGraduateFolderName(survey));

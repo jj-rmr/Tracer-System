@@ -61,8 +61,6 @@ export async function createSurveyDocument(
 ) {
   const payload = toDb(document, surveyId);
 
-  console.log("Creating survey document with payload:", payload);
-
   const { data, error } = await supabase
     .from("survey_documents")
     .insert(payload)
@@ -86,4 +84,46 @@ export async function getSurveyDocuments(surveyId: string) {
   if (error) throw error;
 
   return data.map(fromDb);
+}
+
+export async function getSurveyDocumentById(documentId: string) {
+  const { data, error } = await supabase
+    .from("survey_documents")
+    .select("*")
+    .eq("id", documentId)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  return data ? fromDb(data) : null;
+}
+
+export async function getSurveyDocumentWithSurveyId(documentId: string) {
+  const { data, error } = await supabase
+    .from("survey_documents")
+    .select("*")
+    .eq("id", documentId)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  if (!data) return null;
+
+  return {
+    document: fromDb(data),
+    surveyId: data.survey_id,
+  };
+}
+
+export async function deleteSurveyDocument(documentId: string) {
+  const { data, error } = await supabase
+    .from("survey_documents")
+    .delete()
+    .eq("id", documentId)
+    .select()
+    .single();
+
+  if (error) throw error;
+
+  return fromDb(data);
 }

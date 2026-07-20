@@ -68,10 +68,12 @@ export function Dropdown({
       </label>
 
       {disabled ? (
-        <div className="flex items-center justify-between rounded-2xl bg-slate-200 px-4 py-3.5 text-sm text-slate-900">
-          <span className={!value ? "text-slate-400" : ""}>
+        <div className="flex w-full cursor-not-allowed items-center justify-between rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm text-slate-500 shadow-none">
+          <span className="truncate">
             {selectedOption?.label ?? placeholder}
           </span>
+
+          <LuChevronDown size={18} className="shrink-0 text-slate-400" />
         </div>
       ) : (
         <>
@@ -82,14 +84,14 @@ export function Dropdown({
             onClick={() => setIsOpen((prev) => !prev)}
             className={`
               flex w-full items-center justify-between gap-3
-              rounded-2xl border bg-white px-4 py-3.5
+              rounded-2xl border bg-slate-50 px-4 py-3
               text-left text-sm text-slate-900
-              shadow-sm transition-all duration-200
-              focus:outline-none focus:ring-4
+              transition duration-200
+              focus:outline-none
               ${
                 hasError
-                  ? "border-rose-400 focus:ring-rose-100"
-                  : "border-sky-200 hover:border-sky-300 hover:bg-sky-50/30 focus:border-sky-500 focus:ring-sky-100"
+                  ? "border-rose-400 focus:bg-white focus:ring-4 focus:ring-rose-100"
+                  : "border-slate-200 shadow-sm focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100"
               }
             `}
           >
@@ -103,7 +105,7 @@ export function Dropdown({
 
             <LuChevronDown
               size={18}
-              className={`shrink-0 text-slate-400 transition-all duration-200 ${
+              className={`shrink-0 text-slate-400 transition-transform duration-200 ${
                 isOpen ? "rotate-180 text-sky-500" : ""
               }`}
             />
@@ -113,12 +115,12 @@ export function Dropdown({
             <div
               role="listbox"
               className="
-                absolute left-0 right-0 top-full mt-2
-                z-50
+                absolute left-0 right-0 top-full z-50 mt-2
                 max-h-60 overflow-y-auto
-                rounded-2xl border border-sky-100
+                space-y-0.5 rounded-2xl border border-sky-100
                 bg-white p-1.5
                 shadow-xl shadow-sky-100/50
+                scrollbar-none
               "
             >
               {options.map((option) => (

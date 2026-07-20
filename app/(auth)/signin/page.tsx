@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { LuCircleAlert } from "react-icons/lu";
 
 import { SignInButton } from "@/components/SignInButton";
 import { Role, ROLES } from "@/types";
@@ -80,9 +81,9 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="w-full max-w-2xl bg-white md:rounded-2xl md:shadow-md md:border border-slate-100 p-8 md:p-10">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-slate-900 tracking-tight font-sans">
+    <div className="w-full max-w-2xl rounded-3xl border border-slate-200 bg-white p-8 shadow-[0_12px_30px_-5px_rgba(0,0,0,0.04)] shadow-sky-100/80 md:p-10">
+      <div className="mb-8 text-center">
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
           Welcome Back
         </h1>
 
@@ -92,20 +93,9 @@ export default function SignInPage() {
       </div>
 
       {error && (
-        <div className="mb-6 p-4 rounded-2xl bg-red-50 border border-red-200 text-sm text-red-500">
+        <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-500 shadow-sm">
           <div className="flex items-center gap-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 20 20"
-              fill="currentColor"
-              className="w-5 h-5 shrink-0"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
-                clipRule="evenodd"
-              />
-            </svg>
+            <LuCircleAlert size={20} className="shrink-0" />
 
             <span>{error}</span>
           </div>
@@ -129,7 +119,7 @@ export default function SignInPage() {
             onChange={(e) => setEmail(e.target.value)}
             disabled={isPending}
             placeholder="name@parsu.edu.ph"
-            className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition duration-150 disabled:opacity-60 bg-slate-50 focus:bg-white"
+            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition duration-200 placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100 disabled:opacity-60"
           />
         </div>
 
@@ -151,7 +141,7 @@ export default function SignInPage() {
             onChange={(e) => setPassword(e.target.value)}
             disabled={isPending}
             placeholder="••••••••"
-            className="w-full px-4 py-3 rounded-2xl border border-slate-200 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition duration-150 disabled:opacity-60 bg-slate-50 focus:bg-white"
+            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition duration-200 placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100 disabled:opacity-60"
           />
         </div>
 
@@ -162,7 +152,7 @@ export default function SignInPage() {
         Don't have an account?{" "}
         <Link
           href="/signup"
-          className="font-medium text-sky-400 hover:text-sky-500 active:scale-95 transition-[color,scale] duration-300 cursor-pointer"
+          className="font-medium text-sky-600 transition-colors duration-200 hover:text-sky-700"
         >
           Create one now
         </Link>

@@ -42,17 +42,22 @@ export async function uploadToDrive(
     fields: "id,name,mimeType,size,webViewLink",
   });
 
+  if (!response.data.id) {
+    throw new Error("Google Drive upload returned no file ID.");
+  }
+
   return {
     filename: response.data.name!,
-
     mimeType: response.data.mimeType!,
-
     size: Number(response.data.size ?? 0),
-
-    googleDriveFileId: response.data.id!,
-
+    googleDriveFileId: response.data.id,
     googleDriveFolderId: folderId,
-
     webViewLink: response.data.webViewLink ?? undefined,
   };
+}
+
+export async function deleteFromDrive(fileId: string) {
+  await drive.files.delete({
+    fileId,
+  });
 }

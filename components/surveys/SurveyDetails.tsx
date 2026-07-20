@@ -116,8 +116,8 @@ export default function SurveyDetails({ id }: Props) {
 
   return (
     <div className="space-y-8 p-6 max-w-5xl mx-auto">
-      <div className="flex justify-between items-center border-b pb-4">
-        <h1 className="text-3xl font-bold tracking-tight">
+      <div className="flex flex-col gap-2 border-b border-slate-200 pb-4 md:flex-row md:items-center md:justify-between">
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
           Survey Profile Administration
         </h1>
         <div className="text-sm text-slate-500">User ID: {survey.userId}</div>
@@ -131,9 +131,11 @@ export default function SurveyDetails({ id }: Props) {
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label className="text-sm font-medium">Last Name</label>
+            <label className="text-sm font-medium text-slate-700">
+              Last Name
+            </label>
             <input
-              className="mt-1 w-full rounded-xl border p-2.5 text-sm"
+              className="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition duration-200 placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100"
               value={survey.lastName || ""}
               onChange={(e) =>
                 setSurvey({ ...survey, lastName: e.target.value })
@@ -141,9 +143,11 @@ export default function SurveyDetails({ id }: Props) {
             />
           </div>
           <div>
-            <label className="text-sm font-medium">First Name</label>
+            <label className="text-sm font-medium text-slate-700">
+              First Name
+            </label>
             <input
-              className="mt-1 w-full rounded-xl border p-2.5 text-sm"
+              className="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition duration-200 placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100"
               value={survey.firstName || ""}
               onChange={(e) =>
                 setSurvey({ ...survey, firstName: e.target.value })
@@ -151,9 +155,11 @@ export default function SurveyDetails({ id }: Props) {
             />
           </div>
           <div>
-            <label className="text-sm font-medium">Middle Name</label>
+            <label className="text-sm font-medium text-slate-700">
+              Middle Name
+            </label>
             <input
-              className="mt-1 w-full rounded-xl border p-2.5 text-sm"
+              className="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition duration-200 placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100"
               value={survey.middleName || ""}
               onChange={(e) =>
                 setSurvey({ ...survey, middleName: e.target.value })
@@ -161,9 +167,11 @@ export default function SurveyDetails({ id }: Props) {
             />
           </div>
           <div>
-            <label className="text-sm font-medium">Extension Name</label>
+            <label className="text-sm font-medium text-slate-700">
+              Extension Name
+            </label>
             <input
-              className="mt-1 w-full rounded-xl border p-2.5 text-sm"
+              className="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition duration-200 placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100"
               placeholder="e.g., Jr., III"
               value={survey.extensionName || ""}
               onChange={(e) =>
@@ -175,9 +183,9 @@ export default function SurveyDetails({ id }: Props) {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label className="text-sm font-medium">Sex</label>
+            <label className="text-sm font-medium text-slate-700">Sex</label>
             <select
-              className="mt-1 w-full rounded-xl border p-2.5 text-sm bg-white"
+              className="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition duration-200 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100"
               value={survey.sex}
               onChange={(e) =>
                 setSurvey({ ...survey, sex: e.target.value as Sex })
@@ -190,9 +198,11 @@ export default function SurveyDetails({ id }: Props) {
           </div>
 
           <div>
-            <label className="text-sm font-medium">Civil Status</label>
+            <label className="text-sm font-medium text-slate-700">
+              Civil Status
+            </label>
             <select
-              className="mt-1 w-full rounded-xl border p-2.5 text-sm bg-white"
+              className="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition duration-200 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100"
               value={survey.civilStatus}
               onChange={(e) =>
                 setSurvey({
@@ -212,24 +222,26 @@ export default function SurveyDetails({ id }: Props) {
       </div>
 
       {/* SECTION 2: ADDRESS & CONTACT */}
-      <div className="rounded-2xl border p-6 space-y-4 bg-white shadow-sm">
-        <h2 className="text-xl font-semibold border-b pb-2 text-slate-800">
+      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_12px_30px_-5px_rgba(0,0,0,0.04)] shadow-sky-100/80 space-y-4">
+        <h2 className="border-b border-slate-200 pb-2 text-xl font-semibold text-slate-800">
           Address & Contact
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <div>
-            <label className="text-sm font-medium">Street</label>
+            <label className="text-sm font-medium text-slate-700">Street</label>
             <input
-              className="mt-1 w-full rounded-xl border p-2.5 text-sm"
+              className="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition duration-200 placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100"
               value={survey.street || ""}
               onChange={(e) => setSurvey({ ...survey, street: e.target.value })}
             />
           </div>
           <div>
-            <label className="text-sm font-medium">Barangay</label>
+            <label className="text-sm font-medium text-slate-700">
+              Barangay
+            </label>
             <input
-              className="mt-1 w-full rounded-xl border p-2.5 text-sm"
+              className="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition duration-200 placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100"
               value={survey.barangay || ""}
               onChange={(e) =>
                 setSurvey({ ...survey, barangay: e.target.value })
@@ -237,9 +249,11 @@ export default function SurveyDetails({ id }: Props) {
             />
           </div>
           <div>
-            <label className="text-sm font-medium">Municipality / City</label>
+            <label className="text-sm font-medium text-slate-700">
+              Municipality / City
+            </label>
             <input
-              className="mt-1 w-full rounded-xl border p-2.5 text-sm"
+              className="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition duration-200 placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100"
               value={survey.municipality || ""}
               onChange={(e) =>
                 setSurvey({ ...survey, municipality: e.target.value })
@@ -248,11 +262,13 @@ export default function SurveyDetails({ id }: Props) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
-            <label className="text-sm font-medium">Province</label>
+            <label className="text-sm font-medium text-slate-700">
+              Province
+            </label>
             <input
-              className="mt-1 w-full rounded-xl border p-2.5 text-sm"
+              className="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition duration-200 placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100"
               value={survey.province || ""}
               onChange={(e) =>
                 setSurvey({ ...survey, province: e.target.value })
@@ -260,9 +276,9 @@ export default function SurveyDetails({ id }: Props) {
             />
           </div>
           <div>
-            <label className="text-sm font-medium">Region</label>
+            <label className="text-sm font-medium text-slate-700">Region</label>
             <input
-              className="mt-1 w-full rounded-xl border p-2.5 text-sm"
+              className="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition duration-200 placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100"
               value={survey.region || ""}
               onChange={(e) => setSurvey({ ...survey, region: e.target.value })}
             />
@@ -271,16 +287,18 @@ export default function SurveyDetails({ id }: Props) {
       </div>
 
       {/* SECTION 3: EDUCATION & GRADUATE STUDIES */}
-      <div className="rounded-2xl border p-6 space-y-4 bg-white shadow-sm">
-        <h2 className="text-xl font-semibold border-b pb-2 text-slate-800">
+      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_12px_30px_-5px_rgba(0,0,0,0.04)] shadow-sky-100/80 space-y-4">
+        <h2 className="border-b border-slate-200 pb-2 text-xl font-semibold text-slate-800">
           Education Background
         </h2>
 
         <div className="w-full md:w-1/3">
-          <label className="text-sm font-medium">Year Graduated</label>
+          <label className="text-sm font-medium text-slate-700">
+            Year Graduated
+          </label>
           <input
             type="number"
-            className="mt-1 w-full rounded-xl border p-2.5 text-sm"
+            className="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition duration-200 placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100"
             value={survey.yearGraduated ?? ""}
             onChange={(e) =>
               setSurvey({
@@ -291,11 +309,13 @@ export default function SurveyDetails({ id }: Props) {
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+        <div className="grid grid-cols-1 gap-4 pt-2 md:grid-cols-2">
           <div>
-            <label className="text-sm font-medium">Advanced Study Degree</label>
+            <label className="text-sm font-medium text-slate-700">
+              Advanced Study Degree
+            </label>
             <select
-              className="mt-1 w-full rounded-xl border p-2.5 text-sm bg-white"
+              className="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition duration-200 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100"
               value={survey.advancedStudyDegree}
               onChange={(e) =>
                 setSurvey({
@@ -312,11 +332,11 @@ export default function SurveyDetails({ id }: Props) {
           </div>
           {survey.advancedStudyDegree === "Others" && (
             <div>
-              <label className="text-sm font-medium">
+              <label className="text-sm font-medium text-slate-700">
                 Specify Other Degree
               </label>
               <input
-                className="mt-1 w-full rounded-xl border p-2.5 text-sm"
+                className="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition duration-200 placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100"
                 value={survey.advancedStudyOther || ""}
                 onChange={(e) =>
                   setSurvey({ ...survey, advancedStudyOther: e.target.value })
@@ -328,18 +348,18 @@ export default function SurveyDetails({ id }: Props) {
       </div>
 
       {/* SECTION 4: EMPLOYMENT DETAILS */}
-      <div className="rounded-2xl border p-6 space-y-4 bg-white shadow-sm">
-        <h2 className="text-xl font-semibold border-b pb-2 text-slate-800">
+      <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_12px_30px_-5px_rgba(0,0,0,0.04)] shadow-sky-100/80 space-y-4">
+        <h2 className="border-b border-slate-200 pb-2 text-xl font-semibold text-slate-800">
           Employment Profile
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
-            <label className="text-sm font-medium">
+            <label className="text-sm font-medium text-slate-700">
               Is Currently Employed?
             </label>
             <select
-              className="mt-1 w-full rounded-xl border p-2.5 text-sm bg-white"
+              className="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition duration-200 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100"
               value={survey.employmentStatus}
               onChange={(e) =>
                 setSurvey({
@@ -356,11 +376,11 @@ export default function SurveyDetails({ id }: Props) {
           </div>
 
           <div>
-            <label className="text-sm font-medium">
+            <label className="text-sm font-medium text-slate-700">
               Current Employment Status Type
             </label>
             <select
-              className="mt-1 w-full rounded-xl border p-2.5 text-sm bg-white"
+              className="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition duration-200 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100"
               value={survey.currentEmploymentStatus}
               onChange={(e) =>
                 setSurvey({
@@ -382,13 +402,13 @@ export default function SurveyDetails({ id }: Props) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
-            <label className="text-sm font-medium">
+            <label className="text-sm font-medium text-slate-700">
               Present Occupation / Job Title
             </label>
             <input
-              className="mt-1 w-full rounded-xl border p-2.5 text-sm"
+              className="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition duration-200 placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100"
               value={survey.currentOccupation || ""}
               onChange={(e) =>
                 setSurvey({ ...survey, currentOccupation: e.target.value })
@@ -396,9 +416,11 @@ export default function SurveyDetails({ id }: Props) {
             />
           </div>
           <div>
-            <label className="text-sm font-medium">Company Name</label>
+            <label className="text-sm font-medium text-slate-700">
+              Company Name
+            </label>
             <input
-              className="mt-1 w-full rounded-xl border p-2.5 text-sm"
+              className="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition duration-200 placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100"
               value={survey.companyName || ""}
               onChange={(e) =>
                 setSurvey({ ...survey, companyName: e.target.value })
@@ -407,13 +429,13 @@ export default function SurveyDetails({ id }: Props) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div>
-            <label className="text-sm font-medium">
+            <label className="text-sm font-medium text-slate-700">
               Business Industry Sector
             </label>
             <select
-              className="mt-1 w-full rounded-xl border p-2.5 text-sm bg-white"
+              className="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition duration-200 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100"
               value={survey.businessIndustry}
               onChange={(e) =>
                 setSurvey({
@@ -436,11 +458,11 @@ export default function SurveyDetails({ id }: Props) {
           </div>
 
           <div>
-            <label className="text-sm font-medium">
+            <label className="text-sm font-medium text-slate-700">
               Initial Monthly Income
             </label>
             <select
-              className="mt-1 w-full rounded-xl border p-2.5 text-sm bg-white"
+              className="mt-1 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition duration-200 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100"
               value={survey.initialMonthlyIncome}
               onChange={(e) =>
                 setSurvey({

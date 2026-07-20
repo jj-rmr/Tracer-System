@@ -13,7 +13,7 @@ export default async function SurveyPage() {
   return (
     <div className="flex flex-col gap-8 items-center justify-center">
       <div className="text-left w-full max-w-5xl">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
           Alumni Tracer Survey
         </h1>
         <p className="text-slate-500">

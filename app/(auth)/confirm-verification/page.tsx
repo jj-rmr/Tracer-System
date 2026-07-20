@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { LuCheck, LuX } from "react-icons/lu";
+import { LuCheck, LuLoaderCircle, LuX } from "react-icons/lu";
 
 export default function ConfirmVerificationPage() {
   const router = useRouter();
@@ -120,7 +120,7 @@ export default function ConfirmVerificationPage() {
   }
 
   return (
-    <div className="w-full max-w-2xl bg-white md:rounded-2xl md:shadow-md md:border border-slate-100 px-4 py-8 text-center">
+    <div className="w-full max-w-2xl rounded-3xl border border-slate-200 bg-white px-4 py-8 text-center shadow-[0_12px_30px_-5px_rgba(0,0,0,0.04)] shadow-sky-100/80 md:px-8">
       <div
         className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 transition-colors duration-300 ${
           status === "verifying"
@@ -131,26 +131,7 @@ export default function ConfirmVerificationPage() {
         }`}
       >
         {status === "verifying" ? (
-          <svg
-            className="animate-spin h-7 w-7"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            />
-          </svg>
+          <LuLoaderCircle size={32} className="animate-spin" />
         ) : status === "success" ? (
           <LuCheck size={32} />
         ) : (
@@ -198,14 +179,14 @@ export default function ConfirmVerificationPage() {
           (sessionMismatch ? (
             <button
               onClick={handleSignOut}
-              className="w-full py-3 px-4 rounded-xl bg-sky-400 hover:bg-sky-500 text-white font-medium shadow-md shadow-sky-100 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className="w-full rounded-2xl bg-sky-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-sky-700 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
             >
               Sign Out and Continue
             </button>
           ) : (
             <button
               onClick={() => router.push("/verify-email")}
-              className="w-full py-3 px-4 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium transition cursor-pointer"
+              className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:bg-slate-50 hover:shadow-md"
             >
               Back to Verify Email
             </button>

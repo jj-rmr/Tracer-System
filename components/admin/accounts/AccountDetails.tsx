@@ -142,7 +142,7 @@ export default function AccountDetails({ id, currentUserId }: Props) {
       <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
         <div className="flex items-start gap-4 justify-between flex-wrap">
           <div className="flex-1 min-w-62.5">
-            <h1 className="text-3xl font-bold text-slate-900">
+            <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
               {account.name}
             </h1>
             <p className="mt-2 text-slate-500">{account.email}</p>

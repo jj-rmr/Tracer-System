@@ -35,7 +35,7 @@ export default async function AlumniPage() {
           />
         </div>
 
-        <h1 className="text-base md:text-3xl font-bold tracking-tight text-slate-900">
+        <h1 className="text-base font-semibold tracking-tight text-slate-900 md:text-3xl">
           Welcome Back, {user?.name}
         </h1>
 

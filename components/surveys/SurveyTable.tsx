@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Survey } from "@/types/survey";
 import ScrollProvider from "@/components/ScrollProvider";
 import SurveyForm from "./SurveyForm";
-import { LuX } from "react-icons/lu";
+import { LuEye, LuLoaderCircle, LuTrash2, LuX } from "react-icons/lu";
 import { useToast } from "@/components/Toast";
 import { useRouter } from "next/navigation";
 
@@ -187,10 +187,7 @@ export default function SurveyTable({
   if (loading && showLoading) {
     return (
       <div className="flex justify-center items-center p-12 text-sky-600 font-medium w-full">
-        <svg
-          className="animate-spin h-6 w-6 mr-3 border-4 border-sky-200 border-t-sky-600 rounded-full"
-          viewBox="0 0 24 24"
-        />
+        <LuLoaderCircle className="mr-3 h-6 w-6 animate-spin" />
         <span>Filtering Survey logs...</span>
       </div>
     );
@@ -328,8 +325,9 @@ export default function SurveyTable({
                     <button
                       type="button"
                       onClick={() => setSelectedSurveyId(doc.id)}
-                      className="font-semibold px-4 py-2 rounded-xl bg-sky-100 text-sky-400 hover:bg-sky-200 transition-colors"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-100 px-4 py-2 font-semibold text-sky-600 transition-colors hover:bg-sky-200"
                     >
+                      <LuEye size={16} />
                       View
                     </button>
 
@@ -340,8 +338,9 @@ export default function SurveyTable({
                         setSurveyToDelete(doc.id);
                         setShowDeleteModal(true);
                       }}
-                      className="font-semibold px-4 py-2 rounded-xl bg-red-100 text-red-400 hover:bg-red-200 transition-colors"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-100 px-4 py-2 font-semibold text-red-500 transition-colors hover:bg-red-200"
                     >
+                      <LuTrash2 size={16} />
                       Delete
                     </button>
                   </div>
@@ -372,10 +371,7 @@ export default function SurveyTable({
               <ScrollProvider className="flex-1 overflow-y-auto p-6">
                 {loadingSurvey && showSurveyLoading ? (
                   <div className="flex h-full items-center justify-center gap-2">
-                    <svg
-                      className="h-6 w-6 animate-spin rounded-full border-4 border-sky-200 border-t-sky-600"
-                      viewBox="0 0 24 24"
-                    />
+                    <LuLoaderCircle className="h-6 w-6 animate-spin" />
                     <span>Loading survey...</span>
                   </div>
                 ) : (
@@ -412,7 +408,7 @@ export default function SurveyTable({
           <button
             onClick={() => onPageChange(currentPage - 1)}
             disabled={!hasPrevPage}
-            className={`px-4 py-2 whitespace-nowrap disabled:bg-sky-100 bg-white disabled:text-white shadow-md disabled:border-none disabled:shadow-none border border-slate-200 text-slate-700 text-sm rounded-xl font-semibold hover:bg-slate-200 transition-colors duration-300`}
+            className={`px-4 py-2 whitespace-nowrap disabled:bg-slate-100 bg-white disabled:text-slate-400 shadow-sm disabled:border-none disabled:shadow-none border border-slate-200 text-slate-700 text-sm rounded-xl font-semibold hover:bg-slate-100 transition-colors duration-300`}
           >
             Previous
           </button>
@@ -420,7 +416,7 @@ export default function SurveyTable({
           <button
             onClick={() => onPageChange(currentPage + 1)}
             disabled={!hasNextPage}
-            className={`px-4 py-2 whitespace-nowrap disabled:bg-sky-100 bg-sky-500 text-white text-sm rounded-xl font-semibold hover:bg-sky-700 transition-colors duration-300`}
+            className={`px-4 py-2 whitespace-nowrap disabled:bg-slate-100 bg-sky-600 text-white text-sm rounded-xl font-semibold hover:bg-sky-700 transition-colors duration-300`}
           >
             Next
           </button>

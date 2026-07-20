@@ -4,7 +4,7 @@ import { useState } from "react";
 import SurveyForm from "./SurveyForm";
 import { Survey } from "@/types/survey";
 import ScrollProvider from "@/components/ScrollProvider";
-import { LuX } from "react-icons/lu";
+import { LuPlus, LuX } from "react-icons/lu";
 
 interface Props {
   survey: Survey;
@@ -35,7 +35,7 @@ export default function SurveyContainer({
 
   if (isNew) {
     return (
-      <div className="w-full max-w-5xl rounded-2xl bg-white p-8 shadow-lg shadow-slate-200 text-center">
+      <div className="w-full max-w-5xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-[0_12px_30px_-5px_rgba(0,0,0,0.04)] shadow-sky-100/80">
         <h2 className="text-xl font-semibold text-slate-900">
           No Alumni Tracer Survey Found
         </h2>
@@ -47,8 +47,9 @@ export default function SurveyContainer({
 
         <button
           onClick={() => setOpen(true)}
-          className="mt-6 rounded-xl bg-sky-500 px-6 py-3 text-sm font-semibold text-white transition-colors duration-300 hover:bg-sky-700"
+          className="mt-6 inline-flex items-center justify-center gap-2 rounded-2xl bg-sky-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-sky-700 hover:shadow-md"
         >
+          <LuPlus size={16} />
           Add New Survey
         </button>
 
@@ -84,7 +85,7 @@ export default function SurveyContainer({
 
   return (
     <div className="space-y-6 w-full flex flex-col items-center relative">
-      <div className="w-full max-w-5xl rounded-2xl bg-white p-5 text-left shadow-lg shadow-slate-200">
+      <div className="w-full max-w-5xl rounded-3xl border border-slate-200 bg-white p-5 text-left shadow-[0_12px_30px_-5px_rgba(0,0,0,0.04)] shadow-sky-100/80">
         <div className="flex flex-col gap-2 lg:flex-row justify-center md:justify-between">
           <div>
             <p className="text-xs uppercase text-slate-500">Survey ID</p>
@@ -112,7 +113,7 @@ export default function SurveyContainer({
             <button
               onClick={() => setOpen(true)}
               disabled={open}
-              className="px-4 py-2 whitespace-nowrap disabled:bg-sky-200 bg-sky-500 text-white w-full text-sm rounded-xl font-semibold hover:bg-sky-700 transition-colors duration-300"
+              className="w-full rounded-2xl bg-sky-600 px-4 py-2.5 whitespace-nowrap text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-sky-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none disabled:hover:bg-slate-300"
             >
               {readOnly ? "View" : "Edit"} Form
             </button>
@@ -163,7 +164,7 @@ export default function SurveyContainer({
             <div className="mt-6 flex justify-end gap-3">
               <button
                 onClick={() => setShowCancelModal(false)}
-                className="px-4 py-2 rounded-xl text-smxlon-m text-slate-700 hover:bg-slate-200 transition-colors"
+                className="px-4 py-2 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-200 transition-colors"
               >
                 Keep Editing
               </button>

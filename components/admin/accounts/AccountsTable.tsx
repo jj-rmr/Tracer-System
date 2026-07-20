@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { LuEye, LuLoaderCircle, LuTrash2 } from "react-icons/lu";
 import { Role } from "@/types";
 import { useToast } from "@/components/Toast";
 
@@ -152,10 +153,7 @@ export default function AccountsTable({
   if (loading && showLoading) {
     return (
       <div className="flex justify-center items-center p-12 text-sky-600 font-medium w-full">
-        <svg
-          className="animate-spin h-6 w-6 mr-3 border-4 border-sky-200 border-t-sky-600 rounded-full"
-          viewBox="0 0 24 24"
-        />
+        <LuLoaderCircle className="mr-3 h-6 w-6 animate-spin" />
         <span>Loading accounts...</span>
       </div>
     );
@@ -279,8 +277,9 @@ export default function AccountsTable({
                   <div className="flex justify-center gap-2">
                     <Link
                       href={`/admin/accounts/${account.id}`}
-                      className="font-semibold px-4 py-2 rounded-xl bg-sky-100 text-sky-400 hover:bg-sky-200 transition-colors"
+                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-100 px-4 py-2 font-semibold text-sky-600 transition-colors hover:bg-sky-200"
                     >
+                      <LuEye size={16} />
                       View
                     </Link>
                     {account.id !== currentUserId && (
@@ -290,8 +289,9 @@ export default function AccountsTable({
                           setAccountToDelete(account.id);
                           setShowDeleteModal(true);
                         }}
-                        className="font-semibold px-4 py-2 rounded-xl bg-red-100 text-red-400 hover:bg-red-200 transition-colors"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-100 px-4 py-2 font-semibold text-red-500 transition-colors hover:bg-red-200"
                       >
+                        <LuTrash2 size={16} />
                         Delete
                       </button>
                     )}
@@ -360,7 +360,7 @@ export default function AccountsTable({
             disabled={currentPage <= 1}
             className={`rounded-xl border px-4 py-2 text-xs font-medium transition ${
               currentPage > 1
-                ? "border-slate-300 bg-white hover:bg-slate-50 cursor-pointer"
+                ? "border-slate-300 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer"
                 : "border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed"
             }`}
           >
@@ -372,7 +372,7 @@ export default function AccountsTable({
             disabled={currentPage >= totalPages}
             className={`rounded-xl border px-4 py-2 text-xs font-medium transition ${
               currentPage < totalPages
-                ? "border-slate-300 bg-white hover:bg-slate-50 cursor-pointer"
+                ? "border-slate-300 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer"
                 : "border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed"
             }`}
           >

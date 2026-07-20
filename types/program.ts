@@ -8,10 +8,9 @@ export interface ProgramOption {
 export const PROGRAMS: ProgramOption[] = [
   { value: "", label: "Select Program" },
 
-  { value: "program_1", label: "Program 1" },
-  { value: "program_2", label: "Program 2" },
-  { value: "program_3", label: "Program 3" },
-
-  { value: "program_4", label: "Program 4" },
-  { value: "program_5", label: "Program 5" },
+  { value: "bscs", label: "BS in Computer Science" },
+  { value: "bsit", label: "BS in Information Technology" },
+  { value: "bsmath", label: "BS in Mathematics" },
+  { value: "bsce", label: "BS in Civil Engineering" },
+  { value: "bsse", label: "BS in Sanitary Engineering" },
 ];

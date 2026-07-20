@@ -21,7 +21,7 @@ export default function TestUploadPage() {
 
       formData.append("file", file);
 
-      const response = await fetch("/api/alumni/survey/upload", {
+      const response = await fetch("/api/alumni/documents/upload", {
         method: "POST",
         body: formData,
       });

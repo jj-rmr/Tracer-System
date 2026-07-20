@@ -1,12 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Survey } from "@/types/survey";
+import { Survey, UnemploymentReason } from "@/types/survey";
 import { useToast } from "@/components/Toast";
 import { Dropdown } from "@/components/Dropdown";
 import { useRouter } from "next/navigation";
 import { ArrayInput } from "@/components/ArrayInput";
 import { PROGRAMS } from "@/types/program";
+import { FileInput } from "../FileInput";
+import { uploadDocument, deleteDocument } from "@/lib/api/documents";
+import { SurveyDocument } from "@/types";
 
 interface Props {
   initialData: Survey;
@@ -27,11 +30,21 @@ export default function SurveyForm({
 
   useEffect(() => {
     setForm(initialData);
+    setExistingDocuments(initialData.documents ?? []);
   }, [initialData]);
   const [errors, setErrors] = useState<FormErrors>({});
   const [step, setStep] = useState(1);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [employmentDocument, setEmploymentDocument] = useState<File | null>(
+    null,
+  );
+  const [awardsDocument, setAwardsDocument] = useState<File | null>(null);
+  const [existingDocuments, setExistingDocuments] = useState<SurveyDocument[]>(
+    initialData.documents ?? [],
+  );
+  const [documentToDelete, setDocumentToDelete] =
+    useState<SurveyDocument | null>(null);
   const { showToast } = useToast();
 
   const router = useRouter();
@@ -255,6 +268,99 @@ export default function SurveyForm({
     window.dispatchEvent(new Event("stepchanged"));
   }
 
+  async function handleDeleteDocument(document: SurveyDocument) {
+    if (readOnly) return;
+
+    try {
+      setIsSubmitting(true);
+
+      await deleteDocument(document.id);
+
+      setExistingDocuments((prev) =>
+        prev.filter((item) => item.id !== document.id),
+      );
+
+      setForm((prev) => ({
+        ...prev,
+        documents: prev.documents.filter((item) => item.id !== document.id),
+      }));
+
+      showToast({
+        message: "Document deleted successfully.",
+        type: "success",
+      });
+
+      setDocumentToDelete(null);
+    } catch (error) {
+      console.error("Failed to delete document:", error);
+
+      showToast({
+        message: "Failed to delete document.",
+        type: "error",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  function requestDeleteDocument(document: SurveyDocument) {
+    if (readOnly) return;
+
+    setDocumentToDelete(document);
+  }
+
+  // async function save() {
+  //   console.log("save() called");
+
+  //   const valid = validateStep(4);
+  //   console.log("validateStep(4):", valid);
+
+  //   if (!valid) {
+  //     console.log("Errors:", errors);
+  //     return;
+  //   }
+
+  //   setIsSubmitting(true);
+
+  //   try {
+  //     console.log("Sending request...");
+
+  //     const { id: _, userId: __, ...surveyData } = form;
+
+  //     const response = await fetch("/api/alumni/survey", {
+  //       method: isNew ? "POST" : "PATCH",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify(surveyData),
+  //     });
+
+  //     console.log("Response:", response.status);
+
+  //     const data = await response.json();
+  //     console.log(data);
+
+  //     onSuccess?.();
+  //     setShowSaveModal(false);
+  //     router.refresh();
+  //     showToast({
+  //       message: isNew
+  //         ? "Form saved successfully"
+  //         : "Changes saved successfully!",
+  //       type: "success",
+  //     });
+  //   } catch (err: any) {
+  //     showToast({
+  //       message: isNew
+  //         ? "An error occurred while creating a form"
+  //         : "An error occurred while saving changes",
+  //       type: "error",
+  //     });
+  //   } finally {
+  //     setIsSubmitting(false);
+  //   }
+  // }
+
   async function save() {
     console.log("save() called");
 
@@ -269,10 +375,11 @@ export default function SurveyForm({
     setIsSubmitting(true);
 
     try {
-      console.log("Sending request...");
+      console.log("Sending survey request...");
 
       const { id: _, userId: __, ...surveyData } = form;
 
+      // 1. Save the survey first
       const response = await fetch("/api/alumni/survey", {
         method: isNew ? "POST" : "PATCH",
         headers: {
@@ -281,21 +388,98 @@ export default function SurveyForm({
         body: JSON.stringify(surveyData),
       });
 
-      console.log("Response:", response.status);
+      if (!response.ok) {
+        throw new Error("Failed to save survey");
+      }
 
-      const data = await response.json();
-      console.log(data);
+      const result = await response.json();
+
+      if (!result.success || !result.survey) {
+        throw new Error("Survey was not saved correctly");
+      }
+
+      const savedSurvey: Survey = result.survey;
+
+      const uploadFiles = [
+        {
+          type: "employment",
+          file: employmentDocument,
+        },
+        {
+          type: "awards",
+          file: awardsDocument,
+        },
+      ].filter(
+        (
+          item,
+        ): item is {
+          type: "employment" | "awards";
+          file: File;
+        } => item.file !== null,
+      );
+
+      const uploadResults = await Promise.allSettled(
+        uploadFiles.map((item) => uploadDocument(item.file, savedSurvey.id)),
+      );
+
+      const successfulUploads = uploadResults
+        .filter(
+          (result): result is PromiseFulfilledResult<SurveyDocument> =>
+            result.status === "fulfilled",
+        )
+        .map((result) => result.value);
+
+      const failedUploads = uploadResults
+        .filter(
+          (result): result is PromiseRejectedResult =>
+            result.status === "rejected",
+        )
+        .map((result) =>
+          result.reason instanceof Error
+            ? result.reason.message
+            : "Unknown upload error",
+        );
+
+      const hasUploadFailure = failedUploads.length > 0;
+
+      if (successfulUploads.length > 0) {
+        setExistingDocuments((prev) => [...successfulUploads, ...prev]);
+
+        setForm((prev) => ({
+          ...prev,
+          documents: [...successfulUploads, ...(prev.documents ?? [])],
+        }));
+      }
+
+      uploadResults.forEach((result, index) => {
+        if (result.status === "fulfilled") {
+          const uploadedFile = uploadFiles[index];
+
+          if (uploadedFile.type === "employment") {
+            setEmploymentDocument(null);
+          }
+
+          if (uploadedFile.type === "awards") {
+            setAwardsDocument(null);
+          }
+        }
+      });
+
+      showToast({
+        message: hasUploadFailure
+          ? `Survey saved, but some documents could not be uploaded: ${failedUploads.join(", ")}`
+          : isNew
+            ? "Form saved successfully"
+            : "Changes saved successfully!",
+        type: hasUploadFailure ? "error" : "success",
+      });
 
       onSuccess?.();
       setShowSaveModal(false);
       router.refresh();
-      showToast({
-        message: isNew
-          ? "Form saved successfully"
-          : "Changes saved successfully!",
-        type: "success",
-      });
     } catch (err: any) {
+      console.error("Save failed:", err);
+
       showToast({
         message: isNew
           ? "An error occurred while creating a form"
@@ -355,6 +539,12 @@ export default function SurveyForm({
             errors={errors}
             readOnly={readOnly}
             updateField={updateField}
+            employmentDocument={employmentDocument}
+            setEmploymentDocument={setEmploymentDocument}
+            awardsDocument={awardsDocument}
+            setAwardsDocument={setAwardsDocument}
+            existingDocuments={existingDocuments}
+            onRequestDeleteDocument={requestDeleteDocument}
           />
         )}
         {step === 4 && (
@@ -370,7 +560,7 @@ export default function SurveyForm({
       <div className="flex flex-col-reverse md:flex-row justify-stretch md:justify-end gap-4">
         {step > 1 && (
           <button
-            className="px-4 py-2 whitespace-nowrap disabled:bg-sky-200 bg-white text-slate-700 shadow-md border border-slate-200 text-sm rounded-xl font-semibold hover:bg-slate-200 transition-colors duration-300"
+            className="rounded-2xl border border-slate-200 bg-white px-4 py-2 whitespace-nowrap text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:bg-slate-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-500 disabled:shadow-none disabled:hover:bg-slate-100"
             onClick={() => handleStep("backward")}
           >
             Previous Section
@@ -380,14 +570,14 @@ export default function SurveyForm({
         {!readOnly ? (
           step === sections.length ? (
             <button
-              className="px-4 py-2 whitespace-nowrap disabled:bg-sky-200 bg-sky-500 text-white text-sm rounded-xl font-semibold hover:bg-sky-700 transition-colors duration-300"
+              className="rounded-2xl bg-sky-600 px-4 py-2.5 whitespace-nowrap text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-sky-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none disabled:hover:bg-slate-300"
               onClick={handlePreSubmitCheck}
             >
               {isNew ? "Submit Survey" : "Update Survey"}
             </button>
           ) : (
             <button
-              className="px-4 py-2 whitespace-nowrap disabled:bg-sky-200 bg-sky-500 text-white text-sm rounded-xl font-semibold hover:bg-sky-700 transition-colors duration-300"
+              className="rounded-2xl bg-sky-600 px-4 py-2.5 whitespace-nowrap text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-sky-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none disabled:hover:bg-slate-300"
               onClick={() => validateStep(step) && handleStep("forward")}
             >
               Next Section
@@ -396,7 +586,7 @@ export default function SurveyForm({
         ) : (
           step < sections.length && (
             <button
-              className="px-4 py-2 whitespace-nowrap disabled:bg-sky-200 bg-sky-500 text-white text-sm rounded-xl font-semibold hover:bg-sky-700 transition-colors duration-300"
+              className="rounded-2xl bg-sky-600 px-4 py-2.5 whitespace-nowrap text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-sky-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none disabled:hover:bg-slate-300"
               onClick={() => handleStep("forward")}
             >
               Next Section
@@ -443,6 +633,43 @@ export default function SurveyForm({
           </div>
         </div>
       )}
+      {!readOnly && documentToDelete && (
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/40 px-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <h3 className="text-lg font-semibold text-slate-900">
+              Delete Document?
+            </h3>
+
+            <p className="mt-2 text-sm text-slate-500">
+              Are you sure you want to delete{" "}
+              <span className="font-semibold text-slate-700">
+                "{documentToDelete.filename}"
+              </span>
+              ? This action cannot be undone.
+            </p>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setDocumentToDelete(null)}
+                disabled={isSubmitting}
+                className="rounded-xl px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleDeleteDocument(documentToDelete)}
+                disabled={isSubmitting}
+                className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+              >
+                {isSubmitting ? "Deleting..." : "Delete Document"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -460,10 +687,15 @@ function ErrorMessage({ message }: { message?: string }) {
 }
 
 const styles = {
-  input: (err: boolean, disabled: boolean) =>
-    `w-full p-4 rounded-2xl border text-slate-950 text-sm focus:outline-none focus:ring-2 transition duration-300 ${err ? "border-rose-400 focus:ring-rose-100" : disabled ? "bg-slate-200 border-none" : "bg-slate-200 border-sky-200 focus:ring-sky-100 focus:border-sky-500"}`,
+  input: (err: boolean, disabled: boolean) => {
+    const stateClass = disabled
+      ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-500 shadow-none placeholder:opacity-0"
+      : "focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100 shadow-sm text-slate-900";
+
+    return `w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm transition duration-200 placeholder:text-slate-400 ${stateClass} ${err && !disabled ? "border-rose-400 focus:ring-rose-100" : ""}`;
+  },
   label:
-    "block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-2",
+    "mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-600",
 };
 
 function PersonalInfoStep({ form, errors, updateField, readOnly }: StepProps) {
@@ -669,7 +901,7 @@ function EducationStep({ form, errors, updateField, readOnly }: StepProps) {
           <Dropdown
             id="program"
             disabled={readOnly}
-            label="Program"
+            label="Program *"
             value={form.program}
             onChange={(value) => updateField("program", value)}
             options={PROGRAMS}
@@ -725,6 +957,7 @@ function EducationStep({ form, errors, updateField, readOnly }: StepProps) {
             value={form.advancedStudyDegree}
             onChange={(val) => updateField("advancedStudyDegree", val as any)}
             options={[
+              { value: "", label: "None" },
               { value: "MS", label: "MS" },
               { value: "MA", label: "MA" },
               { value: "Others", label: "Others" },
@@ -733,25 +966,29 @@ function EducationStep({ form, errors, updateField, readOnly }: StepProps) {
             hasError={false}
           />
         </div>
-        <div>
-          <Dropdown
-            disabled={readOnly}
-            id="advancedStudyReasons"
-            label="Reason for Pursuing Graduate Studies"
-            value={form.advancedStudyReasons}
-            onChange={(val) => updateField("advancedStudyReasons", val as any)}
-            options={[
-              { value: "For Promotion", label: "For Promotion" },
-              {
-                value: "Professional Development",
-                label: "Professional Development",
-              },
-              { value: "Others", label: "Others" },
-            ]}
-            placeholder="None"
-            hasError={false}
-          />
-        </div>
+        {form.advancedStudyDegree && (
+          <div>
+            <Dropdown
+              disabled={readOnly}
+              id="advancedStudyReasons"
+              label="Reason for Pursuing Graduate Studies"
+              value={form.advancedStudyReasons}
+              onChange={(val) =>
+                updateField("advancedStudyReasons", val as any)
+              }
+              options={[
+                { value: "For Promotion", label: "For Promotion" },
+                {
+                  value: "Professional Development",
+                  label: "Professional Development",
+                },
+                { value: "Others", label: "Others" },
+              ]}
+              placeholder="None"
+              hasError={false}
+            />
+          </div>
+        )}
       </div>
 
       {form.advancedStudyDegree === "Others" && (
@@ -790,24 +1027,60 @@ function EducationStep({ form, errors, updateField, readOnly }: StepProps) {
   );
 }
 
-function EmploymentStep({ form, errors, updateField, readOnly }: StepProps) {
-  const unempOptions: any[] = [
-    "Advance Study",
-    "Family Concern",
-    "Health",
-    "Lack of Work Experience",
-    "No Job Opportunity",
-    "Did Not Look For Job",
-    "Others",
-  ];
+function EmploymentStep({
+  form,
+  errors,
+  updateField,
+  readOnly,
+  employmentDocument,
+  setEmploymentDocument,
+  awardsDocument,
+  setAwardsDocument,
+  existingDocuments,
+  onRequestDeleteDocument,
+}: StepProps & {
+  employmentDocument: File | null;
+  setEmploymentDocument: (file: File | null) => void;
 
-  const toggleUnemploymentReason = (reason: any) => {
-    const list = [...form.unemploymentReasons];
-    const idx = list.indexOf(reason);
-    if (idx > -1) list.splice(idx, 1);
-    else list.push(reason);
-    updateField("unemploymentReasons", list);
-  };
+  awardsDocument: File | null;
+  setAwardsDocument: (file: File | null) => void;
+
+  existingDocuments: SurveyDocument[];
+  onRequestDeleteDocument: (document: SurveyDocument) => void;
+}) {
+  const unempOptions: {
+    value: UnemploymentReason;
+    label: string;
+  }[] = [
+    {
+      value: "Advance Study",
+      label: "Advance or further study",
+    },
+    {
+      value: "Family Concern",
+      label: "Family concern and decided not to find a job",
+    },
+    {
+      value: "Health",
+      label: "Health-related reason(s)",
+    },
+    {
+      value: "Lack of Work Experience",
+      label: "Lack of work experience",
+    },
+    {
+      value: "No Job Opportunity",
+      label: "No job opportunity",
+    },
+    {
+      value: "Did Not Look For Job",
+      label: "Did not look for a job",
+    },
+    {
+      value: "Others",
+      label: "Others",
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -942,43 +1215,67 @@ function EmploymentStep({ form, errors, updateField, readOnly }: StepProps) {
               hasError={!!errors.placeOfWork}
             />
           </div>
-
-          {/* Verification documents are handled through the upload workflow */}
-          <div className="space-y-4 border-t pt-4">
-            <p className="text-sm text-slate-600">
-              Verification documents are uploaded through the document upload
-              flow and stored separately.
-            </p>
-          </div>
+          <FileInput
+            id="employmentDocuments"
+            name="employmentDocuments"
+            label="Employment Documents"
+            file={employmentDocument}
+            onChange={setEmploymentDocument}
+            accept=".pdf,.doc,.docx"
+            hint="Upload your resume or other employment-related documents."
+            disabled={readOnly}
+          />
+          <FileInput
+            id="awardsDocuments"
+            name="awardsDocuments"
+            label="Awards Documents"
+            file={awardsDocument}
+            onChange={setAwardsDocument}
+            accept=".pdf,.doc,.docx"
+            hint="Upload certificates or documents related to your awards."
+            disabled={readOnly}
+          />
         </div>
       )}
 
-      {(form.employmentStatus === "No" ||
-        form.employmentStatus === "Never Employed") && (
-        <div className="space-y-4 border-t border-sky-200 pt-4 animate-fadeIn">
-          <label className={styles.label}>Reasons for Unemployment *</label>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {unempOptions.map((opt) => (
-              <label
-                key={opt}
-                className="flex items-center space-x-3 bg-sky-50 hover:bg-sky-100 hover:-translate-y-1 transition p-4 shadow-sm shadow-sky-100 rounded-xl cursor-pointer"
-              >
-                <input
-                  disabled={readOnly}
-                  type="checkbox"
-                  checked={form.unemploymentReasons.includes(opt)}
-                  onChange={() => toggleUnemploymentReason(opt)}
-                  className="cursor-pointer"
-                />
-                <span className="text-sm">{opt}</span>
-              </label>
-            ))}
-          </div>
-          <ErrorMessage message={errors.unemploymentReasons} />
+      <div className="space-y-4 border-t border-slate-200 pt-4">
+        {(form.employmentStatus === "No" ||
+          form.employmentStatus === "Never Employed") && (
+          <div className="space-y-2 border-t pt-4">
+            <label className={styles.label}>
+              Please state the reason(s) why you are not yet employed. You may
+              check more than one answer. *
+            </label>
 
-          {form.unemploymentReasons.includes("Others") && (
-            <div>
-              <label className={styles.label}>Specify Other Reason *</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {unempOptions.map((reason) => (
+                <label
+                  key={reason.value}
+                  className="flex items-center space-x-2 text-sm"
+                >
+                  <input
+                    disabled={readOnly}
+                    type="checkbox"
+                    checked={form.unemploymentReasons.includes(reason.value)}
+                    onChange={() =>
+                      updateField(
+                        "unemploymentReasons",
+                        form.unemploymentReasons.includes(reason.value)
+                          ? form.unemploymentReasons.filter(
+                              (r) => r !== reason.value,
+                            )
+                          : [...form.unemploymentReasons, reason.value],
+                      )
+                    }
+                  />
+                  <span>{reason.label}</span>
+                </label>
+              ))}
+            </div>
+
+            <ErrorMessage message={errors.unemploymentReasons} />
+
+            {form.unemploymentReasons.includes("Others") && (
               <input
                 disabled={readOnly}
                 type="text"
@@ -986,16 +1283,45 @@ function EmploymentStep({ form, errors, updateField, readOnly }: StepProps) {
                   !!errors.unemploymentReasonOther,
                   readOnly,
                 )}
+                placeholder="Please specify other reason(s)"
                 value={form.unemploymentReasonOther}
                 onChange={(e) =>
                   updateField("unemploymentReasonOther", e.target.value)
                 }
               />
-              <ErrorMessage message={errors.unemploymentReasonOther} />
-            </div>
-          )}
-        </div>
-      )}
+            )}
+          </div>
+        )}
+
+        {existingDocuments.length > 0 && (
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Uploaded documents
+            </p>
+
+            <ul className="mt-2 space-y-2">
+              {existingDocuments.map((document) => (
+                <li
+                  key={document.id}
+                  className="flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2 text-sm text-slate-700"
+                >
+                  <span className="min-w-0 truncate">{document.filename}</span>
+
+                  {!readOnly && (
+                    <button
+                      type="button"
+                      onClick={() => onRequestDeleteDocument(document)}
+                      className="shrink-0 rounded-lg px-2 py-1 text-xs font-semibold text-rose-500 transition-colors hover:bg-rose-50 hover:text-rose-600"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -1117,7 +1443,6 @@ function JobHistoryStep({ form, errors, updateField, readOnly }: StepProps) {
         />
       </div>
 
-      {/* Conditional Reasons Arrays Selection UI */}
       {form.isFirstJob === true && (
         <div className="space-y-2 border-t pt-4">
           <label className={styles.label}>
