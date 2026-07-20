@@ -1,3 +1,5 @@
+export type SurveyDocumentType = "employment" | "awards";
+
 export interface SurveyDocument {
   id: string;
 
@@ -7,6 +9,8 @@ export interface SurveyDocument {
 
   googleDriveFileId: string;
   googleDriveFolderId: string;
+
+  documentType?: SurveyDocumentType;
 
   uploadedAt: string;
   metadata?: Record<string, unknown>;

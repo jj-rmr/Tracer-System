@@ -1,17 +1,68 @@
+//folders.ts
+
 import { drive } from "../google-drive";
 
-export async function createFolder(name: string) {
-  const response = await drive.files.create({
-    requestBody: {
-      name,
+const folderLocks = new Map<
+  string,
+  Promise<{ id?: string | null; name?: string | null }>
+>();
 
-      mimeType: "application/vnd.google-apps.folder",
+export async function getOrCreateFolder(name: string, parentId?: string) {
+  const actualParentId = parentId ?? process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID!;
 
-      parents: [process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID!],
-    },
+  const lockKey = `${actualParentId}:${name}`;
 
-    fields: "id,name",
+  const existingLock = folderLocks.get(lockKey);
+
+  if (existingLock) {
+    return existingLock;
+  }
+
+  const creationPromise = findOrCreateFolder(name, actualParentId);
+
+  folderLocks.set(lockKey, creationPromise);
+
+  try {
+    return await creationPromise;
+  } finally {
+    folderLocks.delete(lockKey);
+  }
+}
+
+async function findOrCreateFolder(name: string, parentId: string) {
+  const escapedName = name.replace(/'/g, "\\'");
+
+  const response = await drive.files.list({
+    q: [
+      `name = '${escapedName}'`,
+      "mimeType = 'application/vnd.google-apps.folder'",
+      "trashed = false",
+      `'${parentId}' in parents`,
+    ].join(" and "),
+
+    fields: "files(id,name,parents)",
+    spaces: "drive",
   });
 
-  return response.data;
+  const existingFolder = response.data.files?.[0];
+
+  if (existingFolder?.id) {
+    return existingFolder;
+  }
+
+  const folder = await drive.files.create({
+    requestBody: {
+      name,
+      mimeType: "application/vnd.google-apps.folder",
+      parents: [parentId],
+    },
+
+    fields: "id,name,parents",
+  });
+
+  if (!folder.data.id) {
+    throw new Error(`Failed to create folder: ${name}`);
+  }
+
+  return folder.data;
 }

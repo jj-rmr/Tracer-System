@@ -19,12 +19,23 @@ export async function POST(request: NextRequest) {
 
     const file = formData.get("file");
     const surveyId = formData.get("surveyId");
+    const documentType = formData.get("documentType");
 
     if (typeof surveyId !== "string" || !surveyId.trim()) {
       return NextResponse.json(
         {
           success: false,
           message: "Survey ID is required.",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (documentType !== "employment" && documentType !== "awards") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Invalid document type.",
         },
         { status: 400 },
       );
@@ -52,7 +63,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const document = await uploadSurveyDocument(survey, file);
+    const document = await uploadSurveyDocument(survey, file, documentType);
 
     let savedDocument;
 

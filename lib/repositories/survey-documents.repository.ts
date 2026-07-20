@@ -32,6 +32,8 @@ function toDb(document: Partial<SurveyDocument>, surveyId: string) {
 
     google_drive_folder_id: safeDriveFolderId,
 
+    document_type: document.documentType ?? null,
+
     metadata,
   };
 }
@@ -50,7 +52,10 @@ function fromDb(row: any): SurveyDocument {
 
     googleDriveFolderId: row.google_drive_folder_id,
 
+    documentType: row.document_type ?? undefined,
+
     uploadedAt: row.uploaded_at,
+
     metadata: row.metadata ?? {},
   };
 }

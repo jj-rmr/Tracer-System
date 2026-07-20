@@ -36,10 +36,9 @@ export default function SurveyForm({
   const [step, setStep] = useState(1);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [employmentDocument, setEmploymentDocument] = useState<File | null>(
-    null,
-  );
-  const [awardsDocument, setAwardsDocument] = useState<File | null>(null);
+  const [employmentDocuments, setEmploymentDocuments] = useState<File[]>([]);
+
+  const [awardsDocuments, setAwardsDocuments] = useState<File[]>([]);
   const [existingDocuments, setExistingDocuments] = useState<SurveyDocument[]>(
     initialData.documents ?? [],
   );
@@ -164,44 +163,70 @@ export default function SurveyForm({
     }
 
     if (currentStep === 4) {
-      if (form.isFirstJob === undefined || form.isFirstJob === null)
+      if (form.isFirstJob === undefined || form.isFirstJob === null) {
         newErrors.isFirstJob =
-          "Please indicate whether your current job is your first job.";
-      if (
-        form.isFirstJobRelated === undefined ||
-        form.isFirstJobRelated === null
-      )
-        newErrors.isFirstJobRelated =
-          "Please indicate whether your first job was related to your degree program.";
-      if (form.isFirstJob) {
-        if (form.stayingReasons.length === 0)
-          newErrors.stayingReasons =
-            "Please select at least one reason for staying in your first job.";
-        if (
-          form.stayingReasons.includes("Others") &&
-          !form.stayingReasonOther.trim()
-        )
-          newErrors.stayingReasonOther =
-            "Please specify your other reason for staying in your first job.";
+          "Please indicate whether this is your first job after college.";
       } else {
-        if (form.acceptingReasons.length === 0)
-          newErrors.acceptingReasons =
-            "Please select at least one reason for accepting your first first job.";
+        // Q22: Only shown if FIRST JOB = Yes
+        if (form.isFirstJob) {
+          if (form.stayingReasons.length === 0) {
+            newErrors.stayingReasons =
+              "Please select at least one reason for staying in your first job.";
+          }
+
+          if (
+            form.stayingReasons.includes("Others") &&
+            !form.stayingReasonOther.trim()
+          ) {
+            newErrors.stayingReasonOther =
+              "Please specify your other reason for staying in your first job.";
+          }
+
+          // Q23: Only shown if FIRST JOB = Yes
+          if (
+            form.isFirstJobRelated === undefined ||
+            form.isFirstJobRelated === null
+          ) {
+            newErrors.isFirstJobRelated =
+              "Please indicate whether your first job was related to your degree program.";
+          }
+
+          // Q24: Only shown if FIRST JOB = Yes AND related = No
+          if (form.isFirstJobRelated === false) {
+            if (form.acceptingReasons.length === 0) {
+              newErrors.acceptingReasons =
+                "Please select at least one reason for accepting your first job.";
+            }
+
+            if (
+              form.acceptingReasons.includes("Others") &&
+              !form.acceptingReasonOther.trim()
+            ) {
+              newErrors.acceptingReasonOther =
+                "Please specify your other reason for accepting your first job.";
+            }
+          }
+        }
+
+        // Q25: Shown if FIRST JOB = No
+        // OR FIRST JOB = Yes AND FIRST JOB RELATED = No
         if (
-          form.acceptingReasons.includes("Others") &&
-          !form.acceptingReasonOther.trim()
-        )
-          newErrors.acceptingReasonOther =
-            "Please specify your other reason for accepting your first first job.";
-        if (form.changingReasons.length === 0)
-          newErrors.changingReasons =
-            "Please select at least one reason for changing jobs";
-        if (
-          form.changingReasons.includes("Others") &&
-          !form.changingReasonOther.trim()
-        )
-          newErrors.changingReasonOther =
-            "Please specify your other reason for changing jobs.";
+          form.isFirstJob === false ||
+          (form.isFirstJob === true && form.isFirstJobRelated === false)
+        ) {
+          if (form.changingReasons.length === 0) {
+            newErrors.changingReasons =
+              "Please select at least one reason for changing jobs.";
+          }
+
+          if (
+            form.changingReasons.includes("Others") &&
+            !form.changingReasonOther.trim()
+          ) {
+            newErrors.changingReasonOther =
+              "Please specify your other reason for changing jobs.";
+          }
+        }
       }
       if (!form.firstJobTitle.trim())
         newErrors.firstJobTitle = "Please enter the title of your first job.";
@@ -309,58 +334,6 @@ export default function SurveyForm({
     setDocumentToDelete(document);
   }
 
-  // async function save() {
-  //   console.log("save() called");
-
-  //   const valid = validateStep(4);
-  //   console.log("validateStep(4):", valid);
-
-  //   if (!valid) {
-  //     console.log("Errors:", errors);
-  //     return;
-  //   }
-
-  //   setIsSubmitting(true);
-
-  //   try {
-  //     console.log("Sending request...");
-
-  //     const { id: _, userId: __, ...surveyData } = form;
-
-  //     const response = await fetch("/api/alumni/survey", {
-  //       method: isNew ? "POST" : "PATCH",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: JSON.stringify(surveyData),
-  //     });
-
-  //     console.log("Response:", response.status);
-
-  //     const data = await response.json();
-  //     console.log(data);
-
-  //     onSuccess?.();
-  //     setShowSaveModal(false);
-  //     router.refresh();
-  //     showToast({
-  //       message: isNew
-  //         ? "Form saved successfully"
-  //         : "Changes saved successfully!",
-  //       type: "success",
-  //     });
-  //   } catch (err: any) {
-  //     showToast({
-  //       message: isNew
-  //         ? "An error occurred while creating a form"
-  //         : "An error occurred while saving changes",
-  //       type: "error",
-  //     });
-  //   } finally {
-  //     setIsSubmitting(false);
-  //   }
-  // }
-
   async function save() {
     console.log("save() called");
 
@@ -378,6 +351,9 @@ export default function SurveyForm({
       console.log("Sending survey request...");
 
       const { id: _, userId: __, ...surveyData } = form;
+
+      console.log("FIRST NAME BEFORE SAVE:", form.firstName);
+      console.log("FORM:", form);
 
       // 1. Save the survey first
       const response = await fetch("/api/alumni/survey", {
@@ -401,25 +377,21 @@ export default function SurveyForm({
       const savedSurvey: Survey = result.survey;
 
       const uploadFiles = [
-        {
-          type: "employment",
-          file: employmentDocument,
-        },
-        {
-          type: "awards",
-          file: awardsDocument,
-        },
-      ].filter(
-        (
-          item,
-        ): item is {
-          type: "employment" | "awards";
-          file: File;
-        } => item.file !== null,
-      );
+        ...employmentDocuments.map((file) => ({
+          type: "employment" as const,
+          file,
+        })),
+
+        ...awardsDocuments.map((file) => ({
+          type: "awards" as const,
+          file,
+        })),
+      ];
 
       const uploadResults = await Promise.allSettled(
-        uploadFiles.map((item) => uploadDocument(item.file, savedSurvey.id)),
+        uploadFiles.map((item) =>
+          uploadDocument(item.file, savedSurvey.id, item.type),
+        ),
       );
 
       const successfulUploads = uploadResults
@@ -455,13 +427,13 @@ export default function SurveyForm({
         if (result.status === "fulfilled") {
           const uploadedFile = uploadFiles[index];
 
-          if (uploadedFile.type === "employment") {
-            setEmploymentDocument(null);
-          }
+          setEmploymentDocuments((prev) =>
+            prev.filter((file) => file !== uploadedFile.file),
+          );
 
-          if (uploadedFile.type === "awards") {
-            setAwardsDocument(null);
-          }
+          setAwardsDocuments((prev) =>
+            prev.filter((file) => file !== uploadedFile.file),
+          );
         }
       });
 
@@ -539,12 +511,18 @@ export default function SurveyForm({
             errors={errors}
             readOnly={readOnly}
             updateField={updateField}
-            employmentDocument={employmentDocument}
-            setEmploymentDocument={setEmploymentDocument}
-            awardsDocument={awardsDocument}
-            setAwardsDocument={setAwardsDocument}
+            employmentDocuments={employmentDocuments}
+            setEmploymentDocuments={setEmploymentDocuments}
+            awardsDocuments={awardsDocuments}
+            setAwardsDocuments={setAwardsDocuments}
             existingDocuments={existingDocuments}
             onRequestDeleteDocument={requestDeleteDocument}
+            onFileError={(message) =>
+              showToast({
+                message,
+                type: "error",
+              })
+            }
           />
         )}
         {step === 4 && (
@@ -662,7 +640,7 @@ export default function SurveyForm({
                 type="button"
                 onClick={() => handleDeleteDocument(documentToDelete)}
                 disabled={isSubmitting}
-                className="rounded-xl bg-rose-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+                className="rounded-xl bg-red-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:bg-slate-300"
               >
                 {isSubmitting ? "Deleting..." : "Delete Document"}
               </button>
@@ -907,6 +885,7 @@ function EducationStep({ form, errors, updateField, readOnly }: StepProps) {
             options={PROGRAMS}
             hasError={!!errors.program}
             required
+            placeholder="Select your program of study"
           />
           <ErrorMessage message={errors.program} />
         </div>
@@ -948,7 +927,7 @@ function EducationStep({ form, errors, updateField, readOnly }: StepProps) {
         readOnly={readOnly}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-200">
         <div>
           <Dropdown
             disabled={readOnly}
@@ -1032,18 +1011,21 @@ function EmploymentStep({
   errors,
   updateField,
   readOnly,
-  employmentDocument,
-  setEmploymentDocument,
-  awardsDocument,
-  setAwardsDocument,
+  employmentDocuments,
+  setEmploymentDocuments,
+  awardsDocuments,
+  setAwardsDocuments,
   existingDocuments,
   onRequestDeleteDocument,
+  onFileError,
 }: StepProps & {
-  employmentDocument: File | null;
-  setEmploymentDocument: (file: File | null) => void;
+  employmentDocuments: File[];
+  setEmploymentDocuments: (files: File[]) => void;
 
-  awardsDocument: File | null;
-  setAwardsDocument: (file: File | null) => void;
+  awardsDocuments: File[];
+  setAwardsDocuments: (files: File[]) => void;
+
+  onFileError: (message: string) => void;
 
   existingDocuments: SurveyDocument[];
   onRequestDeleteDocument: (document: SurveyDocument) => void;
@@ -1097,18 +1079,18 @@ function EmploymentStep({
           { value: "No", label: "No" },
           { value: "Never Employed", label: "Never Employed" },
         ]}
-        placeholder="Select"
+        placeholder="Select Employment Status"
         required
         hasError={!!errors.employmentStatus}
       />
 
       {form.employmentStatus === "Yes" && (
-        <div className="space-y-6 border-t pt-4 animate-fadeIn">
+        <div className="space-y-6 border-t border-slate-200 pt-4 animate-fadeIn">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Dropdown
               disabled={readOnly}
               id="currentEmploymentStatus"
-              label="Present Employment Status *"
+              label="Current Employment Status *"
               value={form.currentEmploymentStatus}
               onChange={(val) =>
                 updateField("currentEmploymentStatus", val as any)
@@ -1122,7 +1104,7 @@ function EmploymentStep({
                 { value: "Self-employed", label: "Self-employed" },
                 { value: "Open Contract", label: "Open Contract" },
               ]}
-              placeholder="Select"
+              placeholder="Select Current Employment Status"
               required
               hasError={!!errors.currentEmploymentStatus}
             />
@@ -1171,6 +1153,7 @@ function EmploymentStep({
               disabled={readOnly}
               id="businessIndustry"
               label="Business Industry *"
+              description="Major line of business of the company you are presently employed in. Please check one only."
               value={form.businessIndustry}
               onChange={(val) => updateField("businessIndustry", val as any)}
               options={[
@@ -1196,7 +1179,7 @@ function EmploymentStep({
                 { value: "Travel and Tourism", label: "Travel and Tourism" },
                 { value: "Meeting and Events", label: "Meeting and Events" },
               ]}
-              placeholder="Select"
+              placeholder="Select Business Industry"
               required
               hasError={!!errors.businessIndustry}
             />
@@ -1219,21 +1202,34 @@ function EmploymentStep({
             id="employmentDocuments"
             name="employmentDocuments"
             label="Employment Documents"
-            file={employmentDocument}
-            onChange={setEmploymentDocument}
+            files={employmentDocuments}
+            onChange={setEmploymentDocuments}
+            existingDocuments={existingDocuments.filter(
+              (document) => document.documentType === "employment",
+            )}
+            onRequestDeleteDocument={onRequestDeleteDocument}
             accept=".pdf,.doc,.docx"
-            hint="Upload your resume or other employment-related documents."
+            hint="To verify your employment status, please provide supporting documentation, such as a company ID and/or a copy of your employment contract."
             disabled={readOnly}
+            maxFiles={5}
+            onError={onFileError}
           />
+
           <FileInput
             id="awardsDocuments"
             name="awardsDocuments"
             label="Awards Documents"
-            file={awardsDocument}
-            onChange={setAwardsDocument}
+            files={awardsDocuments}
+            onChange={setAwardsDocuments}
+            existingDocuments={existingDocuments.filter(
+              (document) => document.documentType === "awards",
+            )}
+            onRequestDeleteDocument={onRequestDeleteDocument}
             accept=".pdf,.doc,.docx"
-            hint="Upload certificates or documents related to your awards."
+            hint="Upload copies of awards, recognition, and feedback from employers."
             disabled={readOnly}
+            maxFiles={5}
+            onError={onFileError}
           />
         </div>
       )}
@@ -1241,7 +1237,7 @@ function EmploymentStep({
       <div className="space-y-4 border-t border-slate-200 pt-4">
         {(form.employmentStatus === "No" ||
           form.employmentStatus === "Never Employed") && (
-          <div className="space-y-2 border-t pt-4">
+          <div className="space-y-2 border-t border-slate-200 pt-4">
             <label className={styles.label}>
               Please state the reason(s) why you are not yet employed. You may
               check more than one answer. *
@@ -1290,35 +1286,6 @@ function EmploymentStep({
                 }
               />
             )}
-          </div>
-        )}
-
-        {existingDocuments.length > 0 && (
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Uploaded documents
-            </p>
-
-            <ul className="mt-2 space-y-2">
-              {existingDocuments.map((document) => (
-                <li
-                  key={document.id}
-                  className="flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2 text-sm text-slate-700"
-                >
-                  <span className="min-w-0 truncate">{document.filename}</span>
-
-                  {!readOnly && (
-                    <button
-                      type="button"
-                      onClick={() => onRequestDeleteDocument(document)}
-                      className="shrink-0 rounded-lg px-2 py-1 text-xs font-semibold text-rose-500 transition-colors hover:bg-rose-50 hover:text-rose-600"
-                    >
-                      Remove
-                    </button>
-                  )}
-                </li>
-              ))}
-            </ul>
           </div>
         )}
       </div>
@@ -1404,7 +1371,7 @@ function JobHistoryStep({ form, errors, updateField, readOnly }: StepProps) {
         <Dropdown
           disabled={readOnly}
           id="isFirstJob"
-          label="Is your current job your first job? *"
+          label="Is this your FIRST JOB after college? *"
           value={
             form.isFirstJob === true
               ? "true"
@@ -1421,64 +1388,64 @@ function JobHistoryStep({ form, errors, updateField, readOnly }: StepProps) {
           required
           hasError={!!errors.isFirstJob}
         />
-        <Dropdown
-          disabled={readOnly}
-          id="isFirstJobRelated"
-          label="Is your first job related to your college course? *"
-          value={
-            form.isFirstJobRelated === true
-              ? "true"
-              : form.isFirstJobRelated === false
-                ? "false"
-                : ""
-          }
-          onChange={(val) => updateField("isFirstJobRelated", val === "true")}
-          options={[
-            { value: "true", label: "Yes" },
-            { value: "false", label: "No" },
-          ]}
-          placeholder="Select"
-          required
-          hasError={!!errors.isFirstJobRelated}
-        />
+
+        {form.isFirstJob === true && (
+          <Dropdown
+            disabled={readOnly}
+            id="isFirstJobRelated"
+            label="Is your FIRST JOB related to your college course? *"
+            value={
+              form.isFirstJobRelated === true
+                ? "true"
+                : form.isFirstJobRelated === false
+                  ? "false"
+                  : ""
+            }
+            onChange={(val) => updateField("isFirstJobRelated", val === "true")}
+            options={[
+              { value: "true", label: "Yes" },
+              { value: "false", label: "No" },
+            ]}
+            placeholder="Select"
+            required
+            hasError={!!errors.isFirstJobRelated}
+          />
+        )}
       </div>
 
-      {form.isFirstJob === true && (
-        <div className="space-y-2 border-t pt-4">
-          <label className={styles.label}>
-            Reasons for staying in your first job *
-          </label>
-          <div className="grid grid-cols-2 gap-2">
-            {reasonsList.map((r) => (
-              <label key={r} className="flex items-center space-x-2 text-sm">
-                <input
-                  disabled={readOnly}
-                  type="checkbox"
-                  checked={form.stayingReasons.includes(r as any)}
-                  onChange={() => toggleList("stayingReasons", r)}
-                />
-                <span>{r}</span>
-              </label>
-            ))}
+      {form.isFirstJob === true && form.isFirstJobRelated === false && (
+        <>
+          <div className="space-y-2 border-t border-slate-200 pt-4">
+            <label className={styles.label}>
+              Reasons for staying in your first job *
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              {reasonsList.map((r) => (
+                <label key={r} className="flex items-center space-x-2 text-sm">
+                  <input
+                    disabled={readOnly}
+                    type="checkbox"
+                    checked={form.stayingReasons.includes(r as any)}
+                    onChange={() => toggleList("stayingReasons", r)}
+                  />
+                  <span>{r}</span>
+                </label>
+              ))}
+            </div>
+            <ErrorMessage message={errors.stayingReasons} />
+            {form.stayingReasons.includes("Others") && (
+              <input
+                disabled={readOnly}
+                type="text"
+                className={styles.input(!!errors.stayingReasonOther, readOnly)}
+                placeholder="Specify other reasons"
+                value={form.stayingReasonOther}
+                onChange={(e) =>
+                  updateField("stayingReasonOther", e.target.value)
+                }
+              />
+            )}
           </div>
-          <ErrorMessage message={errors.stayingReasons} />
-          {form.stayingReasons.includes("Others") && (
-            <input
-              disabled={readOnly}
-              type="text"
-              className={styles.input(!!errors.stayingReasonOther, readOnly)}
-              placeholder="Specify other reasons"
-              value={form.stayingReasonOther}
-              onChange={(e) =>
-                updateField("stayingReasonOther", e.target.value)
-              }
-            />
-          )}
-        </div>
-      )}
-
-      {form.isFirstJob === false && (
-        <div className="space-y-4 border-t pt-4">
           <div>
             <label className={styles.label}>
               Reasons for accepting first job *
@@ -1525,7 +1492,11 @@ function JobHistoryStep({ form, errors, updateField, readOnly }: StepProps) {
               />
             )}
           </div>
+        </>
+      )}
 
+      {form.isFirstJob === false && (
+        <div className="space-y-4 border-t border-slate-200 pt-4">
           <div>
             <label className={styles.label}>
               Reasons for changing your job *
@@ -1573,7 +1544,7 @@ function JobHistoryStep({ form, errors, updateField, readOnly }: StepProps) {
       )}
 
       {/* Standard Fields block */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t pt-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-slate-200 pt-4">
         <div>
           <label className={styles.label}>First Job Title *</label>
           <input
@@ -1741,7 +1712,7 @@ function JobHistoryStep({ form, errors, updateField, readOnly }: StepProps) {
           <ErrorMessage message={errors.initialMonthlyIncome} />
         </div>
       </div>
-      <div className="space-y-4 border-t pt-4">
+      <div className="space-y-4 border-t border-slate-200 pt-4">
         <Dropdown
           disabled={readOnly}
           id="curriculumRelevant"

@@ -1,19 +1,24 @@
 "use client";
 
+import { SurveyDocument } from "@/types/survey-document";
 import { useEffect, useRef, useState } from "react";
-import { LuCloudUpload, LuX } from "react-icons/lu";
+import { LuCloudUpload, LuFileText, LuFileType2, LuX } from "react-icons/lu";
 
 interface FileInputProps {
   id: string;
   name?: string;
   label: string;
-  file: File | null;
-  onChange: (file: File | null) => void;
+  files: File[];
+  onChange: (files: File[]) => void;
+  existingDocuments?: SurveyDocument[];
+  onRequestDeleteDocument?: (document: SurveyDocument) => void;
   accept?: string;
   hint?: string;
   required?: boolean;
   disabled?: boolean;
   hasError?: boolean;
+  maxFiles?: number;
+  onError?: (message: string) => void;
 }
 
 const styles = {
@@ -24,23 +29,23 @@ const styles = {
     err: boolean,
     disabled: boolean,
     isDragActive: boolean,
-    file: File | null,
+    hasFile: boolean,
   ) => {
     const stateClass = disabled
       ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-500 shadow-none"
       : isDragActive
         ? "border-sky-400 bg-sky-50"
-        : file
+        : hasFile
           ? "border-sky-400 bg-sky-50"
           : "border-slate-200 bg-slate-50 hover:border-sky-400 hover:bg-white";
 
-    return `flex w-full cursor-pointer items-center gap-3 rounded-2xl border border-dashed px-4 py-3 text-sm transition duration-200 ${
+    return `flex min-h-32 w-full cursor-pointer items-center gap-3 rounded-2xl border border-dashed px-5 py-5 text-sm transition duration-200 ${
       err && !disabled ? "border-rose-400 focus:ring-4 focus:ring-rose-100" : ""
     } ${stateClass}`;
   },
 
   removeButton:
-    "rounded-xl p-2 text-slate-400 transition duration-200 hover:bg-rose-50 hover:text-rose-500 focus:outline-none focus:ring-4 focus:ring-rose-100",
+    "shrink-0 rounded-xl p-2 text-slate-400 transition duration-200 hover:bg-rose-50 hover:text-rose-500 focus:outline-none focus:ring-4 focus:ring-rose-100",
 };
 
 function isAcceptedFile(file: File, accept: string) {
@@ -62,22 +67,56 @@ function isAcceptedFile(file: File, accept: string) {
   });
 }
 
+function formatFileSize(bytes: number) {
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  }
+
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+}
+
+function getFileIcon(mimeType: string, filename: string) {
+  const isPdf =
+    mimeType === "application/pdf" || filename.toLowerCase().endsWith(".pdf");
+
+  return isPdf ? LuFileType2 : LuFileText;
+}
+
+function getFileType(mimeType: string, filename: string) {
+  const isPdf =
+    mimeType === "application/pdf" || filename.toLowerCase().endsWith(".pdf");
+
+  if (isPdf) return "PDF";
+
+  const extension = filename.split(".").pop()?.toUpperCase();
+
+  return extension || "Document";
+}
+
 export function FileInput({
   id,
   name = "doc",
   label,
-  file,
+  files,
   onChange,
+  existingDocuments = [],
+  onRequestDeleteDocument,
   accept = "",
   hint,
   required = false,
   disabled = false,
   hasError = false,
+  maxFiles = 5,
+  onError,
 }: FileInputProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isDragActive, setIsDragActive] = useState(false);
+
   const MAX_FILE_SIZE = 10 * 1024 * 1024;
   const MAX_FILE_SIZE_LABEL = "10 MB";
+
+  const totalFiles = existingDocuments.length + files.length;
+  const hasFile = totalFiles > 0;
 
   const resetInput = () => {
     if (inputRef.current) {
@@ -86,10 +125,10 @@ export function FileInput({
   };
 
   useEffect(() => {
-    if (!file) {
+    if (files.length === 0) {
       resetInput();
     }
-  }, [file]);
+  }, [files]);
 
   useEffect(() => {
     if (disabled) {
@@ -97,28 +136,68 @@ export function FileInput({
     }
   }, [disabled]);
 
-  const handleFile = (selectedFile: File | null) => {
+  const showError = (message: string) => {
+    onError?.(message);
+  };
+
+  const handleFiles = (selectedFiles: FileList | File[]) => {
     if (disabled) return;
 
-    if (!selectedFile) {
-      resetInput();
-      onChange(null);
+    const incomingFiles = Array.from(selectedFiles);
+
+    if (incomingFiles.length === 0) {
       return;
     }
 
-    if (selectedFile.size > MAX_FILE_SIZE) {
-      resetInput();
-      onChange(null);
-      return;
+    const acceptedFiles: File[] = [];
+
+    for (const selectedFile of incomingFiles) {
+      if (
+        existingDocuments.length + files.length + acceptedFiles.length >=
+        maxFiles
+      ) {
+        showError(`You can upload a maximum of ${maxFiles} files.`);
+        break;
+      }
+
+      if (selectedFile.size > MAX_FILE_SIZE) {
+        showError(
+          `"${selectedFile.name}" exceeds the maximum file size of ${MAX_FILE_SIZE_LABEL}.`,
+        );
+        continue;
+      }
+
+      if (!isAcceptedFile(selectedFile, accept)) {
+        showError(`"${selectedFile.name}" is not an accepted file type.`);
+        continue;
+      }
+
+      const alreadyExists = [...files, ...acceptedFiles].some(
+        (file) =>
+          file.name === selectedFile.name &&
+          file.size === selectedFile.size &&
+          file.lastModified === selectedFile.lastModified,
+      );
+
+      if (alreadyExists) {
+        showError(`"${selectedFile.name}" has already been selected.`);
+        continue;
+      }
+
+      acceptedFiles.push(selectedFile);
     }
 
-    if (!isAcceptedFile(selectedFile, accept)) {
-      resetInput();
-      onChange(null);
-      return;
+    if (acceptedFiles.length > 0) {
+      onChange([...files, ...acceptedFiles]);
     }
 
-    onChange(selectedFile);
+    resetInput();
+  };
+
+  const removeFile = (index: number) => {
+    if (disabled) return;
+
+    onChange(files.filter((_, fileIndex) => fileIndex !== index));
   };
 
   const handleDragEnter = (event: React.DragEvent<HTMLLabelElement>) => {
@@ -149,8 +228,7 @@ export function FileInput({
     event.preventDefault();
     setIsDragActive(false);
 
-    const droppedFile = event.dataTransfer.files?.[0] || null;
-    handleFile(droppedFile);
+    handleFiles(event.dataTransfer.files);
   };
 
   return (
@@ -166,14 +244,14 @@ export function FileInput({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={styles.input(hasError, disabled, isDragActive, file)}
+        className={styles.input(hasError, disabled, isDragActive, hasFile)}
       >
         <LuCloudUpload
-          size={28}
+          size={36}
           className={`shrink-0 ${
             disabled
               ? "text-slate-400"
-              : file || isDragActive
+              : isDragActive || hasFile
                 ? "text-sky-500"
                 : "text-slate-400"
           }`}
@@ -181,38 +259,19 @@ export function FileInput({
 
         <div className="min-w-0 flex-1">
           <h4
-            className={`truncate text-sm font-semibold ${
+            className={`text-base font-semibold ${
               disabled ? "text-slate-500" : "text-slate-900"
             }`}
           >
-            {file ? file.name : `Choose ${label.toLowerCase()}`}
+            {isDragActive ? "Drop files here" : `Choose ${label.toLowerCase()}`}
           </h4>
 
-          {!file && hint && (
-            <span
-              className={`text-xs ${
-                disabled ? "text-slate-400" : "text-slate-400"
-              }`}
-            >
-              {isDragActive ? "Drop the document here" : hint}
-            </span>
-          )}
-        </div>
+          {hint && <span className="text-xs text-slate-400">{hint}</span>}
 
-        {file && !disabled && (
-          <button
-            type="button"
-            onClick={(event) => {
-              event.preventDefault();
-              event.stopPropagation();
-              handleFile(null);
-            }}
-            className={styles.removeButton}
-            aria-label={`Remove ${file.name}`}
-          >
-            <LuX size={18} />
-          </button>
-        )}
+          <p className="mt-1 text-xs text-slate-400">
+            {totalFiles}/{maxFiles} files selected
+          </p>
+        </div>
 
         <input
           ref={inputRef}
@@ -221,11 +280,100 @@ export function FileInput({
           name={name}
           accept={accept}
           hidden
-          required={required}
+          multiple
+          required={required && totalFiles === 0}
           disabled={disabled}
-          onChange={(event) => handleFile(event.target.files?.[0] || null)}
+          onChange={(event) => {
+            if (event.target.files) {
+              handleFiles(event.target.files);
+            }
+          }}
         />
       </label>
+
+      {/* Existing uploaded files */}
+      {existingDocuments.length > 0 && (
+        <div className="mt-3 space-y-2">
+          {existingDocuments.map((document) => {
+            const FileIcon = getFileIcon(document.mimeType, document.filename);
+
+            return (
+              <div
+                key={document.id}
+                className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <FileIcon size={24} className="shrink-0 text-sky-500" />
+
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-slate-700">
+                      {document.filename}
+                    </p>
+
+                    <p className="text-xs font-medium text-emerald-600">
+                      {getFileType(document.mimeType, document.filename)} •{" "}
+                      {formatFileSize(document.size)} • Uploaded
+                    </p>
+                  </div>
+                </div>
+
+                {!disabled && onRequestDeleteDocument && (
+                  <button
+                    type="button"
+                    onClick={() => onRequestDeleteDocument(document)}
+                    className={styles.removeButton}
+                    aria-label={`Remove ${document.filename}`}
+                  >
+                    <LuX size={18} />
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {files.length > 0 && (
+        <div className="mt-3 space-y-2">
+          {files.map((file, index) => {
+            const FileIcon = getFileIcon(file.type, file.name);
+
+            return (
+              <div
+                key={`${file.name}-${file.lastModified}-${index}`}
+                className="flex items-center justify-between gap-3 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  <FileIcon size={24} className="shrink-0 text-sky-500" />
+
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-slate-800">
+                      {file.name}
+                    </p>
+
+                    <p className="text-xs text-sky-600">
+                      {getFileType(file.type, file.name)} •{" "}
+                      {formatFileSize(file.size)} • Ready to upload
+                    </p>
+                  </div>
+                </div>
+
+                {!disabled && (
+                  <button
+                    type="button"
+                    onClick={() => removeFile(index)}
+                    className={styles.removeButton}
+                    aria-label={`Remove ${file.name}`}
+                  >
+                    <LuX size={18} />
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
       <p className="mt-2 text-xs text-slate-400">
         Maximum file size: {MAX_FILE_SIZE_LABEL}
         {accept && ` • Accepted file types: ${accept}`}
@@ -233,153 +381,3 @@ export function FileInput({
     </div>
   );
 }
-
-// "use client";
-
-// import { useEffect, useRef, useState, type DragEvent } from "react";
-// import { LuCloudUpload, LuX } from "react-icons/lu";
-
-// interface FileInputProps {
-//   id: string;
-//   name?: string;
-//   label: string;
-//   file: File | null;
-//   onChange: (file: File | null) => void;
-//   accept?: string;
-//   hint?: string;
-//   required?: boolean;
-// }
-
-// function isAcceptedFile(file: File, accept: string) {
-//   const acceptedTypes = accept
-//     .split(",")
-//     .map((item) => item.trim().toLowerCase())
-//     .filter(Boolean);
-
-//   if (acceptedTypes.length === 0) {
-//     return true;
-//   }
-
-//   return acceptedTypes.some((accepted) => {
-//     if (accepted.startsWith(".")) {
-//       return file.name.toLowerCase().endsWith(accepted);
-//     }
-//     return file.type === accepted;
-//   });
-// }
-
-// export function FileInput({
-//   id,
-//   name = "doc",
-//   label,
-//   file,
-//   onChange,
-//   accept = "",
-//   hint,
-//   required = false,
-// }: FileInputProps) {
-//   const inputRef = useRef<HTMLInputElement | null>(null);
-//   const [isDragActive, setIsDragActive] = useState(false);
-
-//   const resetInput = () => {
-//     if (inputRef.current) {
-//       inputRef.current.value = "";
-//     }
-//   };
-
-//   useEffect(() => {
-//     if (!file) {
-//       resetInput();
-//     }
-//   }, [file]);
-
-//   const handleFile = (selectedFile: File | null) => {
-//     if (!selectedFile) {
-//       resetInput();
-//       onChange(null);
-//       return;
-//     }
-
-//     if (!isAcceptedFile(selectedFile, accept)) {
-//       return;
-//     }
-
-//     onChange(selectedFile);
-//   };
-
-//   const handleDragEnter = (event: React.DragEvent<HTMLLabelElement>) => {
-//     event.preventDefault();
-//     setIsDragActive(true);
-//   };
-
-//   const handleDragOver = (event: React.DragEvent<HTMLLabelElement>) => {
-//     event.preventDefault();
-//     event.dataTransfer.dropEffect = "copy";
-//     setIsDragActive(true);
-//   };
-
-//   const handleDragLeave = (event: React.DragEvent<HTMLLabelElement>) => {
-//     event.preventDefault();
-//     setIsDragActive(false);
-//   };
-
-//   const handleDrop = (event: React.DragEvent<HTMLLabelElement>) => {
-//     event.preventDefault();
-//     setIsDragActive(false);
-//     const droppedFile = event.dataTransfer.files?.[0] || null;
-//     handleFile(droppedFile);
-//   };
-
-//   return (
-//     <div className="relative flex flex-col gap-1 w-full">
-//       <label
-//         htmlFor={id}
-//         onDragEnter={handleDragEnter}
-//         onDragOver={handleDragOver}
-//         onDragLeave={handleDragLeave}
-//         onDrop={handleDrop}
-//         className={`overflow-hidden flex flex-col md:flex-row items-center p-4 gap-3 rounded-3xl border border-dashed transition-[colors, transform] duration-300 cursor-pointer  ${
-//           isDragActive
-//             ? "border-sky-400 bg-sky-50"
-//             : file
-//             ? "border-solid bg-sky-100 border-sky-400 text-sky-400"
-//             : "border-sky-200 text-foreground/50 hover:border-sky-400 hover:bg-sky-100 active:border-sky-400 active:bg-sky-100 active:scale-95"
-//         }`}
-//       >
-//         <LuCloudUpload
-//           size={32}
-//           className={`pointer-events-none shrink-0 ${
-//             file || isDragActive ? "text-sky-400" : "text-foreground opacity-50"
-//           }`}
-//         />
-//         <div className="pointer-events-none">
-//           <h4 className="text-sm md:text-base font-semibold">
-//             {file ? file.name : label}
-//           </h4>
-//           <span className={`text-xs md:text-sm ${file ? "hidden" : ""}`}>
-//             {isDragActive ? "Drop the document here" : hint}
-//           </span>
-//         </div>
-//         <input
-//           ref={inputRef}
-//           type="file"
-//           id={id}
-//           name={name}
-//           accept={accept}
-//           hidden
-//           required={required}
-//           onChange={(event) => handleFile(event.target.files?.[0] || null)}
-//         />
-//       </label>
-//       <button
-//         className={`absolute top-3 right-3 md:top-1/2 md:-translate-y-1/2 p-1 rounded-lg text-sky-400 hover:bg-sky-100 transition-colors duration-300 cursor-pointer ${
-//           file ? "" : "hidden"
-//         }`}
-//         type="button"
-//         onClick={() => handleFile(null)}
-//       >
-//         <LuX className="shrink-0 size-4 " />
-//       </button>
-//     </div>
-//   );
-// }

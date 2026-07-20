@@ -10,6 +10,7 @@ interface DropdownProps {
   id: string;
   disabled: boolean;
   label: string;
+  description?: string;
   value: string;
   onChange: (value: string) => void;
   options: Option[];
@@ -22,6 +23,7 @@ export function Dropdown({
   id,
   disabled,
   label,
+  description,
   value,
   onChange,
   options,
@@ -66,6 +68,12 @@ export function Dropdown({
       >
         {label}
       </label>
+
+      {description && (
+        <p className="mb-2 text-xs leading-relaxed text-slate-500">
+          {description}
+        </p>
+      )}
 
       {disabled ? (
         <div className="flex w-full cursor-not-allowed items-center justify-between rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-sm text-slate-500 shadow-none">
@@ -123,6 +131,15 @@ export function Dropdown({
                 scrollbar-none
               "
             >
+              <div
+                className={`
+                    w-full px-4 py-3
+                    text-left text-sm
+                    text-slate-300 cursor-default
+                  `}
+              >
+                {placeholder}
+              </div>
               {options.map((option) => (
                 <button
                   key={option.value}
@@ -136,8 +153,8 @@ export function Dropdown({
                     transition-colors duration-150
                     ${
                       option.value === value
-                        ? "bg-sky-100 font-semibold text-sky-700"
-                        : "text-slate-700 hover:bg-sky-50"
+                        ? "bg-sky-200 font-semibold text-sky-700"
+                        : "text-slate-700 hover:bg-sky-100"
                     }
                   `}
                 >

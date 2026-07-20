@@ -56,6 +56,20 @@ export async function uploadToDrive(
   };
 }
 
+export async function downloadFromDrive(fileId: string) {
+  const response = await drive.files.get(
+    {
+      fileId,
+      alt: "media",
+    },
+    {
+      responseType: "arraybuffer",
+    },
+  );
+
+  return Buffer.from(response.data as ArrayBuffer);
+}
+
 export async function deleteFromDrive(fileId: string) {
   await drive.files.delete({
     fileId,

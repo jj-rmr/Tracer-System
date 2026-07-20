@@ -518,7 +518,11 @@ export async function getSurveyById(id: string) {
 
   if (error) throw error;
 
+  console.log("RAW SUPABASE FIRST NAME:", data.first_name);
+
   const survey = fromDb(data);
+
+  console.log("MAPPED SURVEY FIRST NAME:", survey.firstName);
 
   const documents = await getSurveyDocuments(id);
 
