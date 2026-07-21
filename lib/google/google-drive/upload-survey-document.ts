@@ -10,14 +10,11 @@ export async function uploadSurveyDocument(
   file: File,
   documentType: SurveyDocumentType,
 ): Promise<SurveyDocument> {
-  // Get the main graduate folder
   const graduateFolderId = await getOrCreateGraduateFolder(survey);
 
-  // Determine the subfolder name
   const subfolderName =
     documentType === "employment" ? "Employment Documents" : "Awards";
 
-  // Create or reuse the subfolder
   const documentFolder = await getOrCreateFolder(
     subfolderName,
     graduateFolderId,
@@ -27,7 +24,6 @@ export async function uploadSurveyDocument(
     throw new Error(`Failed to create or find ${subfolderName} folder`);
   }
 
-  // Upload the file into the subfolder
   const uploaded = await uploadToDrive(file, documentFolder.id);
 
   return {

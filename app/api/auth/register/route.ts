@@ -73,7 +73,6 @@ export async function POST(request: NextRequest) {
     const adminAccount = new Account(adminClient);
     const users = new Users(adminClient);
 
-    // Create account
     const createdUser = await adminAccount.create(
       ID.unique(),
       email,
@@ -81,19 +80,15 @@ export async function POST(request: NextRequest) {
       fullName,
     );
 
-    // Assign default role FIRST
     await users.updateLabels(createdUser.$id, [ROLES.ALUMNI]);
-    // Add user preferences
     await users.updatePrefs(createdUser.$id, {
       firstName,
       middleName,
       lastName,
       extensionName,
     });
-    // Verify labels
     const updatedUser = await users.get(createdUser.$id);
 
-    // Create session after role assignment
     const session = await adminAccount.createEmailPasswordSession(
       email,
       password,

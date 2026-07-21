@@ -30,7 +30,7 @@ export default function SurveyContainer({
 
   const handleConfirmCancel = () => {
     setOpen(false);
-    setShowCancelModal(false); // Close the confirmation modal
+    setShowCancelModal(false);
   };
 
   if (isNew) {

@@ -4,13 +4,11 @@ import { useState } from "react";
 import { LuSave } from "react-icons/lu";
 
 export default function AccountForm({ initialUser }: { initialUser: any }) {
-  // Use state so the input fields are editable
   const [name, setName] = useState(initialUser?.name || "");
   const [email, setEmail] = useState(initialUser?.email || "");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Here you would call a Server Action to save the updated data
     console.log("Saving updates:", { name, email });
   };
 

@@ -113,7 +113,6 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const showToast = useCallback(
     ({ message, type = "success", duration = 3000 }: ToastOptions) => {
-      // Clear existing toast first to reset animations if triggered consecutively
       setToast(null);
       setTimeout(() => {
         setToast({ message, type, duration });

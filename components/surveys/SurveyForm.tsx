@@ -167,7 +167,6 @@ export default function SurveyForm({
         newErrors.isFirstJob =
           "Please indicate whether this is your first job after college.";
       } else {
-        // Q22: Only shown if FIRST JOB = Yes
         if (form.isFirstJob) {
           if (form.stayingReasons.length === 0) {
             newErrors.stayingReasons =
@@ -182,7 +181,6 @@ export default function SurveyForm({
               "Please specify your other reason for staying in your first job.";
           }
 
-          // Q23: Only shown if FIRST JOB = Yes
           if (
             form.isFirstJobRelated === undefined ||
             form.isFirstJobRelated === null
@@ -191,7 +189,6 @@ export default function SurveyForm({
               "Please indicate whether your first job was related to your degree program.";
           }
 
-          // Q24: Only shown if FIRST JOB = Yes AND related = No
           if (form.isFirstJobRelated === false) {
             if (form.acceptingReasons.length === 0) {
               newErrors.acceptingReasons =
@@ -208,8 +205,6 @@ export default function SurveyForm({
           }
         }
 
-        // Q25: Shown if FIRST JOB = No
-        // OR FIRST JOB = Yes AND FIRST JOB RELATED = No
         if (
           form.isFirstJob === false ||
           (form.isFirstJob === true && form.isFirstJobRelated === false)
@@ -355,7 +350,6 @@ export default function SurveyForm({
       console.log("FIRST NAME BEFORE SAVE:", form.firstName);
       console.log("FORM:", form);
 
-      // 1. Save the survey first
       const response = await fetch("/api/alumni/survey", {
         method: isNew ? "POST" : "PATCH",
         headers: {

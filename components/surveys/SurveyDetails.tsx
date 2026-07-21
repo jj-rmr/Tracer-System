@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-// Replace your old import with this:
 import type {
   Survey,
   CivilStatus,
@@ -100,7 +99,6 @@ export default function SurveyDetails({ id }: Props) {
     }
   }
 
-  // Helper function to handle toggle-style arrays (like string arrays for multi-checkbox fields)
   const handleArrayToggle = (field: keyof Survey, value: any) => {
     if (!survey) return;
     const currentArray = (survey[field] as any[]) || [];

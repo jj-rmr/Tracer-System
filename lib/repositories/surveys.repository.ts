@@ -566,21 +566,6 @@ export async function getAllSurveys() {
   return data.map(fromDb);
 }
 
-// export async function updateSurvey(id: string, survey: Partial<Survey>) {
-//   const transformed = transformSurvey(survey);
-
-//   const { data, error } = await supabase
-//     .from("surveys")
-//     .update(toDb(transformed))
-//     .eq("id", id)
-//     .select()
-//     .single();
-
-//   if (error) throw error;
-
-//   return fromDb(data);
-// }
-
 export async function updateSurvey(id: string, survey: Partial<Survey>) {
   const transformed = transformSurvey(survey);
   const payload = toDbPatch(transformed);

@@ -31,7 +31,6 @@ export async function POST(_request: NextRequest) {
       success: true,
     });
   } catch (error: any) {
-    // Email already verified
     if (error?.code === 409) {
       return NextResponse.json(
         {

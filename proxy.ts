@@ -23,7 +23,6 @@ export function proxy(request: NextRequest) {
 
     const redirect = pathname + search;
 
-    // Only preserve redirects for special flows
     if (redirect.startsWith("/confirm-verification")) {
       signInUrl.searchParams.set("redirect", redirect);
     }

@@ -34,9 +34,7 @@ export async function getOrCreateGraduateFolder(
       ) {
         return folder.data.id;
       }
-    } catch {
-      // Stored folder no longer exists.
-    }
+    } catch {}
   }
 
   const existingCreation = folderCreationLocks.get(survey.id);

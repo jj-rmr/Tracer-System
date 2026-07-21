@@ -6,22 +6,6 @@ export default async function AlumniPage() {
   const user = await requireUserRole([ROLES.ALUMNI]);
 
   return (
-    // <div className="flex flex-col gap-8 items-center justify-center">
-    //   <div className="text-center w-full max-w-5xl">
-    //     <h1 className="text-xl font-bold tracking-tight text-slate-900">
-    //       Welcome Back, {user.name}
-    //     </h1>
-    //     <p className="text-slate-600">
-    //       You are currently signed in as an alumni.
-    //     </p>
-    //     <Image
-    //       src="/placement-logo.png"
-    //       alt="Placement Unit Logo"
-    //       width={32}
-    //       height={32}
-    //     />
-    //   </div>
-    // </div>
     <div className="flex min-h-[calc(100dvh-10.5rem)] md:min-h-[calc(100dvh-4rem)] flex-col items-center justify-center">
       <div className="w-full max-w-5xl text-center">
         <div className="mx-auto mb-8 w-10/12 max-w-80">

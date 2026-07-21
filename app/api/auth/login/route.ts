@@ -21,7 +21,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Authenticate the user
     const adminAccount = new Account(createAdminClient());
 
     const session = await adminAccount.createEmailPasswordSession(
@@ -29,7 +28,6 @@ export async function POST(request: NextRequest) {
       password,
     );
 
-    // Create a client using the new session
     const sessionAccount = new Account(createSessionClient(session.secret));
 
     const user = await sessionAccount.get();
