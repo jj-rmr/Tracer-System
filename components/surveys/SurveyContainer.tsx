@@ -56,7 +56,7 @@ export default function SurveyContainer({
         {open && (
           <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm">
             <div className="flex h-full w-full items-center justify-center p-6">
-              <div className="relative h-[95vh] w-full max-w-6xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+              <div className="relative h-[95svh] w-full max-w-6xl overflow-hidden rounded-2xl bg-white shadow-2xl">
                 <div className="flex items-center justify-between border-b border-sky-100 px-6 py-4">
                   <h2 className="text-lg font-semibold">New Tracer Survey</h2>
 
