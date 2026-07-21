@@ -9,15 +9,22 @@ export async function createDriveUploadSession(
   mimeType: string,
   size: number,
   folderId: string,
+  providedOrigin?: string,
 ) {
-  const MAX_SIZE = 10 * 1024 * 1024;
+  const MAX_SIZE = 10 * 1024 * 1024; // 10MB Limit
 
   if (size > MAX_SIZE) {
     throw new Error("File exceeds 10MB limit");
   }
 
-  const accessToken = await oauth2Client.getAccessToken();
+  const rawOrigin =
+    providedOrigin ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    "http://localhost:3000";
 
+  const cleanOrigin = rawOrigin.replace(/\/+$/, "");
+
+  const accessToken = await oauth2Client.getAccessToken();
   if (!accessToken.token) {
     throw new Error("Failed to obtain Google access token");
   }
@@ -31,6 +38,7 @@ export async function createDriveUploadSession(
         "Content-Type": "application/json; charset=UTF-8",
         "X-Upload-Content-Type": mimeType,
         "X-Upload-Content-Length": String(size),
+        Origin: cleanOrigin,
       },
       body: JSON.stringify({
         name: sanitizeFilename(filename),
@@ -41,12 +49,10 @@ export async function createDriveUploadSession(
 
   if (!response.ok) {
     const error = await response.text();
-
     throw new Error(`Failed to create Google Drive upload session: ${error}`);
   }
 
   const uploadUrl = response.headers.get("Location");
-
   if (!uploadUrl) {
     throw new Error("Google Drive returned no upload URL");
   }

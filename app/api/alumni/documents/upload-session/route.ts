@@ -82,11 +82,15 @@ export async function POST(request: NextRequest) {
       throw new Error(`Failed to create or find ${subfolderName} folder`);
     }
 
+    const requestOrigin =
+      request.headers.get("origin") || request.headers.get("referer");
+
     const uploadUrl = await createDriveUploadSession(
       filename,
       mimeType,
       size,
       documentFolder.id,
+      requestOrigin ?? undefined,
     );
 
     return NextResponse.json({

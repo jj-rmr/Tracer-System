@@ -13,7 +13,7 @@ export async function uploadDocument(
     throw new Error("File exceeds 10MB limit");
   }
 
-  // 1. Ask your server to create a Google Drive upload session
+  // 1. Ask server to create a Google Drive upload session
   const sessionResponse = await fetch("/api/alumni/documents/upload-session", {
     method: "POST",
     headers: {
@@ -34,27 +34,27 @@ export async function uploadDocument(
     throw new Error(sessionResult.message || "Failed to create upload session");
   }
 
-  const { uploadUrl } = sessionResult;
+  const { uploadUrl, folderId } = sessionResult;
 
   // 2. Upload the actual file directly to Google Drive
+  // NOTE: Content-Length removed — browsers automatically compute and handle this header on File objects.
   const uploadResponse = await fetch(uploadUrl, {
     method: "PUT",
     headers: {
       "Content-Type": file.type || "application/octet-stream",
-      "Content-Length": String(file.size),
     },
     body: file,
   });
 
   if (!uploadResponse.ok) {
     const errorText = await uploadResponse.text();
-
     throw new Error(`Google Drive upload failed: ${errorText}`);
   }
 
   const uploadedFile = await uploadResponse.json();
 
-  // 3. Tell your server about the uploaded Google Drive file
+  // 3. Tell server about the uploaded Google Drive file
+  // Fallbacks provided in case Google Drive omits properties from response JSON
   const completeResponse = await fetch("/api/alumni/documents/complete", {
     method: "POST",
     headers: {
@@ -63,12 +63,15 @@ export async function uploadDocument(
     body: JSON.stringify({
       surveyId,
       documentType,
-      filename: uploadedFile.name,
-      mimeType: uploadedFile.mimeType,
-      size: Number(uploadedFile.size),
+      filename: uploadedFile.name || file.name,
+      mimeType:
+        uploadedFile.mimeType || file.type || "application/octet-stream",
+      size: uploadedFile.size ? Number(uploadedFile.size) : file.size,
       googleDriveFileId: uploadedFile.id,
-      googleDriveFolderId: sessionResult.folderId,
-      webViewLink: uploadedFile.webViewLink,
+      googleDriveFolderId: folderId,
+      webViewLink:
+        uploadedFile.webViewLink ??
+        `https://drive.google.com/file/d/${uploadedFile.id}/view`,
     }),
   });
 
@@ -80,35 +83,6 @@ export async function uploadDocument(
 
   return completeResult.document;
 }
-
-// import { SurveyDocument } from "@/types";
-
-// export type SurveyDocumentType = "employment" | "awards";
-
-// export async function uploadDocument(
-//   file: File,
-//   surveyId: string,
-//   documentType: SurveyDocumentType,
-// ): Promise<SurveyDocument> {
-//   const formData = new FormData();
-
-//   formData.append("file", file);
-//   formData.append("surveyId", surveyId);
-//   formData.append("documentType", documentType);
-
-//   const response = await fetch("/api/alumni/documents/upload", {
-//     method: "POST",
-//     body: formData,
-//   });
-
-//   const result = await response.json();
-
-//   if (!response.ok) {
-//     throw new Error(result.message || "Failed to upload document");
-//   }
-
-//   return result.document;
-// }
 
 export async function deleteDocument(documentId: string): Promise<void> {
   const response = await fetch(`/api/alumni/documents/${documentId}`, {

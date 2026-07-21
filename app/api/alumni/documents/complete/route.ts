@@ -5,6 +5,7 @@ import { ROLES } from "@/types";
 
 import { getSurveyById } from "@/lib/repositories/surveys.repository";
 import { createSurveyDocument } from "@/lib/repositories/survey-documents.repository";
+import { deleteFromDrive } from "@/lib/google/google-drive/upload";
 
 export async function POST(request: NextRequest) {
   try {
@@ -79,7 +80,19 @@ export async function POST(request: NextRequest) {
       },
     };
 
-    const savedDocument = await createSurveyDocument(surveyId, document);
+    let savedDocument;
+
+    try {
+      savedDocument = await createSurveyDocument(surveyId, document);
+    } catch (dbError) {
+      try {
+        await deleteFromDrive(googleDriveFileId);
+      } catch (cleanupError) {
+        console.error("FAILED TO CLEAN UP DRIVE FILE:", cleanupError);
+      }
+
+      throw dbError;
+    }
 
     return NextResponse.json({
       success: true,
