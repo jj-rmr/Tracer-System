@@ -16,7 +16,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex h-dvh w-screen overflow-hidden">
+    <div className="flex h-svh w-screen overflow-hidden">
       <ToastProvider>
         <Nav role={role} />
         <main className="flex-1 overflow-y-auto scrollbar-gutter-stable px-4">
