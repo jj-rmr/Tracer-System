@@ -23,7 +23,7 @@ export async function POST(_request: NextRequest) {
 
     const account = new Account(createSessionClient(session));
 
-    const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL}/confirm-verification`;
+    const verificationUrl = `${process.env.PUBLIC_APP_URL}/confirm-verification`;
 
     await account.createVerification(verificationUrl);
 
