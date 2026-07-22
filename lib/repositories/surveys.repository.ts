@@ -415,52 +415,96 @@ function transformSurvey(survey: Partial<Survey>): Partial<Survey> {
   return {
     ...survey,
 
-    firstName: survey.firstName?.trim() ?? "",
-    middleName: survey.middleName?.trim() ?? "",
-    lastName: survey.lastName?.trim() ?? "",
-    extensionName: survey.extensionName?.trim() ?? "",
+    firstName:
+      survey.firstName !== undefined ? survey.firstName.trim() : undefined,
+    middleName:
+      survey.middleName !== undefined ? survey.middleName.trim() : undefined,
+    lastName:
+      survey.lastName !== undefined ? survey.lastName.trim() : undefined,
+    extensionName:
+      survey.extensionName !== undefined
+        ? survey.extensionName.trim()
+        : undefined,
 
-    street: survey.street?.trim() ?? "",
-    barangay: survey.barangay?.trim() ?? "",
-    municipality: survey.municipality?.trim() ?? "",
-    province: survey.province?.trim() ?? "",
-    region: survey.region?.trim() ?? "",
+    street: survey.street !== undefined ? survey.street.trim() : undefined,
+    barangay:
+      survey.barangay !== undefined ? survey.barangay.trim() : undefined,
+    municipality:
+      survey.municipality !== undefined
+        ? survey.municipality.trim()
+        : undefined,
+    province:
+      survey.province !== undefined ? survey.province.trim() : undefined,
+    region: survey.region !== undefined ? survey.region.trim() : undefined,
 
-    companyName: survey.companyName?.trim() ?? "",
-    companyAddress: survey.companyAddress?.trim() ?? "",
-    currentOccupation: survey.currentOccupation?.trim() ?? "",
+    companyName:
+      survey.companyName !== undefined ? survey.companyName.trim() : undefined,
+    companyAddress:
+      survey.companyAddress !== undefined
+        ? survey.companyAddress.trim()
+        : undefined,
+    currentOccupation:
+      survey.currentOccupation !== undefined
+        ? survey.currentOccupation.trim()
+        : undefined,
 
-    advancedStudyOther: survey.advancedStudyOther?.trim() ?? "",
-    advancedStudyReasonOther: survey.advancedStudyReasonOther?.trim() ?? "",
+    advancedStudyOther:
+      survey.advancedStudyOther !== undefined
+        ? survey.advancedStudyOther.trim()
+        : undefined,
+    advancedStudyReasonOther:
+      survey.advancedStudyReasonOther !== undefined
+        ? survey.advancedStudyReasonOther.trim()
+        : undefined,
 
-    unemploymentReasonOther: survey.unemploymentReasonOther?.trim() ?? "",
+    unemploymentReasonOther:
+      survey.unemploymentReasonOther !== undefined
+        ? survey.unemploymentReasonOther.trim()
+        : undefined,
 
-    stayingReasonOther: survey.stayingReasonOther?.trim() ?? "",
-    acceptingReasonOther: survey.acceptingReasonOther?.trim() ?? "",
-    changingReasonOther: survey.changingReasonOther?.trim() ?? "",
+    stayingReasonOther:
+      survey.stayingReasonOther !== undefined
+        ? survey.stayingReasonOther.trim()
+        : undefined,
+    acceptingReasonOther:
+      survey.acceptingReasonOther !== undefined
+        ? survey.acceptingReasonOther.trim()
+        : undefined,
+    changingReasonOther:
+      survey.changingReasonOther !== undefined
+        ? survey.changingReasonOther.trim()
+        : undefined,
 
-    firstJobTitle: survey.firstJobTitle?.trim() ?? "",
-    firstJobDurationOther: survey.firstJobDurationOther?.trim() ?? "",
-    firstJobSourceOther: survey.firstJobSourceOther?.trim() ?? "",
+    firstJobTitle:
+      survey.firstJobTitle !== undefined
+        ? survey.firstJobTitle.trim()
+        : undefined,
+    firstJobDurationOther:
+      survey.firstJobDurationOther !== undefined
+        ? survey.firstJobDurationOther.trim()
+        : undefined,
+    firstJobSourceOther:
+      survey.firstJobSourceOther !== undefined
+        ? survey.firstJobSourceOther.trim()
+        : undefined,
     firstJobSearchDurationOther:
-      survey.firstJobSearchDurationOther?.trim() ?? "",
+      survey.firstJobSearchDurationOther !== undefined
+        ? survey.firstJobSearchDurationOther.trim()
+        : undefined,
 
-    usefulCompetencyOther: survey.usefulCompetencyOther?.trim() ?? "",
+    usefulCompetencyOther:
+      survey.usefulCompetencyOther !== undefined
+        ? survey.usefulCompetencyOther.trim()
+        : undefined,
 
     contactNumbers: survey.contactNumbers?.map((n) => n.trim()).filter(Boolean),
-
     honors: survey.honors?.map((h) => h.trim()).filter(Boolean),
-
     trainings: survey.trainings?.map((t) => t.trim()).filter(Boolean),
 
     unemploymentReasons: survey.unemploymentReasons?.filter(Boolean),
-
     stayingReasons: survey.stayingReasons?.filter(Boolean),
-
     acceptingReasons: survey.acceptingReasons?.filter(Boolean),
-
     changingReasons: survey.changingReasons?.filter(Boolean),
-
     usefulCompetencies: survey.usefulCompetencies?.filter(Boolean),
 
     yearGraduated:
@@ -470,39 +514,37 @@ function transformSurvey(survey: Partial<Survey>): Partial<Survey> {
 
 export async function createSurvey(survey: Survey) {
   const transformed = transformSurvey(survey);
-  const payload = toDb(transformed);
 
-  if (!payload.user_id || !String(payload.user_id).trim()) {
+  if (!transformed.userId || !transformed.userId.trim()) {
     throw new Error("Cannot create survey without a user_id");
   }
 
-  console.log("Creating survey with payload:", payload);
-  console.log("BEFORE INSERT");
+  // 1. Check existing record
   const { data: existingSurvey, error: existingError } = await supabase
     .from("surveys")
-    .select("id")
-    .eq("user_id", payload.user_id)
+    .select("id, graduate_folder_id")
+    .eq("user_id", transformed.userId)
     .maybeSingle();
-  console.log("AFTER INSERT");
+
   if (existingError) throw existingError;
 
-  let data;
-  let error;
-
+  // 2. If it already exists, use PATCH update so we don't wipe out non-provided fields
   if (existingSurvey?.id) {
-    ({ data, error } = await supabase
-      .from("surveys")
-      .update(payload)
-      .eq("id", existingSurvey.id)
-      .select()
-      .single());
-  } else {
-    ({ data, error } = await supabase
-      .from("surveys")
-      .insert(payload)
-      .select()
-      .single());
+    // Preserve existing graduateFolderId if new one is omitted
+    if (!transformed.graduateFolderId && existingSurvey.graduate_folder_id) {
+      transformed.graduateFolderId = existingSurvey.graduate_folder_id;
+    }
+    return await updateSurvey(existingSurvey.id, transformed);
   }
+
+  // 3. Otherwise perform insert
+  const payload = toDb(transformed);
+
+  const { data, error } = await supabase
+    .from("surveys")
+    .insert(payload)
+    .select()
+    .single();
 
   if (error) throw error;
 
@@ -518,11 +560,7 @@ export async function getSurveyById(id: string) {
 
   if (error) throw error;
 
-  console.log("RAW SUPABASE FIRST NAME:", data.first_name);
-
   const survey = fromDb(data);
-
-  console.log("MAPPED SURVEY FIRST NAME:", survey.firstName);
 
   const documents = await getSurveyDocuments(id);
 

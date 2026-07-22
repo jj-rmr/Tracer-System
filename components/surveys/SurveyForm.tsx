@@ -330,10 +330,7 @@ export default function SurveyForm({
   }
 
   async function save() {
-    console.log("save() called");
-
     const valid = validateStep(4);
-    console.log("validateStep(4):", valid);
 
     if (!valid) {
       console.log("Errors:", errors);
@@ -343,12 +340,7 @@ export default function SurveyForm({
     setIsSubmitting(true);
 
     try {
-      console.log("Sending survey request...");
-
       const { id: _, userId: __, ...surveyData } = form;
-
-      console.log("FIRST NAME BEFORE SAVE:", form.firstName);
-      console.log("FORM:", form);
 
       const response = await fetch("/api/alumni/survey", {
         method: isNew ? "POST" : "PATCH",

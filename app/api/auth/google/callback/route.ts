@@ -18,9 +18,6 @@ export async function GET(request: NextRequest) {
 
   const { tokens } = await oauth2Client.getToken(code);
 
-  console.log("GOOGLE TOKENS:");
-  console.log(tokens);
-
   return NextResponse.json({
     success: true,
     message:
