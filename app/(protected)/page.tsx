@@ -1,20 +1,55 @@
-import { redirect } from "next/navigation";
+"use client";
 
-import { requireVerifiedUser, getRole } from "@/lib/auth";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { account } from "@/lib/appwrite/appwrite-client";
+import { getRole } from "@/lib/auth/roles";
 import { ROLES } from "@/types";
 
-export default async function ProtectedPage() {
-  const user = await requireVerifiedUser();
+export default function ProtectedPage() {
+  const router = useRouter();
 
-  const role = getRole(user);
+  useEffect(() => {
+    async function redirectUser() {
+      try {
+        const user = await account.get();
 
-  if (role === ROLES.ADMIN) {
-    redirect("/admin");
-  }
+        if (!user.email.toLowerCase().endsWith("@parsu.edu.ph")) {
+          await account.deleteSession("current");
+          router.replace("/signin?error=unauthorized_domain");
+          return;
+        }
 
-  if (role === ROLES.ALUMNI) {
-    redirect("/alumni");
-  }
+        if (!user.emailVerification) {
+          router.replace("/verify-email");
+          return;
+        }
 
-  redirect("/unauthorized");
+        const role = getRole(user);
+
+        if (role === ROLES.ADMIN) {
+          router.replace("/admin");
+          return;
+        }
+
+        if (role === ROLES.ALUMNI) {
+          router.replace("/alumni");
+          return;
+        }
+
+        router.replace("/unauthorized");
+      } catch (error) {
+        console.error("Authentication failed:", error);
+        router.replace("/signin");
+      }
+    }
+
+    redirectUser();
+  }, [router]);
+
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <p>Checking authentication...</p>
+    </div>
+  );
 }

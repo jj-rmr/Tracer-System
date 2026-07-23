@@ -1,162 +1,78 @@
 "use client";
 
-import React, { useState } from "react";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { LuCircleAlert } from "react-icons/lu";
-
-import { SignInButton } from "@/components/SignInButton";
-import { Role, ROLES } from "@/types";
+import { account } from "@/lib/appwrite/appwrite-client";
+import { OAuthProvider } from "appwrite";
+import { useSearchParams } from "next/navigation";
 
 export default function SignInPage() {
-  const router = useRouter();
   const searchParams = useSearchParams();
+  const error = searchParams.get("error");
+  const redirect = searchParams.get("redirect") || "";
 
-  const redirect = searchParams.get("redirect");
+  const handleGoogleSignIn = () => {
+    // 1. Where Appwrite should redirect the user after Google approves login
+    const successUrl = `${window.location.origin}/callback${
+      redirect ? `?redirect=${encodeURIComponent(redirect)}` : ""
+    }`;
 
-  const [isPending, setIsPending] = useState(false);
+    // 2. Where Appwrite should redirect if Google login fails/cancels
+    const failureUrl = `${window.location.origin}/signin?error=oauth_failed`;
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setError(null);
-
-    if (!email || !password) {
-      setError("Please enter your email and password.");
-      return;
-    }
-
-    if (!email.toLowerCase().endsWith("@parsu.edu.ph")) {
-      setError("Please use your ParSU email address to sign in.");
-      return;
-    }
-
-    setIsPending(true);
-
-    try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) {
-        setError("Incorrect email or password. Please try again.");
-        return;
-      }
-
-      const meResponse = await fetch("/api/auth/me");
-      const me = await meResponse.json();
-
-      const user = me.data;
-      const labels = user?.labels ?? [];
-
-      const isAdmin = labels.some((label: Role) => label === ROLES.ADMIN);
-
-      if (redirect) {
-        router.replace(decodeURIComponent(redirect));
-        return;
-      }
-
-      if (me.success && user && !user.emailVerification) {
-        router.replace("/verify-email");
-        return;
-      }
-
-      router.replace(isAdmin ? "/admin" : "/alumni");
-    } catch (err) {
-      setError("Unable to sign in right now. Please try again in a moment.");
-    } finally {
-      setIsPending(false);
-    }
-  }
+    // 3. Trigger Google OAuth redirect
+    account.createOAuth2Session(OAuthProvider.Google, successUrl, failureUrl);
+  };
 
   return (
-    <div className="w-full max-w-2xl rounded-3xl border border-slate-200 bg-white p-8 shadow-[0_12px_30px_-5px_rgba(0,0,0,0.04)] shadow-sky-100/80 md:p-10">
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
-          Welcome Back
-        </h1>
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4">
+      <div className="w-full max-w-md space-y-6 rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
+        <div className="space-y-2">
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+            Welcome Back
+          </h1>
+          <p className="text-sm text-slate-500">
+            Sign in with your official ParSU Google account to continue.
+          </p>
+        </div>
 
-        <p className="text-sm text-slate-500 mt-2">
-          Tracer System by ParSU Placement Unit
-        </p>
-      </div>
-
-      {error && (
-        <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-500 shadow-sm">
-          <div className="flex items-center gap-2">
-            <LuCircleAlert size={20} className="shrink-0" />
-
-            <span>{error}</span>
+        {/* Error Alert Box */}
+        {error === "unauthorized_domain" && (
+          <div className="rounded-2xl bg-red-50 p-4 text-xs font-medium text-red-600 border border-red-100">
+            Access Restricted. Please sign in using your official{" "}
+            <strong>@parsu.edu.ph</strong> email address.
           </div>
-        </div>
-      )}
+        )}
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div>
-          <label
-            htmlFor="email"
-            className="block text-sm font-medium text-slate-700 mb-1.5"
-          >
-            Email Address
-          </label>
-
-          <input
-            id="email"
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            disabled={isPending}
-            placeholder="name@parsu.edu.ph"
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition duration-200 placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100 disabled:opacity-60"
-          />
-        </div>
-
-        <div>
-          <div className="flex justify-between items-center mb-1.5">
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-slate-700"
-            >
-              Password
-            </label>
+        {error === "oauth_failed" && (
+          <div className="rounded-2xl bg-red-50 p-4 text-xs font-medium text-red-600 border border-red-100">
+            Google Sign-In failed or was cancelled. Please try again.
           </div>
+        )}
 
-          <input
-            id="password"
-            type="password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={isPending}
-            placeholder="••••••••"
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 shadow-sm transition duration-200 placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100 disabled:opacity-60"
-          />
-        </div>
-
-        <SignInButton isPending={isPending} />
-      </form>
-
-      <p className="text-center text-sm text-slate-500 mt-8">
-        Don't have an account?{" "}
-        <Link
-          href="/signup"
-          className="font-medium text-sky-600 transition-colors duration-200 hover:text-sky-700"
+        <button
+          onClick={handleGoogleSignIn}
+          className="flex w-full items-center justify-center gap-3 rounded-full bg-slate-900 px-5 py-3 text-sm font-medium text-white transition hover:bg-slate-800 active:scale-[0.98]"
         >
-          Create one now
-        </Link>
-      </p>
+          <svg className="h-5 w-5" viewBox="0 0 24 24">
+            <path
+              fill="#EA4335"
+              d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.7 14.8 1 12 1 7.5 1 3.7 3.6 1.9 7.3l3.7 2.9C6.5 7.2 9 5 12 5z"
+            />
+            <path
+              fill="#4285F4"
+              d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.6h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.9z"
+            />
+            <path
+              fill="#FBBC05"
+              d="M5.6 14.8c-.2-.7-.4-1.5-.4-2.3s.2-1.6.4-2.3L1.9 7.3C.7 9.7 0 12.4 0 15.2s.7 5.5 1.9 7.9l3.7-2.9c-.2-.7-.4-1.5-.4-2.3z"
+            />
+            <path
+              fill="#34A853"
+              d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3 0-5.5-2.2-6.4-5.2L1.9 16C3.7 19.7 7.5 22.3 12 23z"
+            />
+          </svg>
+          Sign in with Google
+        </button>
+      </div>
     </div>
   );
 }

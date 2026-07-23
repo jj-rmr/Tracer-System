@@ -1,6 +1,6 @@
 // lib/auth/roles.ts
 
-import { Models } from "node-appwrite";
+import { Models } from "appwrite";
 import { Role, ROLES } from "@/types";
 
 export function getRole(user: Models.User<Models.Preferences>): Role | null {

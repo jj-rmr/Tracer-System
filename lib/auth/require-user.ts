@@ -1,31 +1,33 @@
 import { redirect } from "next/navigation";
-
 import { getCurrentUser } from "./current-user";
-import { getSessionCookie } from "./cookies";
 import { requireRole } from "./roles";
 import { Role, ROLES } from "@/types";
 
+/**
+ * Ensures the user is logged in via Appwrite OAuth cookie.
+ * If no active session exists, redirects to /signin.
+ */
 export async function requireUser() {
-  const session = await getSessionCookie();
+  const user = await getCurrentUser();
 
-  if (!session) {
+  if (!user) {
     redirect("/signin");
   }
 
-  const user = await getCurrentUser(session);
-
-  if (!user) {
-    redirect("/api/auth/session-expired");
+  // Strict domain check (@parsu.edu.ph)
+  if (!user.email.toLowerCase().endsWith("@parsu.edu.ph")) {
+    redirect("/signin?error=unauthorized_domain");
   }
 
-  return {
-    session,
-    user,
-  };
+  return user;
 }
 
+/**
+ * Guarantees the user is logged in and email verified.
+ * (Google OAuth accounts are verified by default in Appwrite).
+ */
 export async function requireVerifiedUser() {
-  const { user } = await requireUser();
+  const user = await requireUser();
 
   if (!user.emailVerification) {
     redirect("/verify-email");
@@ -34,22 +36,44 @@ export async function requireVerifiedUser() {
   return user;
 }
 
-export async function requireUserRole(allowed: Role[]) {
-  const user = await requireVerifiedUser();
+/**
+ * Restricts access to users matching specific role labels (e.g. ['ADMIN', 'ALUMNI']).
+ */
+export async function requireUserRole(allowedRoles: Role[]) {
+  const user = await getCurrentUser();
 
+  // 1. If no session, redirect to signin
+  if (!user) {
+    redirect("/signin");
+  }
+
+  // 2. Validate institutional domain
+  if (!user.email.toLowerCase().endsWith("@parsu.edu.ph")) {
+    redirect("/signin?error=unauthorized_domain");
+  }
+
+  // 3. Verify user labels against allowed roles
   try {
-    requireRole(user, allowed);
+    requireRole(user, allowedRoles);
   } catch {
-    redirect("/unauthorized");
+    // If authenticated but lacks the required role (e.g. ALUMNI trying to access /admin)
+    redirect("/alumni");
   }
 
   return user;
 }
 
+/**
+ * Restricts access exclusively to ADMIN role users.
+ */
 export async function requireAdmin() {
-  const { user } = await requireUser();
+  const user = await requireVerifiedUser();
 
-  requireRole(user, [ROLES.ADMIN]);
+  try {
+    requireRole(user, [ROLES.ADMIN]);
+  } catch {
+    redirect("/unauthorized");
+  }
 
   return user;
 }

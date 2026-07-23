@@ -1,18 +1,17 @@
-import { ok, fail } from "@/lib/api/response";
-import { requireUser } from "@/lib/auth/require-user";
+// app/api/auth/me/route.ts
+import { NextResponse } from "next/server";
+import { createServices } from "@/lib/appwrite/appwrite-server";
 
 export async function GET() {
   try {
-    const { user } = await requireUser();
+    const { account } = await createServices();
+    const user = await account.get();
 
-    return ok(user);
-  } catch {
-    return fail("Unauthorized", 401);
+    return NextResponse.json({ success: true, data: user });
+  } catch (error) {
+    return NextResponse.json(
+      { success: false, error: "Unauthorized" },
+      { status: 401 },
+    );
   }
-}
-
-export async function requireUserId() {
-  const { user } = await requireUser();
-
-  return user.$id;
 }

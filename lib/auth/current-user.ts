@@ -1,16 +1,12 @@
-import { Account } from "node-appwrite";
-import { createSessionClient } from "@/lib/appwrite/session";
+// lib/auth/current-user.ts
+import { createSessionClient } from "@/lib/appwrite/appwrite-server";
 
-export async function getCurrentUser(session: string | null) {
-  if (!session) return null;
-
-  const client = createSessionClient(session);
-  const account = new Account(client);
-
+export async function getCurrentUser() {
   try {
-    return await account.get();
+    const { account } = await createSessionClient();
+    const user = await account.get();
+    return user;
   } catch (error) {
-    console.error("Appwrite session validation failed:", error);
     return null;
   }
 }
