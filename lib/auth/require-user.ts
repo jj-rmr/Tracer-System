@@ -24,18 +24,8 @@ export async function requireUser() {
   };
 }
 
-export async function requireVerifiedUser() {
-  const { user } = await requireUser();
-
-  if (!user.emailVerification) {
-    redirect("/verify-email");
-  }
-
-  return user;
-}
-
 export async function requireUserRole(allowed: Role[]) {
-  const user = await requireVerifiedUser();
+  const { user } = await requireUser();
 
   try {
     requireRole(user, allowed);
@@ -49,7 +39,11 @@ export async function requireUserRole(allowed: Role[]) {
 export async function requireAdmin() {
   const { user } = await requireUser();
 
-  requireRole(user, [ROLES.ADMIN]);
+  try {
+    requireRole(user, [ROLES.ADMIN]);
+  } catch {
+    redirect("/unauthorized");
+  }
 
   return user;
 }

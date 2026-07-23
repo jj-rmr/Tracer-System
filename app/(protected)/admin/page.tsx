@@ -3,7 +3,6 @@ import Image from "next/image";
 
 export default async function AdminPage() {
   const user = await requireAdmin();
-  console.log("Admin page rendered");
 
   return (
     <div className="flex min-h-[calc(100dvh-10.5rem)] md:min-h-[calc(100dvh-4rem)] flex-col items-center justify-center">

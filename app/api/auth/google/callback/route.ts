@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { oauth2Client } from "@/lib/google/google-drive";
+import { oauth2Client } from "@/lib/google-drive/client";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");

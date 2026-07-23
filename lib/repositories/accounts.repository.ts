@@ -1,4 +1,4 @@
-import { Users } from "node-appwrite";
+import { Models, Users } from "node-appwrite";
 
 import { createAdminClient } from "@/lib/appwrite/admin";
 import { ROLES } from "@/types";
@@ -9,7 +9,7 @@ function getUsersService() {
   return new Users(client);
 }
 
-export function formatAccount(user: any) {
+export function formatAccount(user: Models.User<Models.Preferences>) {
   return {
     id: user.$id,
     name: user.name,
@@ -24,14 +24,6 @@ export function formatAccount(user: any) {
     createdAt: user.$createdAt,
     updatedAt: user.$updatedAt,
   };
-}
-
-export async function listAccounts() {
-  const users = getUsersService();
-
-  const result = await users.list();
-
-  return result.users.map(formatAccount);
 }
 
 export async function getAccount(id: string) {

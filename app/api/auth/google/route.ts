@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { oauth2Client } from "@/lib/google/google-drive";
+import { oauth2Client } from "@/lib/google-drive/client";
 
 export async function GET() {
   const url = oauth2Client.generateAuthUrl({

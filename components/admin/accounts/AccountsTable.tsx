@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LuEye, LuLoaderCircle, LuTrash2 } from "react-icons/lu";
 import { Role } from "@/types";
-import { useToast } from "@/components/Toast";
+import { useToast } from "@/components/ui/Toast";
+import ConfirmationDialog from "@/components/ui/ConfirmationDialog";
 
 interface Account {
   id: string;
@@ -302,44 +303,20 @@ export default function AccountsTable({
           </tbody>
         </table>
       </div>
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="w-full max-w-md p-6 bg-white rounded-2xl shadow-xl mx-4">
-            <h3 className="text-lg font-semibold text-slate-900">
-              Delete Account?
-            </h3>
-
-            <p className="mt-2 text-sm text-slate-500">
-              Are you sure you want to permanently delete this account? This
-              action cannot be undone.
-            </p>
-
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowDeleteModal(false);
-                  setAccountToDelete(null);
-                }}
-                className="px-4 py-2 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  if (!accountToDelete) return;
-                  confirmDelete(accountToDelete);
-                }}
-                className="px-4 py-2 rounded-xl text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
-              >
-                Delete Account
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmationDialog
+        open={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setAccountToDelete(null);
+        }}
+        onConfirm={() => {
+          if (accountToDelete) void confirmDelete(accountToDelete);
+        }}
+        title="Delete account?"
+        description="This account will be permanently deleted. This action cannot be undone."
+        confirmLabel="Delete Account"
+        tone="danger"
+      />
       <div className="flex items-center justify-between border-t border-slate-100 p-4 bg-slate-50/10 text-sm">
         {totalRows > 1 ? (
           <span className="text-sky-600 py-2 px-4 bg-sky-50 rounded-lg font-semibold">

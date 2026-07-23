@@ -8,7 +8,11 @@ import {
   getAccount,
   updateAccountName,
 } from "@/lib/repositories/accounts.repository";
-import { getSurveyByUserId } from "@/lib/repositories/surveys.repository";
+import {
+  getFormResponseDocuments,
+  listFormResponsesByUser,
+} from "@/lib/repositories/form-responses.repository";
+import { formResponseToSurvey } from "@/lib/forms/graduate-tracer-adapter";
 
 async function authorize(): Promise<
   Models.User<Models.Preferences> | NextResponse
@@ -45,25 +49,27 @@ export async function GET(
 
     const account = await getAccount(id);
 
-    let survey = null;
-
-    try {
-      survey = await getSurveyByUserId(id);
-      console.log(id);
-    } catch (surveyError) {
-      console.log(`No survey record found for account ID: ${id}`);
-    }
+    const response = (await listFormResponsesByUser(id))[0];
+    const survey = response
+      ? formResponseToSurvey(
+          response,
+          await getFormResponseDocuments(response.id),
+        )
+      : null;
 
     return NextResponse.json({
       success: true,
       account,
       survey,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         success: false,
-        message: error.message ?? "Failed to load account details.",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to load account details.",
       },
       {
         status: 500,
@@ -104,11 +110,12 @@ export async function PATCH(
       success: true,
       message: "Account updated successfully.",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         success: false,
-        message: error.message ?? "Failed to update account.",
+        message:
+          error instanceof Error ? error.message : "Failed to update account.",
       },
       {
         status: 500,
@@ -150,11 +157,12 @@ export async function DELETE(
       success: true,
       message: "Account deleted successfully.",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         success: false,
-        message: error.message ?? "Failed to delete account.",
+        message:
+          error instanceof Error ? error.message : "Failed to delete account.",
       },
       {
         status: 500,

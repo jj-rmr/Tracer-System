@@ -4,8 +4,9 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LuArrowLeft } from "react-icons/lu";
 import { Role, Survey } from "@/types";
-import SurveyContainer from "@/components/surveys/SurveyContainer";
-import { defaultSurvey } from "@/lib/survey/defaults";
+import ResponseWorkspace from "@/components/responses/ResponseWorkspace";
+import { defaultSurvey } from "@/lib/surveys/defaults";
+import ConfirmationDialog from "@/components/ui/ConfirmationDialog";
 
 interface Account {
   id: string;
@@ -212,40 +213,16 @@ export default function AccountDetails({ id, currentUserId }: Props) {
             </button>
           )}
         </div>
-        {showDeleteModal && (
-          <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-            <div className="w-full max-w-md p-6 bg-white rounded-2xl shadow-xl mx-4">
-              <h3 className="text-lg font-semibold text-slate-900">
-                Delete Account?
-              </h3>
-
-              <p className="mt-2 text-sm text-slate-500">
-                Are you sure you want to permanently delete this account? This
-                action cannot be undone.
-              </p>
-
-              <div className="mt-6 flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowDeleteModal(false);
-                  }}
-                  className="px-4 py-2 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="button"
-                  onClick={deleteAccount}
-                  className="px-4 py-2 rounded-xl text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
-                >
-                  {deleting ? "Deleting..." : "Delete Account"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <ConfirmationDialog
+          open={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          onConfirm={() => void deleteAccount()}
+          title="Delete account?"
+          description="This account will be permanently deleted. This action cannot be undone."
+          confirmLabel="Delete Account"
+          busy={deleting}
+          tone="danger"
+        />
       </div>
 
       {/* Tracer Survey Section */}
@@ -263,14 +240,14 @@ export default function AccountDetails({ id, currentUserId }: Props) {
             </p>
           </div>
         ) : (
-          <SurveyContainer
+        <ResponseWorkspace
             survey={{
               ...defaultSurvey,
               ...(survey ?? {}),
             }}
             isNew={!survey}
             updatedAt={survey?.updatedAt}
-            surveyId={survey?.id}
+            responseId={survey?.id}
             readOnly={true}
           />
         )}

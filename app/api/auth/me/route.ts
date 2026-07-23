@@ -1,4 +1,4 @@
-import { ok, fail } from "@/lib/api/response";
+import { ok, fail } from "@/lib/api/responses";
 import { requireUser } from "@/lib/auth/require-user";
 
 export async function GET() {
@@ -9,10 +9,4 @@ export async function GET() {
   } catch {
     return fail("Unauthorized", 401);
   }
-}
-
-export async function requireUserId() {
-  const { user } = await requireUser();
-
-  return user.$id;
 }
