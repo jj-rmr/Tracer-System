@@ -21,6 +21,8 @@ interface ModalProps {
   layer?: "modal" | "nested";
   bodyClassName?: string;
   closeLabel?: string;
+  fitContent?: boolean;
+  showCloseButton?: boolean;
 }
 
 const widthStyles: Record<ModalWidth, string> = {
@@ -49,6 +51,8 @@ export default function Modal({
   layer = "modal",
   bodyClassName = "p-4 md:p-6",
   closeLabel = "Close dialog",
+  fitContent = false,
+  showCloseButton = true,
 }: ModalProps) {
   const titleId = useId();
   const descriptionId = useId();
@@ -146,7 +150,7 @@ export default function Modal({
         aria-describedby={description ? descriptionId : undefined}
         tabIndex={-1}
         className={`relative flex max-h-full w-full flex-col overflow-hidden rounded-2xl bg-white shadow-2xl outline-none ${widthStyles[width]} ${
-          width === "sm" || width === "md" ? "h-auto" : "h-full"
+          fitContent || width === "sm" || width === "md" ? "h-fit" : "h-full"
         }`}
       >
         <header className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-200 px-5 py-4 md:px-6">
@@ -160,14 +164,16 @@ export default function Modal({
               </p>
             )}
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={closeLabel}
-            className="shrink-0 rounded-xl p-2 text-slate-500 transition-colors hover:bg-slate-100"
-          >
-            <LuX aria-hidden="true" size={22} />
-          </button>
+          {showCloseButton && (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label={closeLabel}
+              className="shrink-0 rounded-xl p-2 text-slate-500 transition-colors hover:bg-slate-100"
+            >
+              <LuX aria-hidden="true" size={22} />
+            </button>
+          )}
         </header>
 
         <div

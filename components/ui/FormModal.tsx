@@ -9,12 +9,14 @@ interface FormModalProps {
   open: boolean;
   onClose: () => void;
   title: string;
-  children: ReactNode;
+  children: ReactNode | ((requestClose: () => void) => ReactNode);
   description?: string;
   width?: "sm" | "md" | "lg" | "xl";
   bodyClassName?: string;
   confirmationTitle?: string;
   confirmationDescription?: string;
+  fitContent?: boolean;
+  showCloseButton?: boolean;
 }
 
 export default function FormModal({
@@ -28,8 +30,14 @@ export default function FormModal({
   confirmationTitle = "Discard unsaved changes?",
   confirmationDescription =
     "Any information entered in this form will be lost.",
+  fitContent = false,
+  showCloseButton = true,
 }: FormModalProps) {
   const [confirmingClose, setConfirmingClose] = useState(false);
+
+  function requestClose() {
+    setConfirmingClose(true);
+  }
 
   function discardAndClose() {
     setConfirmingClose(false);
@@ -40,13 +48,15 @@ export default function FormModal({
     <>
       <Modal
         open={open}
-        onClose={() => setConfirmingClose(true)}
+        onClose={requestClose}
         title={title}
         description={description}
         width={width}
         bodyClassName={bodyClassName}
+        fitContent={fitContent}
+        showCloseButton={showCloseButton}
       >
-        {children}
+        {typeof children === "function" ? children(requestClose) : children}
       </Modal>
 
       <ConfirmationDialog

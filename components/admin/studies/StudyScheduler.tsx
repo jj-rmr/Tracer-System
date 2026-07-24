@@ -5,6 +5,8 @@ import { LuArchive, LuPencil, LuPlus } from "react-icons/lu";
 import { useRouter } from "next/navigation";
 
 import { SelectField } from "@/components/forms/SelectField";
+import { fieldStyles as styles } from "@/components/forms/graduate-tracer/shared";
+import FormModal from "@/components/ui/FormModal";
 import { useToast } from "@/components/ui/Toast";
 import { PublishedFormVersion, StudyPeriodSummary } from "@/types";
 
@@ -189,14 +191,22 @@ export default function StudyScheduler({
         </button>
       </header>
 
-      {showForm && (
-        <form
-          onSubmit={saveSchedule}
-          className="grid gap-5 rounded-3xl border border-sky-200 bg-white p-6 shadow-sm md:grid-cols-2"
-        >
-          <h2 className="md:col-span-2 text-lg font-semibold text-slate-900">
-            {editingStudyId ? "Edit study schedule" : "Schedule a study"}
-          </h2>
+      <FormModal
+        open={showForm}
+        onClose={() => setShowForm(false)}
+        title={editingStudyId ? "Edit study schedule" : "Schedule a study"}
+        description="Set the form version and response window for this academic year."
+        width="lg"
+        fitContent
+        showCloseButton={false}
+        confirmationTitle="Discard study schedule changes?"
+        confirmationDescription="Any unsaved changes to this study schedule will be lost."
+      >
+        {(requestClose) => (
+          <form
+            onSubmit={saveSchedule}
+            className="grid gap-5 md:grid-cols-2"
+          >
 
           <SelectField
             id="formVersionId"
@@ -217,8 +227,8 @@ export default function StudyScheduler({
             required
           />
 
-          <label className="min-w-0 space-y-2 text-sm font-medium text-slate-700">
-            <span>Academic year</span>
+          <label className="min-w-0">
+            <span className={styles.label}>Academic year</span>
             <input
               value={draft.academicYear}
               disabled={!!editingStudyId}
@@ -230,13 +240,13 @@ export default function StudyScheduler({
               }
               placeholder="2026-2027"
               pattern="[0-9]{4}-[0-9]{4}"
-              className="min-w-0 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+              className={styles.input(false, Boolean(editingStudyId))}
               required
             />
           </label>
 
-          <label className="min-w-0 space-y-2 text-sm font-medium text-slate-700 md:col-span-2">
-            <span>Study title</span>
+          <label className="min-w-0 md:col-span-2">
+            <span className={styles.label}>Study title</span>
             <input
               value={draft.title}
               onChange={(event) =>
@@ -245,13 +255,13 @@ export default function StudyScheduler({
                   title: event.target.value,
                 }))
               }
-              className="min-w-0 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+              className={styles.input(false, false)}
               required
             />
           </label>
 
-          <label className="min-w-0 space-y-2 text-sm font-medium text-slate-700">
-            <span>Opens</span>
+          <label className="min-w-0">
+            <span className={styles.label}>Opens</span>
             <input
               type="datetime-local"
               value={draft.opensAt}
@@ -266,13 +276,21 @@ export default function StudyScheduler({
                   opensAt: event.target.value,
                 }))
               }
-              className="min-w-0 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+              className={styles.input(
+                false,
+                Boolean(
+                  editingStudyId &&
+                    data.studies.find(
+                      (study) => study.id === editingStudyId,
+                    )?.status === "open",
+                ),
+              )}
               required
             />
           </label>
 
-          <label className="min-w-0 space-y-2 text-sm font-medium text-slate-700">
-            <span>Closes</span>
+          <label className="min-w-0">
+            <span className={styles.label}>Closes</span>
             <input
               type="datetime-local"
               value={draft.closesAt}
@@ -282,7 +300,7 @@ export default function StudyScheduler({
                   closesAt: event.target.value,
                 }))
               }
-              className="min-w-0 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+              className={styles.input(false, false)}
               required
             />
           </label>
@@ -290,7 +308,7 @@ export default function StudyScheduler({
           <div className="flex justify-end gap-3 md:col-span-2">
             <button
               type="button"
-              onClick={() => setShowForm(false)}
+              onClick={requestClose}
               className="rounded-xl px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
             >
               Cancel
@@ -303,8 +321,9 @@ export default function StudyScheduler({
               {saving ? "Saving..." : "Save Schedule"}
             </button>
           </div>
-        </form>
-      )}
+          </form>
+        )}
+      </FormModal>
 
       {data.studies.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500">
