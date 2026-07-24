@@ -1,0 +1,75 @@
+import { drive } from "./client";
+import { Readable } from "stream";
+
+export interface UploadedDriveFile {
+  filename: string;
+  mimeType: string;
+  size: number;
+
+  googleDriveFileId: string;
+  googleDriveFolderId: string;
+
+  webViewLink?: string;
+}
+
+function sanitizeFilename(name: string) {
+  return name.replace(/[\/\\]/g, "-");
+}
+
+export async function uploadFileToDrive(
+  file: File,
+  folderId: string,
+): Promise<UploadedDriveFile> {
+  const MAX_SIZE = 10 * 1024 * 1024;
+
+  if (file.size > MAX_SIZE) {
+    throw new Error("File exceeds 10MB limit");
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  const response = await drive.files.create({
+    requestBody: {
+      name: sanitizeFilename(file.name),
+      parents: [folderId],
+    },
+
+    media: {
+      mimeType: file.type,
+      body: Readable.from(buffer),
+    },
+
+    fields: "id,name,mimeType,size,webViewLink",
+  });
+
+  if (!response.data.id) {
+    throw new Error("Google Drive upload returned no file ID.");
+  }
+
+  return {
+    filename: response.data.name!,
+    mimeType: response.data.mimeType!,
+    size: Number(response.data.size ?? 0),
+    googleDriveFileId: response.data.id,
+    googleDriveFolderId: folderId,
+    webViewLink: response.data.webViewLink ?? undefined,
+  };
+}
+
+export async function deleteDriveFile(fileId: string) {
+  try {
+    await drive.files.delete({ fileId });
+  } catch (error) {
+    const status =
+      typeof error === "object" &&
+      error !== null &&
+      "response" in error &&
+      typeof error.response === "object" &&
+      error.response !== null &&
+      "status" in error.response
+        ? error.response.status
+        : undefined;
+
+    if (status !== 404) throw error;
+  }
+}

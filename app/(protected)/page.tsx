@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
 
-import { requireVerifiedUser, getRole } from "@/lib/auth";
+import { getRole, requireUser } from "@/lib/auth";
 import { ROLES } from "@/types";
 
 export default async function ProtectedPage() {
-  const user = await requireVerifiedUser();
+  const { user } = await requireUser();
 
   const role = getRole(user);
 

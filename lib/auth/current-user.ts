@@ -10,7 +10,11 @@ export async function getCurrentUser(session: string | null) {
   try {
     return await account.get();
   } catch (error) {
-    console.error("Appwrite session validation failed:", error);
+    console.error("Appwrite session validation failed:", {
+      error,
+      message: error instanceof Error ? error.message : "Unknown error",
+    });
+
     return null;
   }
 }

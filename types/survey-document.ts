@@ -11,6 +11,7 @@ export interface SurveyDocument {
   googleDriveFolderId: string;
 
   documentType?: SurveyDocumentType;
+  uploadKey?: string;
 
   uploadedAt: string;
   metadata?: Record<string, unknown>;

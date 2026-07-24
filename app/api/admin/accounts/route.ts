@@ -3,9 +3,11 @@ import { Users } from "node-appwrite";
 
 import { createAdminClient } from "@/lib/appwrite/admin";
 import { formatAccount } from "@/lib/repositories/accounts.repository";
+import { requireAdmin } from "@/lib/auth";
 
 export async function GET() {
   try {
+    await requireAdmin();
     const client = createAdminClient();
     const users = new Users(client);
 
@@ -17,11 +19,12 @@ export async function GET() {
       success: true,
       accounts,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         success: false,
-        message: error.message,
+        message:
+          error instanceof Error ? error.message : "Failed to load accounts.",
       },
       {
         status: 500,

@@ -31,7 +31,3 @@ export function requireRole(
 export function isAdmin(user: Models.User<Models.Preferences>) {
   return user.labels.includes(ROLES.ADMIN);
 }
-
-export function isAlumni(user: Models.User<Models.Preferences>) {
-  return user.labels.includes(ROLES.ALUMNI);
-}

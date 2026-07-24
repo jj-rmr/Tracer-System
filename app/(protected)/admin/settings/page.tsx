@@ -1,16 +1,15 @@
-import { SignOutButton } from "@/components/SignOutButton";
+import SettingsPage from "@/components/settings/SettingsPage";
+import { requireUserRole } from "@/lib/auth";
+import { ROLES } from "@/types";
 
-export default function Settings() {
+export default async function AdminSettingsPage() {
+  const user = await requireUserRole([ROLES.ADMIN]);
+
   return (
-    <div className="flex flex-col gap-8 items-center justify-center">
-      <div className="text-left w-full max-w-5xl flex flex-col gap-24">
-        <h1 className="mb-12 text-3xl font-semibold tracking-tight text-slate-900">
-          Settings
-        </h1>
-        <div className="inline-flex w-full items-center justify-center">
-          <SignOutButton />
-        </div>
-      </div>
-    </div>
+    <SettingsPage
+      name={user.name}
+      email={user.email}
+      role={ROLES.ADMIN}
+    />
   );
 }

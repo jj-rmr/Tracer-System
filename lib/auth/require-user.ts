@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation";
+import { cache } from "react";
 
 import { getCurrentUser } from "./current-user";
 import { getSessionCookie } from "./cookies";
 import { requireRole } from "./roles";
 import { Role, ROLES } from "@/types";
 
-export async function requireUser() {
+export const requireUser = cache(async function requireUser() {
   const session = await getSessionCookie();
 
   if (!session) {
@@ -22,20 +23,10 @@ export async function requireUser() {
     session,
     user,
   };
-}
-
-export async function requireVerifiedUser() {
-  const { user } = await requireUser();
-
-  if (!user.emailVerification) {
-    redirect("/verify-email");
-  }
-
-  return user;
-}
+});
 
 export async function requireUserRole(allowed: Role[]) {
-  const user = await requireVerifiedUser();
+  const { user } = await requireUser();
 
   try {
     requireRole(user, allowed);
@@ -49,7 +40,11 @@ export async function requireUserRole(allowed: Role[]) {
 export async function requireAdmin() {
   const { user } = await requireUser();
 
-  requireRole(user, [ROLES.ADMIN]);
+  try {
+    requireRole(user, [ROLES.ADMIN]);
+  } catch {
+    redirect("/unauthorized");
+  }
 
   return user;
 }

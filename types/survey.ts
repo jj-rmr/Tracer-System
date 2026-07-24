@@ -62,8 +62,8 @@ export interface Survey {
   documents: SurveyDocument[];
 
   // First Job
-  isFirstJob: boolean;
-  isFirstJobRelated: boolean;
+  isFirstJob: boolean | null;
+  isFirstJobRelated: boolean | null;
 
   stayingReasons: StayingReason[];
   stayingReasonOther: string;
@@ -91,7 +91,7 @@ export interface Survey {
   initialMonthlyIncome: MonthlyIncome;
 
   // Curriculum
-  curriculumRelevant: boolean;
+  curriculumRelevant: boolean | null;
 
   usefulCompetencies: Competency[];
   usefulCompetencyOther: string;

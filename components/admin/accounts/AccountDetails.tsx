@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LuArrowLeft } from "react-icons/lu";
 import { Role, Survey } from "@/types";
-import SurveyContainer from "@/components/surveys/SurveyContainer";
-import { defaultSurvey } from "@/lib/survey/defaults";
+import ResponseWorkspace from "@/components/responses/ResponseWorkspace";
+import { defaultSurvey } from "@/lib/surveys/defaults";
+import ConfirmationDialog from "@/components/ui/ConfirmationDialog";
+import LoadingState from "@/components/ui/LoadingState";
 
 interface Account {
   id: string;
@@ -113,15 +115,16 @@ export default function AccountDetails({ id, currentUserId }: Props) {
 
   if (loading) {
     return (
-      <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center text-slate-500">
-        Loading account profile and survey...
-      </div>
+      <LoadingState
+        className="min-h-[60dvh]"
+        message="Loading account details..."
+      />
     );
   }
 
   if (error || !account) {
     return (
-      <div className="rounded-3xl border border-red-200 bg-red-50 p-6 text-red-500">
+      <div className="rounded-3xl border border-rose-200 bg-rose-50 p-6 text-rose-500">
         {error ?? "Account not found."}
       </div>
     );
@@ -206,46 +209,22 @@ export default function AccountDetails({ id, currentUserId }: Props) {
             <button
               onClick={() => setShowDeleteModal(true)}
               disabled={deleting}
-              className="px-4 py-2 rounded-xl text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
+              className="px-4 py-2 rounded-xl text-sm font-medium bg-rose-500 text-white hover:bg-rose-600 transition-colors"
             >
               Delete Account
             </button>
           )}
         </div>
-        {showDeleteModal && (
-          <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-            <div className="w-full max-w-md p-6 bg-white rounded-2xl shadow-xl mx-4">
-              <h3 className="text-lg font-semibold text-slate-900">
-                Delete Account?
-              </h3>
-
-              <p className="mt-2 text-sm text-slate-500">
-                Are you sure you want to permanently delete this account? This
-                action cannot be undone.
-              </p>
-
-              <div className="mt-6 flex justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowDeleteModal(false);
-                  }}
-                  className="px-4 py-2 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-                >
-                  Cancel
-                </button>
-
-                <button
-                  type="button"
-                  onClick={deleteAccount}
-                  className="px-4 py-2 rounded-xl text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
-                >
-                  {deleting ? "Deleting..." : "Delete Account"}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        <ConfirmationDialog
+          open={showDeleteModal}
+          onClose={() => setShowDeleteModal(false)}
+          onConfirm={() => void deleteAccount()}
+          title="Delete account?"
+          description="This account will be permanently deleted. This action cannot be undone."
+          confirmLabel="Delete Account"
+          busy={deleting}
+          tone="danger"
+        />
       </div>
 
       {/* Tracer Survey Section */}
@@ -255,7 +234,7 @@ export default function AccountDetails({ id, currentUserId }: Props) {
         </h2>
 
         {loadingSurvey ? (
-          <p className="text-slate-500">Loading survey responses...</p>
+          <LoadingState message="Loading responses..." />
         ) : !survey ? (
           <div className="bg-slate-50 rounded-2xl p-6 text-center border border-dashed border-slate-200">
             <p className="text-slate-500">
@@ -263,14 +242,14 @@ export default function AccountDetails({ id, currentUserId }: Props) {
             </p>
           </div>
         ) : (
-          <SurveyContainer
+          <ResponseWorkspace
             survey={{
               ...defaultSurvey,
               ...(survey ?? {}),
             }}
             isNew={!survey}
             updatedAt={survey?.updatedAt}
-            surveyId={survey?.id}
+            responseId={survey?.id}
             readOnly={true}
           />
         )}

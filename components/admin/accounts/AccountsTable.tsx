@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LuEye, LuLoaderCircle, LuTrash2 } from "react-icons/lu";
+import { LuEye, LuTrash2 } from "react-icons/lu";
 import { Role } from "@/types";
-import { useToast } from "@/components/Toast";
+import { useToast } from "@/components/ui/Toast";
+import ConfirmationDialog from "@/components/ui/ConfirmationDialog";
+import LoadingState from "@/components/ui/LoadingState";
 
 interface Account {
   id: string;
@@ -38,7 +40,6 @@ export default function AccountsTable({
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [totalRows, setTotalRows] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [showLoading, setShowLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState<string | null>(null);
@@ -54,12 +55,6 @@ export default function AccountsTable({
     async function fetchAccounts() {
       setLoading(true);
       setError(null);
-
-      const loadingTimer = setTimeout(() => {
-        if (!cancelled) {
-          setShowLoading(true);
-        }
-      }, 200);
 
       try {
         const res = await fetch("/api/admin/accounts", {
@@ -99,11 +94,8 @@ export default function AccountsTable({
           setError(err.message);
         }
       } finally {
-        clearTimeout(loadingTimer);
-
         if (!cancelled) {
           setLoading(false);
-          setShowLoading(false);
         }
       }
     }
@@ -150,19 +142,14 @@ export default function AccountsTable({
     }
   };
 
-  if (loading && showLoading) {
-    return (
-      <div className="flex justify-center items-center p-12 text-sky-600 font-medium w-full">
-        <LuLoaderCircle className="mr-3 h-6 w-6 animate-spin" />
-        <span>Loading accounts...</span>
-      </div>
-    );
+  if (loading) {
+    return <LoadingState className="min-h-72" message="Loading accounts..." />;
   }
 
   if (error) {
     return (
       <div
-        className="p-4 w-full text-sm text-red-500 rounded-2xl bg-red-50 border border-red-100 shadow-sm"
+        className="p-4 w-full text-sm text-rose-500 rounded-2xl bg-rose-50 border border-rose-100 shadow-sm"
         role="alert"
       >
         <span className="font-bold">Error:</span> {error}
@@ -249,7 +236,7 @@ export default function AccountsTable({
                       className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium ${
                         account.verified
                           ? "bg-emerald-50 text-emerald-500 border border-emerald-100"
-                          : "bg-red-50 text-red-500 border border-red-100"
+                          : "bg-rose-50 text-rose-500 border border-rose-100"
                       }`}
                     >
                       {account.verified ? "Verified" : "Pending"}
@@ -289,7 +276,7 @@ export default function AccountsTable({
                           setAccountToDelete(account.id);
                           setShowDeleteModal(true);
                         }}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-red-100 px-4 py-2 font-semibold text-red-500 transition-colors hover:bg-red-200"
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-100 px-4 py-2 font-semibold text-rose-500 transition-colors hover:bg-rose-200"
                       >
                         <LuTrash2 size={16} />
                         Delete
@@ -302,44 +289,20 @@ export default function AccountsTable({
           </tbody>
         </table>
       </div>
-      {showDeleteModal && (
-        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-          <div className="w-full max-w-md p-6 bg-white rounded-2xl shadow-xl mx-4">
-            <h3 className="text-lg font-semibold text-slate-900">
-              Delete Account?
-            </h3>
-
-            <p className="mt-2 text-sm text-slate-500">
-              Are you sure you want to permanently delete this account? This
-              action cannot be undone.
-            </p>
-
-            <div className="mt-6 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowDeleteModal(false);
-                  setAccountToDelete(null);
-                }}
-                className="px-4 py-2 rounded-xl text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  if (!accountToDelete) return;
-                  confirmDelete(accountToDelete);
-                }}
-                className="px-4 py-2 rounded-xl text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
-              >
-                Delete Account
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConfirmationDialog
+        open={showDeleteModal}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setAccountToDelete(null);
+        }}
+        onConfirm={() => {
+          if (accountToDelete) void confirmDelete(accountToDelete);
+        }}
+        title="Delete account?"
+        description="This account will be permanently deleted. This action cannot be undone."
+        confirmLabel="Delete Account"
+        tone="danger"
+      />
       <div className="flex items-center justify-between border-t border-slate-100 p-4 bg-slate-50/10 text-sm">
         {totalRows > 1 ? (
           <span className="text-sky-600 py-2 px-4 bg-sky-50 rounded-lg font-semibold">

@@ -1,12 +1,26 @@
 import { NextResponse } from "next/server";
-import { oauth2Client } from "@/lib/google/google-drive";
+
+import { createGoogleSignInClient } from "@/lib/google/oauth";
 
 export async function GET() {
-  const url = oauth2Client.generateAuthUrl({
-    access_type: "offline",
-    prompt: "consent",
-    scope: ["https://www.googleapis.com/auth/drive"],
+  const state = crypto.randomUUID();
+  const googleClient = createGoogleSignInClient();
+  const authorizationUrl = googleClient.generateAuthUrl({
+    prompt: "select_account",
+    scope: ["openid", "email", "profile"],
+    state,
   });
 
-  return NextResponse.redirect(url);
+  const response = NextResponse.redirect(authorizationUrl);
+
+  response.headers.set("Cache-Control", "no-store");
+  response.cookies.set("google_oauth_state", state, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 10 * 60,
+  });
+
+  return response;
 }
