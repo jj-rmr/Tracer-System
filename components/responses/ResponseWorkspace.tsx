@@ -4,8 +4,8 @@ import { useState } from "react";
 import GraduateTracerForm from "@/components/forms/GraduateTracerForm";
 import { Survey } from "@/types";
 import { LuPlus } from "react-icons/lu";
+import FormModal from "@/components/ui/FormModal";
 import Modal from "@/components/ui/Modal";
-import ConfirmationDialog from "@/components/ui/ConfirmationDialog";
 import { surveyToAnswers } from "@/lib/forms/graduate-tracer-adapter";
 import {
   deleteFormResponseDocument,
@@ -30,21 +30,10 @@ export default function ResponseWorkspace({
   studyId,
 }: Props) {
   const [open, setOpen] = useState(false);
-  const [showCancelModal, setShowCancelModal] = useState(false);
 
   const handleSuccess = () => {
     setOpen(false);
   };
-
-  const handleConfirmCancel = () => {
-    setOpen(false);
-    setShowCancelModal(false);
-  };
-
-  function requestClose() {
-    if (readOnly) setOpen(false);
-    else setShowCancelModal(true);
-  }
 
   async function saveStudyResponse(
     nextSurvey: Survey,
@@ -96,11 +85,12 @@ export default function ResponseWorkspace({
           Add New Survey
         </button>
 
-        <Modal
+        <FormModal
           open={open}
           onClose={() => setOpen(false)}
           title="New Tracer Survey"
           width="xl"
+          confirmationDescription="Your survey answers and selected documents will be discarded."
         >
           <GraduateTracerForm
             initialData={survey}
@@ -108,7 +98,7 @@ export default function ResponseWorkspace({
             onSuccess={handleSuccess}
             onSave={studyId ? saveStudyResponse : undefined}
           />
-        </Modal>
+        </FormModal>
       </div>
     );
   }
@@ -151,37 +141,42 @@ export default function ResponseWorkspace({
         </div>
       </div>
 
-      <Modal
-        open={open}
-        onClose={requestClose}
-        title={readOnly ? "View Tracer Survey" : "Edit Tracer Survey"}
-        width="xl"
-      >
-        <GraduateTracerForm
-          initialData={survey}
-          isNew={false}
-          onSuccess={handleSuccess}
-          readOnly={readOnly}
-          onSave={studyId && !readOnly ? saveStudyResponse : undefined}
-          onDeleteDocument={
-            studyId && !readOnly
-              ? (document) =>
-                  deleteFormResponseDocument(survey.id, document.id)
-              : undefined
-          }
-        />
-      </Modal>
-
-      <ConfirmationDialog
-        open={!readOnly && showCancelModal}
-        onClose={() => setShowCancelModal(false)}
-        onConfirm={handleConfirmCancel}
-        title="Discard unsaved changes?"
-        description="Any modifications you made to this survey form will be permanently lost."
-        cancelLabel="Keep Editing"
-        confirmLabel="Discard Changes"
-        tone="danger"
-      />
+      {readOnly ? (
+        <Modal
+          open={open}
+          onClose={() => setOpen(false)}
+          title="View Tracer Survey"
+          width="xl"
+        >
+          <GraduateTracerForm
+            initialData={survey}
+            isNew={false}
+            onSuccess={handleSuccess}
+            readOnly
+          />
+        </Modal>
+      ) : (
+        <FormModal
+          open={open}
+          onClose={() => setOpen(false)}
+          title="Edit Tracer Survey"
+          width="xl"
+          confirmationDescription="Any modifications to this survey and newly selected documents will be discarded."
+        >
+          <GraduateTracerForm
+            initialData={survey}
+            isNew={false}
+            onSuccess={handleSuccess}
+            onSave={studyId ? saveStudyResponse : undefined}
+            onDeleteDocument={
+              studyId
+                ? (document) =>
+                    deleteFormResponseDocument(survey.id, document.id)
+                : undefined
+            }
+          />
+        </FormModal>
+      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import {
   FormResponse,
   FormResponseSource,
   FormResponseStatus,
+  ResponseDeletionStatus,
 } from "@/types";
 
 interface FormResponseRow {
@@ -18,6 +19,7 @@ interface FormResponseRow {
   submitted_at: string | null;
   created_at: string;
   updated_at: string;
+  deletion_status: ResponseDeletionStatus;
 }
 
 function mapFormResponse(row: FormResponseRow): FormResponse {
@@ -34,6 +36,7 @@ function mapFormResponse(row: FormResponseRow): FormResponse {
     submittedAt: row.submitted_at,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    deletionStatus: row.deletion_status,
   };
 }
 
@@ -46,6 +49,7 @@ export async function getFormResponse(
     .select("*")
     .eq("study_period_id", studyPeriodId)
     .eq("user_id", userId)
+    .eq("deletion_status", "active")
     .maybeSingle();
 
   if (error) throw error;
@@ -60,6 +64,7 @@ export async function getFormResponseById(
     .from("form_responses")
     .select("*")
     .eq("id", responseId)
+    .eq("deletion_status", "active")
     .maybeSingle();
 
   if (error) throw error;
@@ -71,6 +76,7 @@ export async function listFormResponses() {
   const { data, error } = await supabase
     .from("form_responses")
     .select("*")
+    .eq("deletion_status", "active")
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -78,11 +84,42 @@ export async function listFormResponses() {
   return (data as FormResponseRow[]).map(mapFormResponse);
 }
 
+export async function listFormResponsesByIds(responseIds: string[]) {
+  if (responseIds.length === 0) return [];
+
+  const rows: FormResponseRow[] = [];
+  const chunkSize = 200;
+
+  for (let index = 0; index < responseIds.length; index += chunkSize) {
+    const chunk = responseIds.slice(index, index + chunkSize);
+    const { data, error } = await supabase
+      .from("form_responses")
+      .select("*")
+      .eq("deletion_status", "active")
+      .in("id", chunk);
+
+    if (error) throw error;
+    rows.push(...(data as FormResponseRow[]));
+  }
+
+  const responseOrder = new Map(
+    responseIds.map((responseId, index) => [responseId, index]),
+  );
+
+  return rows
+    .sort(
+      (left, right) =>
+        (responseOrder.get(left.id) ?? 0) - (responseOrder.get(right.id) ?? 0),
+    )
+    .map(mapFormResponse);
+}
+
 export async function listFormResponsesByUser(userId: string) {
   const { data, error } = await supabase
     .from("form_responses")
     .select("*")
     .eq("user_id", userId)
+    .eq("deletion_status", "active")
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -94,9 +131,44 @@ export async function deleteFormResponse(responseId: string) {
   const { error } = await supabase
     .from("form_responses")
     .delete()
-    .eq("id", responseId);
+    .eq("id", responseId)
+    .eq("deletion_status", "deleting");
 
   if (error) throw error;
+}
+
+export async function claimFormResponseDeletion(responseId: string) {
+  const { data, error } = await supabase
+    .from("form_responses")
+    .update({ deletion_status: "deleting" })
+    .eq("id", responseId)
+    .in("deletion_status", ["active", "delete_failed"])
+    .select()
+    .maybeSingle();
+
+  if (error) throw error;
+  return data ? mapFormResponse(data as FormResponseRow) : null;
+}
+
+export async function markFormResponseDeletionFailed(responseId: string) {
+  const { error } = await supabase
+    .from("form_responses")
+    .update({ deletion_status: "delete_failed" })
+    .eq("id", responseId)
+    .eq("deletion_status", "deleting");
+
+  if (error) throw error;
+}
+
+export async function getFormResponseDeletionStatus(responseId: string) {
+  const { data, error } = await supabase
+    .from("form_responses")
+    .select("deletion_status")
+    .eq("id", responseId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return (data?.deletion_status as ResponseDeletionStatus | undefined) ?? null;
 }
 
 export async function createFormResponseDocument({
@@ -108,6 +180,7 @@ export async function createFormResponseDocument({
   googleDriveFileId,
   googleDriveFolderId,
   webViewLink,
+  uploadKey,
 }: {
   responseId: string;
   documentType: "employment" | "awards";
@@ -117,6 +190,7 @@ export async function createFormResponseDocument({
   googleDriveFileId: string;
   googleDriveFolderId: string;
   webViewLink?: string;
+  uploadKey?: string;
 }) {
   const { data, error } = await supabase
     .from("form_response_documents")
@@ -128,6 +202,7 @@ export async function createFormResponseDocument({
       size,
       google_drive_file_id: googleDriveFileId,
       google_drive_folder_id: googleDriveFolderId,
+      upload_key: uploadKey ?? null,
       metadata: { source: "google-drive", webViewLink },
     })
     .select()
@@ -135,6 +210,21 @@ export async function createFormResponseDocument({
 
   if (error) throw error;
 
+  return data;
+}
+
+export async function getFormResponseDocumentByUploadKey(
+  responseId: string,
+  uploadKey: string,
+) {
+  const { data, error } = await supabase
+    .from("form_response_documents")
+    .select("*")
+    .eq("response_id", responseId)
+    .eq("upload_key", uploadKey)
+    .maybeSingle();
+
+  if (error) throw error;
   return data;
 }
 
@@ -157,6 +247,7 @@ export async function getFormResponseDocuments(
     googleDriveFileId: row.google_drive_file_id,
     googleDriveFolderId: row.google_drive_folder_id,
     documentType: row.document_type,
+    uploadKey: row.upload_key ?? undefined,
     uploadedAt: row.uploaded_at,
     metadata: row.metadata ?? {},
   }));
@@ -224,30 +315,85 @@ export async function createManualFormResponse({
   respondentName,
   respondentEmail,
   answers,
+  importToken,
 }: {
   studyPeriodId: string;
   enteredByUserId: string;
   respondentName?: string;
   respondentEmail?: string;
   answers: Record<string, unknown>;
+  importToken: string;
 }): Promise<FormResponse> {
+  const values = {
+    study_period_id: studyPeriodId,
+    user_id: null,
+    source: "admin_import" as const,
+    respondent_name: respondentName?.trim() || null,
+    respondent_email: respondentEmail?.trim().toLowerCase() || null,
+    entered_by_user_id: enteredByUserId,
+    status: "submitted" as const,
+    answers,
+    submitted_at: new Date().toISOString(),
+    import_status: "processing" as const,
+    import_token: importToken,
+  };
+  const existing = await getManualFormResponseByImportToken(importToken);
+
+  if (existing) {
+    const { data, error } = await supabase
+      .from("form_responses")
+      .update(values)
+      .eq("id", existing.id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return mapFormResponse(data as FormResponseRow);
+  }
+
   const { data, error } = await supabase
     .from("form_responses")
-    .insert({
-      study_period_id: studyPeriodId,
-      user_id: null,
-      source: "admin_import",
-      respondent_name: respondentName?.trim() || null,
-      respondent_email: respondentEmail?.trim().toLowerCase() || null,
-      entered_by_user_id: enteredByUserId,
-      status: "submitted",
-      answers,
-      submitted_at: new Date().toISOString(),
-    })
+    .insert(values)
     .select()
     .single();
+
+  if (error?.code === "23505") {
+    const concurrentResponse = await getManualFormResponseByImportToken(
+      importToken,
+    );
+
+    if (concurrentResponse) return concurrentResponse;
+  }
 
   if (error) throw error;
 
   return mapFormResponse(data as FormResponseRow);
+}
+
+async function getManualFormResponseByImportToken(importToken: string) {
+  const { data, error } = await supabase
+    .from("form_responses")
+    .select("*")
+    .eq("source", "admin_import")
+    .eq("import_token", importToken)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data ? mapFormResponse(data as FormResponseRow) : null;
+}
+
+export async function setManualImportStatus(
+  responseId: string,
+  importStatus: "processing" | "completed" | "failed",
+) {
+  const { data, error } = await supabase
+    .from("form_responses")
+    .update({ import_status: importStatus })
+    .eq("id", responseId)
+    .eq("source", "admin_import")
+    .select("id")
+    .maybeSingle();
+
+  if (error) throw error;
+  return Boolean(data);
 }

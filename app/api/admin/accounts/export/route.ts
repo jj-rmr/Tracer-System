@@ -2,8 +2,10 @@
 
 import { exportAccountsCsv } from "@/lib/exports/accounts";
 import { NextResponse } from "next/server";
+import { requireAdmin } from "@/lib/auth";
 
 export async function GET() {
+  await requireAdmin();
   const csv = await exportAccountsCsv();
 
   const now = new Date();

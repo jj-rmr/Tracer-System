@@ -63,11 +63,15 @@ export async function listStudyPeriodSummaries(): Promise<
         supabase
           .from("form_responses")
           .select("id", { count: "exact", head: true })
-          .eq("study_period_id", study.id),
+          .eq("study_period_id", study.id)
+          .eq("import_status", "completed")
+          .eq("deletion_status", "active"),
         supabase
           .from("form_responses")
           .select("id", { count: "exact", head: true })
           .eq("study_period_id", study.id)
+          .eq("import_status", "completed")
+          .eq("deletion_status", "active")
           .eq("status", "submitted"),
       ]);
 

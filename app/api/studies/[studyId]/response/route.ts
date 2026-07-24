@@ -6,6 +6,7 @@ import {
   saveFormResponse,
 } from "@/lib/repositories/form-responses.repository";
 import { getStudyContext } from "@/lib/repositories/forms.repository";
+import { validateGraduateTracerSurvey } from "@/lib/forms/graduate-tracer-validation";
 import { FormResponseStatus, ROLES } from "@/types";
 
 interface SaveResponseBody {
@@ -124,6 +125,21 @@ export async function PUT(
         },
         { status: 400 },
       );
+    }
+
+    if (body.status === "submitted") {
+      const validation = validateGraduateTracerSurvey(body.answers);
+
+      if (!validation.valid) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Please complete all required survey fields.",
+            errors: validation.errors,
+          },
+          { status: 400 },
+        );
+      }
     }
 
     const response = await saveFormResponse({

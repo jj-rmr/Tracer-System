@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, useTransition, type MouseEvent } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   LuPanelLeftClose,
   LuPanelLeftOpen,
@@ -19,11 +19,57 @@ interface DashboardNavigationProps {
   role: Role;
 }
 
+const ADMIN_PREFETCH_ROUTES = [
+  "/admin",
+  "/admin/accounts",
+  "/admin/responses",
+  "/admin/studies",
+  "/admin/settings",
+];
+
+const ALUMNI_PREFETCH_ROUTES = [
+  "/alumni",
+  "/alumni/survey",
+  "/alumni/settings",
+];
+
 export default function DashboardNavigation({
   role,
 }: DashboardNavigationProps) {
   const [isOpen, setIsOpen] = useState(true);
+  const [pendingHref, setPendingHref] = useState<string | null>(null);
+  const [isNavigationPending, startNavigation] = useTransition();
   const pathname = usePathname();
+  const router = useRouter();
+
+  useEffect(() => {
+    const routes =
+      role === "admin" ? ADMIN_PREFETCH_ROUTES : ALUMNI_PREFETCH_ROUTES;
+
+    for (const route of routes) {
+      if (route !== pathname) router.prefetch(route);
+    }
+  }, [pathname, role, router]);
+
+  function markNavigationPending(
+    event: MouseEvent<HTMLAnchorElement>,
+    href: string,
+  ) {
+    if (
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey ||
+      href === pathname
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    setPendingHref(href);
+    startNavigation(() => router.push(href));
+  }
 
   const adminNavItems = [
     {
@@ -142,7 +188,9 @@ export default function DashboardNavigation({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex items-center pl-4.75 py-4 rounded-2xl  active:scale-95 transition-all duration-300 ${
+                prefetch
+                onClick={(event) => markNavigationPending(event, item.href)}
+                className={`relative flex items-center pl-4.75 py-4 rounded-2xl active:scale-95 transition-all duration-300 ${
                   isActiveLink(item.href)
                     ? "bg-sky-100 text-sky-500"
                     : "hover:shadow-md shadow-slate-200 hover:-translate-y-1 hover:text-sky-500"
@@ -157,6 +205,12 @@ export default function DashboardNavigation({
                 >
                   {item.label}
                 </span>
+                {isNavigationPending && pendingHref === item.href && (
+                  <span
+                    aria-label={`Opening ${item.label}`}
+                    className="absolute right-3 h-2 w-2 animate-pulse rounded-full bg-sky-500"
+                  />
+                )}
               </Link>
             );
           })}
@@ -170,7 +224,9 @@ export default function DashboardNavigation({
               <Link
                 key={item.href}
                 href={item.href}
-                className={`pl-5.5 py-2 flex items-center transition-all duration-300 hover:text-sky-400 active:scale-95 ${
+                prefetch
+                onClick={(event) => markNavigationPending(event, item.href)}
+                className={`relative pl-5.5 py-2 flex items-center transition-all duration-300 hover:text-sky-400 active:scale-95 ${
                   isActiveLink(item.href) ? "text-sky-500" : ""
                 }`}
               >
@@ -183,6 +239,12 @@ export default function DashboardNavigation({
                 >
                   {item.label}
                 </span>
+                {isNavigationPending && pendingHref === item.href && (
+                  <span
+                    aria-label={`Opening ${item.label}`}
+                    className="absolute right-3 h-2 w-2 animate-pulse rounded-full bg-sky-500"
+                  />
+                )}
               </Link>
             );
           })}
@@ -205,6 +267,8 @@ export default function DashboardNavigation({
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch
+                onClick={(event) => markNavigationPending(event, item.href)}
                 className={`relative flex flex-col items-center flex-1 p-2 active:scale-90 ${
                   active ? "text-sky-400" : ""
                 }`}
@@ -218,6 +282,12 @@ export default function DashboardNavigation({
                     active ? "bg-sky-100" : ""
                   }`}
                 />
+                {isNavigationPending && pendingHref === item.href && (
+                  <span
+                    aria-label={`Opening ${item.label}`}
+                    className="absolute right-2 top-1.5 h-2 w-2 animate-pulse rounded-full bg-sky-500"
+                  />
+                )}
               </Link>
             );
           })}

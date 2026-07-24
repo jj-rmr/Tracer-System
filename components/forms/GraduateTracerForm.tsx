@@ -11,6 +11,11 @@ import { PROGRAMS } from "@/lib/programs/catalog";
 import { FileUploadField } from "@/components/forms/FileUploadField";
 import { SurveyDocument } from "@/types";
 import { graduateTracerV1 } from "@/lib/forms/registry";
+import {
+  getGraduateTracerConditionalSections,
+  GraduateTracerFieldErrors,
+  validateGraduateTracerStep,
+} from "@/lib/forms/graduate-tracer-validation";
 
 const FORM_OPTIONS = graduateTracerV1.optionSets;
 
@@ -34,7 +39,7 @@ export interface PendingSurveyDocuments {
   awards: File[];
 }
 
-export type FormErrors = Partial<Record<keyof Survey, string>>;
+export type FormErrors = GraduateTracerFieldErrors;
 
 export default function GraduateTracerForm({
   initialData,
@@ -90,222 +95,47 @@ export default function GraduateTracerForm({
     }
   }
 
-  function validateStep(currentStep: number): boolean {
+  function getStepErrors(currentStep: number): FormErrors {
+    return validateGraduateTracerStep(form, currentStep);
+
+  }
+
+  function validateSteps(stepsToValidate: number[]): boolean {
     if (!requireResponses) {
       setErrors({});
       return true;
     }
 
-    const newErrors: FormErrors = {};
+    const errorsByStep = stepsToValidate.map((currentStep) => ({
+      currentStep,
+      errors: getStepErrors(currentStep),
+    }));
+    const newErrors = Object.assign(
+      {},
+      ...errorsByStep.map(({ errors: stepErrors }) => stepErrors),
+    ) as FormErrors;
 
-    if (currentStep === 1) {
-      if (!form.firstName.trim())
-        newErrors.firstName = "Please enter your first name.";
-      if (!form.lastName.trim())
-        newErrors.lastName = "Please enter your last name.";
-      if (!form.barangay.trim())
-        newErrors.barangay = "Please enter your barangay.";
-      if (!form.municipality.trim())
-        newErrors.municipality = "Please enter your municipality or city.";
-      if (!form.province.trim())
-        newErrors.province = "Please enter your province.";
-      if (!form.region.trim()) newErrors.region = "Please select your region.";
-      if (!form.civilStatus)
-        newErrors.civilStatus = "Please select your civil status.";
-      if (!form.sex) newErrors.sex = "Please select your sex.";
-      if (
-        form.contactNumbers.length === 0 ||
-        form.contactNumbers.some((n) => !n.trim())
-      ) {
-        newErrors.contactNumbers =
-          "Please provide at least one valid contact number.";
-      }
-    }
-
-    if (currentStep === 2) {
-      if (!form.program) {
-        newErrors.program =
-          "Please select the degree program you graduated from.";
-      }
-      if (!form.yearGraduated) {
-        newErrors.yearGraduated = "Please enter your year of graduation.";
-      } else if (
-        form.yearGraduated < 1900 ||
-        form.yearGraduated > new Date().getFullYear()
-      ) {
-        newErrors.yearGraduated = "Please enter a valid graduation year.";
-      }
-      if (
-        form.advancedStudyDegree === "Others" &&
-        !form.advancedStudyOther.trim()
-      ) {
-        newErrors.advancedStudyOther = "Please specify your graduate degree.";
-      }
-      if (
-        form.advancedStudyReasons === "Others" &&
-        !form.advancedStudyReasonOther.trim()
-      ) {
-        newErrors.advancedStudyReasonOther =
-          "Please specify your reason for pursuing graduate studies.";
-      }
-    }
-
-    if (currentStep === 3) {
-      if (!form.employmentStatus)
-        newErrors.employmentStatus =
-          "Please select your current employment status.";
-
-      if (form.employmentStatus === "Yes") {
-        if (!form.currentEmploymentStatus)
-          newErrors.currentEmploymentStatus =
-            "Please select your present employment status.";
-        if (!form.currentOccupation.trim())
-          newErrors.currentOccupation = "Please enter your current occupation.";
-        if (!form.companyName.trim())
-          newErrors.companyName =
-            "Please enter your company or employer's name.";
-        if (!form.companyAddress.trim())
-          newErrors.companyAddress =
-            "Please enter your company or employer's address.";
-        if (!form.businessIndustry)
-          newErrors.businessIndustry =
-            "Please select your employer's industry.";
-        if (!form.placeOfWork)
-          newErrors.placeOfWork =
-            "Please select whether you work locally or abroad.";
-      } else {
-        if (form.unemploymentReasons.length === 0) {
-          newErrors.unemploymentReasons =
-            "Please select at least one reason for your unemployment.";
-        }
-        if (
-          form.unemploymentReasons.includes("Others") &&
-          !form.unemploymentReasonOther.trim()
-        ) {
-          newErrors.unemploymentReasonOther =
-            "Please specify your other reason for unemployment.";
-        }
-      }
-    }
-
-    if (currentStep === 4) {
-      if (form.isFirstJob === undefined || form.isFirstJob === null) {
-        newErrors.isFirstJob =
-          "Please indicate whether this is your first job after college.";
-      } else {
-        if (form.isFirstJob) {
-          if (form.stayingReasons.length === 0) {
-            newErrors.stayingReasons =
-              "Please select at least one reason for staying in your first job.";
-          }
-
-          if (
-            form.stayingReasons.includes("Others") &&
-            !form.stayingReasonOther.trim()
-          ) {
-            newErrors.stayingReasonOther =
-              "Please specify your other reason for staying in your first job.";
-          }
-
-          if (
-            form.isFirstJobRelated === undefined ||
-            form.isFirstJobRelated === null
-          ) {
-            newErrors.isFirstJobRelated =
-              "Please indicate whether your first job was related to your degree program.";
-          }
-
-          if (form.isFirstJobRelated === false) {
-            if (form.acceptingReasons.length === 0) {
-              newErrors.acceptingReasons =
-                "Please select at least one reason for accepting your first job.";
-            }
-
-            if (
-              form.acceptingReasons.includes("Others") &&
-              !form.acceptingReasonOther.trim()
-            ) {
-              newErrors.acceptingReasonOther =
-                "Please specify your other reason for accepting your first job.";
-            }
-          }
-        }
-
-        if (
-          form.isFirstJob === false ||
-          (form.isFirstJob === true && form.isFirstJobRelated === false)
-        ) {
-          if (form.changingReasons.length === 0) {
-            newErrors.changingReasons =
-              "Please select at least one reason for changing jobs.";
-          }
-
-          if (
-            form.changingReasons.includes("Others") &&
-            !form.changingReasonOther.trim()
-          ) {
-            newErrors.changingReasonOther =
-              "Please specify your other reason for changing jobs.";
-          }
-        }
-      }
-      if (!form.firstJobTitle.trim())
-        newErrors.firstJobTitle = "Please enter the title of your first job.";
-      if (!form.firstJobDuration)
-        newErrors.firstJobDuration =
-          "Please select how long you stayed in your first job.";
-      if (
-        form.firstJobDuration === "Others" &&
-        !form.firstJobDurationOther.trim()
-      )
-        newErrors.firstJobDurationOther =
-          "Please specify the duration of your first job.";
-      if (!form.firstJobSource)
-        newErrors.firstJobSource =
-          "Please select how you found your first job.";
-      if (form.firstJobSource === "Others" && !form.firstJobSourceOther.trim())
-        newErrors.firstJobSourceOther =
-          "Please specify how you found your first job.";
-      if (!form.firstJobSearchDuration)
-        newErrors.firstJobSearchDuration =
-          "Please select how long it took you to find your first job.";
-      if (
-        form.firstJobSearchDuration === "Others" &&
-        !form.firstJobSearchDurationOther.trim()
-      )
-        newErrors.firstJobSearchDurationOther =
-          "Please specify how long it took you to find your first job.";
-      if (!form.firstJobLevel)
-        newErrors.firstJobLevel = "Please select the level of your first job.";
-      if (!form.currentJobLevel)
-        newErrors.currentJobLevel = "Please select your current job level.";
-      if (!form.initialMonthlyIncome)
-        newErrors.initialMonthlyIncome =
-          "Please select your initial monthly income range.";
-      if (
-        form.curriculumRelevant === undefined ||
-        form.curriculumRelevant === null
-      )
-        newErrors.curriculumRelevant =
-          "Please indicate whether your curriculum was relevant to your employment.";
-      if (form.usefulCompetencies.length === 0)
-        newErrors.usefulCompetencies =
-          "Please select at least one competency that has been useful in your career.";
-      if (
-        form.usefulCompetencies.includes("Others") &&
-        !form.usefulCompetencyOther.trim()
-      )
-        newErrors.usefulCompetencyOther =
-          "Please specify the other competency you found useful.";
-    }
     if (Object.keys(newErrors).length > 0) {
       showToast({
         message: Object.values(newErrors)[0]!,
         type: "error",
       });
+
+      const firstInvalidStep = errorsByStep.find(
+        ({ errors: stepErrors }) => Object.keys(stepErrors).length > 0,
+      )?.currentStep;
+
+      if (firstInvalidStep && firstInvalidStep !== step) {
+        setStep(firstInvalidStep);
+        window.dispatchEvent(new Event("stepchanged"));
+      }
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  }
+
+  function validateStep(currentStep: number): boolean {
+    return validateSteps([currentStep]);
   }
 
   function handleStep(move: "forward" | "backward") {
@@ -359,13 +189,9 @@ export default function GraduateTracerForm({
   }
 
   async function save() {
-    console.log("save() called");
-
-    const valid = validateStep(4);
-    console.log("validateStep(4):", valid);
+    const valid = validateSteps([1, 2, 3, 4]);
 
     if (!valid) {
-      console.log("Errors:", errors);
       return;
     }
 
@@ -404,7 +230,7 @@ export default function GraduateTracerForm({
   }
 
   const handlePreSubmitCheck = () => {
-    if (validateStep(4)) {
+    if (validateSteps([1, 2, 3, 4])) {
       setShowSaveModal(true);
     }
   };
@@ -924,6 +750,7 @@ function EmploymentStep({
   existingDocuments: SurveyDocument[];
   onRequestDeleteDocument: (document: SurveyDocument) => void;
 }) {
+  const conditions = getGraduateTracerConditionalSections(form);
   const unempOptions: {
     value: UnemploymentReason;
     label: string;
@@ -967,14 +794,53 @@ function EmploymentStep({
         id="employmentStatus"
         label="Employment Status *"
         value={form.employmentStatus}
-        onChange={(val) => updateField("employmentStatus", val as any)}
+        onChange={(val) => {
+          const employmentStatus = val as Survey["employmentStatus"];
+          updateField("employmentStatus", employmentStatus);
+
+          if (employmentStatus === "Yes") {
+            updateField("unemploymentReasons", []);
+            updateField("unemploymentReasonOther", "");
+          } else {
+            updateField("currentEmploymentStatus", "");
+            updateField("currentOccupation", "");
+            updateField("companyName", "");
+            updateField("companyAddress", "");
+            updateField("businessIndustry", "");
+            updateField("placeOfWork", "");
+          }
+
+          if (employmentStatus === "Never Employed") {
+            updateField("isFirstJob", null);
+            updateField("isFirstJobRelated", null);
+            updateField("stayingReasons", []);
+            updateField("stayingReasonOther", "");
+            updateField("acceptingReasons", []);
+            updateField("acceptingReasonOther", "");
+            updateField("changingReasons", []);
+            updateField("changingReasonOther", "");
+            updateField("firstJobDuration", "");
+            updateField("firstJobDurationOther", "");
+            updateField("firstJobSource", "");
+            updateField("firstJobSourceOther", "");
+            updateField("firstJobSearchDuration", "");
+            updateField("firstJobSearchDurationOther", "");
+            updateField("firstJobTitle", "");
+            updateField("firstJobLevel", "");
+            updateField("currentJobLevel", "");
+            updateField("initialMonthlyIncome", "");
+            updateField("curriculumRelevant", null);
+            updateField("usefulCompetencies", []);
+            updateField("usefulCompetencyOther", "");
+          }
+        }}
         options={FORM_OPTIONS.employmentStatus}
         placeholder="Select Employment Status"
         required
         hasError={!!errors.employmentStatus}
       />
 
-      {form.employmentStatus === "Yes" && (
+      {conditions.showEmployedFields && (
         <div className="space-y-6 border-t border-slate-200 pt-4 animate-fadeIn">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <SelectField
@@ -1126,8 +992,7 @@ function EmploymentStep({
       )}
 
       <div className="space-y-4 border-t border-slate-200 pt-4">
-        {(form.employmentStatus === "No" ||
-          form.employmentStatus === "Never Employed") && (
+        {conditions.showUnemploymentReasons && (
           <div className="space-y-2 border-t border-slate-200 pt-4">
             <label className={styles.label}>
               Please state the reason(s) why you are not yet employed. You may
@@ -1185,6 +1050,7 @@ function EmploymentStep({
 }
 
 function JobHistoryStep({ form, errors, updateField, readOnly }: StepProps) {
+  const conditions = getGraduateTracerConditionalSections(form);
   const durations = FORM_OPTIONS.jobDuration.map((option) => option.value);
   const sources = [
     "Advertisement",
@@ -1225,6 +1091,19 @@ function JobHistoryStep({ form, errors, updateField, readOnly }: StepProps) {
     updateField(field, list);
   };
 
+  if (!conditions.hasJobHistory) {
+    return (
+      <div className="space-y-3">
+        <h3 className="text-xl font-bold text-slate-900">
+          First Job & Curriculum Feedback
+        </h3>
+        <p className="rounded-2xl border border-sky-100 bg-sky-50 p-4 text-sm text-slate-700">
+          This section does not apply because you selected Never Employed.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <h3 className="text-xl font-bold text-slate-900">
@@ -1243,14 +1122,28 @@ function JobHistoryStep({ form, errors, updateField, readOnly }: StepProps) {
                 ? "false"
                 : ""
           }
-          onChange={(val) => updateField("isFirstJob", val === "true")}
+          onChange={(val) => {
+            const isFirstJob = val === "true";
+            updateField("isFirstJob", isFirstJob);
+
+            if (isFirstJob) {
+              updateField("changingReasons", []);
+              updateField("changingReasonOther", "");
+            } else {
+              updateField("isFirstJobRelated", null);
+              updateField("stayingReasons", []);
+              updateField("stayingReasonOther", "");
+              updateField("acceptingReasons", []);
+              updateField("acceptingReasonOther", "");
+            }
+          }}
           options={FORM_OPTIONS.yesNo}
           placeholder="Select"
           required
           hasError={!!errors.isFirstJob}
         />
 
-        {form.isFirstJob === true && (
+        {conditions.showFirstJobRelated && (
           <SelectField
             disabled={readOnly}
             id="isFirstJobRelated"
@@ -1262,7 +1155,15 @@ function JobHistoryStep({ form, errors, updateField, readOnly }: StepProps) {
                   ? "false"
                   : ""
             }
-            onChange={(val) => updateField("isFirstJobRelated", val === "true")}
+            onChange={(val) => {
+              const isRelated = val === "true";
+              updateField("isFirstJobRelated", isRelated);
+
+              if (isRelated) {
+                updateField("acceptingReasons", []);
+                updateField("acceptingReasonOther", "");
+              }
+            }}
             options={FORM_OPTIONS.yesNo}
             placeholder="Select"
             required
@@ -1271,7 +1172,7 @@ function JobHistoryStep({ form, errors, updateField, readOnly }: StepProps) {
         )}
       </div>
 
-      {form.isFirstJob === true && form.isFirstJobRelated === false && (
+      {conditions.showStayingReasons && (
         <>
           <div className="space-y-2 border-t border-slate-200 pt-4">
             <label className={styles.label}>
@@ -1304,7 +1205,7 @@ function JobHistoryStep({ form, errors, updateField, readOnly }: StepProps) {
               />
             )}
           </div>
-          <div>
+          {conditions.showAcceptingReasons && <div>
             <label className={styles.label}>
               Reasons for accepting first job *
             </label>
@@ -1349,11 +1250,11 @@ function JobHistoryStep({ form, errors, updateField, readOnly }: StepProps) {
                 }
               />
             )}
-          </div>
+          </div>}
         </>
       )}
 
-      {form.isFirstJob === false && (
+      {conditions.showChangingReasons && (
         <div className="space-y-4 border-t border-slate-200 pt-4">
           <div>
             <label className={styles.label}>

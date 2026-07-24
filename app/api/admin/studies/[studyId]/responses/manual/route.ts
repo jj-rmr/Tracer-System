@@ -8,7 +8,11 @@ interface ManualResponseBody {
   respondentName?: unknown;
   respondentEmail?: unknown;
   answers?: unknown;
+  importToken?: unknown;
 }
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -49,6 +53,16 @@ export async function POST(
       typeof body.respondentEmail === "string"
         ? body.respondentEmail.trim()
         : undefined;
+    const importToken =
+      typeof body.importToken === "string" ? body.importToken : "";
+
+    if (!UUID_PATTERN.test(importToken)) {
+      return NextResponse.json(
+        { success: false, message: "A valid manual import token is required." },
+        { status: 400 },
+      );
+    }
+
     if (!isObject(body.answers)) {
       return NextResponse.json(
         {
@@ -83,6 +97,7 @@ export async function POST(
       respondentName: respondentName || undefined,
       respondentEmail,
       answers: body.answers,
+      importToken,
     });
 
     return NextResponse.json(

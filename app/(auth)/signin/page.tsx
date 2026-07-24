@@ -9,7 +9,7 @@ export default function SignInPage() {
   const error = searchParams.get("error");
 
   function handleGoogleSignIn() {
-    window.location.href = "/api/auth/oauth";
+    window.location.href = "/api/auth/google";
   }
 
   return (
@@ -25,7 +25,7 @@ export default function SignInPage() {
       </div>
 
       {error === "unauthorized_domain" && (
-        <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-500 shadow-sm">
+        <div className="mb-6 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-500 shadow-sm">
           <div className="flex items-center gap-2">
             <LuCircleAlert size={20} className="shrink-0" />
 
@@ -35,7 +35,7 @@ export default function SignInPage() {
       )}
 
       {error === "oauth_failed" && (
-        <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-500 shadow-sm">
+        <div className="mb-6 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-500 shadow-sm">
           <div className="flex items-center gap-2">
             <LuCircleAlert size={20} className="shrink-0" />
 

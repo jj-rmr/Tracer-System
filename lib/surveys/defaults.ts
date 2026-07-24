@@ -51,8 +51,8 @@ export const defaultSurvey: Survey = {
   graduateFolderId: "",
   documents: [],
 
-  isFirstJob: false,
-  isFirstJobRelated: false,
+  isFirstJob: null,
+  isFirstJobRelated: null,
 
   stayingReasons: [],
   stayingReasonOther: "",
@@ -79,7 +79,7 @@ export const defaultSurvey: Survey = {
 
   initialMonthlyIncome: "",
 
-  curriculumRelevant: false,
+  curriculumRelevant: null,
 
   usefulCompetencies: [],
   usefulCompetencyOther: "",

@@ -1,23 +1,41 @@
-// app/api/admin/responses/export/route.ts
+import { NextRequest, NextResponse } from "next/server";
 
-import { exportResponsesCsv } from "@/lib/exports/responses";
+import {
+  InvalidResponseQueryError,
+  parseAdminResponseQuery,
+} from "@/lib/admin/response-query";
 import { requireAdmin } from "@/lib/auth";
-import { NextResponse } from "next/server";
+import { exportResponsesCsv } from "@/lib/exports/responses";
 
-export async function GET() {
-  await requireAdmin();
-  const csv = await exportResponsesCsv();
+export async function GET(request: NextRequest) {
+  try {
+    await requireAdmin();
 
-  const now = new Date();
+    const { filters } = parseAdminResponseQuery(request.nextUrl.searchParams);
+    const csv = await exportResponsesCsv(filters);
+    const now = new Date();
+    const pad = (value: number) => value.toString().padStart(2, "0");
+    const timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
 
-  const pad = (n: number) => n.toString().padStart(2, "0");
+    return new NextResponse(csv, {
+      headers: {
+        "Content-Type": "text/csv",
+        "Content-Disposition": `attachment; filename="TRACER-RESPONSES-${timestamp}.csv"`,
+        "Cache-Control": "no-store",
+      },
+    });
+  } catch (error) {
+    const invalidQuery = error instanceof InvalidResponseQueryError;
 
-  const timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
-
-  return new NextResponse(csv, {
-    headers: {
-      "Content-Type": "text/csv",
-      "Content-Disposition": `attachment; filename="TRACER-RESPONSES-${timestamp}.csv"`,
-    },
-  });
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to export responses.",
+      },
+      { status: invalidQuery ? 400 : 500 },
+    );
+  }
 }

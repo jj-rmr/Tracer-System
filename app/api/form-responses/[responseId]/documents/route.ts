@@ -3,11 +3,16 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { isAdmin } from "@/lib/auth/roles";
 import { deleteDriveFile, uploadFileToDrive } from "@/lib/google-drive/files";
-import { getOrCreateFolder } from "@/lib/google-drive/folders";
+import { getResponseDocumentFolder } from "@/lib/google-drive/response-folders";
 import {
   createFormResponseDocument,
   getFormResponseById,
+  getFormResponseDocumentByUploadKey,
+  getFormResponseDocuments,
 } from "@/lib/repositories/form-responses.repository";
+
+const UUID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 export async function POST(
   request: NextRequest,
@@ -28,6 +33,8 @@ export async function POST(
     const formData = await request.formData();
     const file = formData.get("file");
     const documentType = formData.get("documentType");
+    const rawUploadKey = formData.get("uploadKey");
+    const uploadKey = typeof rawUploadKey === "string" ? rawUploadKey : undefined;
 
     if (!(file instanceof File)) {
       return NextResponse.json(
@@ -43,20 +50,43 @@ export async function POST(
       );
     }
 
-    const rootFolder = await getOrCreateFolder("Tracer Study Responses");
-    if (!rootFolder.id) throw new Error("Could not create the document folder.");
+    if (uploadKey && !UUID_PATTERN.test(uploadKey)) {
+      return NextResponse.json(
+        { success: false, message: "Invalid document upload key." },
+        { status: 400 },
+      );
+    }
 
-    const responseFolder = await getOrCreateFolder(
-      `${response.respondentName ?? response.userId ?? "Response"} - ${response.id}`,
-      rootFolder.id,
-    );
-    if (!responseFolder.id) throw new Error("Could not create the response folder.");
+    if (response.source === "admin_import" && !uploadKey) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Manual import documents require an upload key.",
+        },
+        { status: 400 },
+      );
+    }
 
-    const typeFolder = await getOrCreateFolder(
-      documentType === "employment" ? "Employment Documents" : "Awards",
-      responseFolder.id,
-    );
-    if (!typeFolder.id) throw new Error("Could not create the document type folder.");
+    if (uploadKey) {
+      const existingDocument = await getFormResponseDocumentByUploadKey(
+        response.id,
+        uploadKey,
+      );
+
+      if (existingDocument) {
+        return NextResponse.json(
+          { success: true, document: existingDocument },
+          { status: 200 },
+        );
+      }
+    }
+
+    const documents = await getFormResponseDocuments(response.id);
+    const typeFolder = await getResponseDocumentFolder({
+      response,
+      documents,
+      documentType,
+    });
 
     const uploaded = await uploadFileToDrive(file, typeFolder.id);
 
@@ -64,12 +94,28 @@ export async function POST(
       const document = await createFormResponseDocument({
         responseId,
         documentType,
+        uploadKey,
         ...uploaded,
       });
 
       return NextResponse.json({ success: true, document }, { status: 201 });
     } catch (error) {
       await deleteDriveFile(uploaded.googleDriveFileId).catch(() => undefined);
+
+      if (uploadKey) {
+        const concurrentDocument = await getFormResponseDocumentByUploadKey(
+          response.id,
+          uploadKey,
+        );
+
+        if (concurrentDocument) {
+          return NextResponse.json(
+            { success: true, document: concurrentDocument },
+            { status: 200 },
+          );
+        }
+      }
+
       throw error;
     }
   } catch (error) {

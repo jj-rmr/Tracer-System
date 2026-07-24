@@ -1,6 +1,8 @@
 import { stringify } from "csv-stringify/sync";
 
-import { listFormResponses } from "@/lib/repositories/form-responses.repository";
+import { listAdminResponseSummaries } from "@/lib/repositories/admin-responses.repository";
+import { listFormResponsesByIds } from "@/lib/repositories/form-responses.repository";
+import { AdminResponseFilters } from "@/types";
 
 function formatDate(value: string | null) {
   return value
@@ -16,8 +18,20 @@ function formatDate(value: string | null) {
     : "";
 }
 
-export async function exportResponsesCsv() {
-  const responses = await listFormResponses();
+export async function exportResponsesCsv(filters: AdminResponseFilters = {}) {
+  const responseIds: string[] = [];
+  const limit = 100;
+  let page = 1;
+  let total = 0;
+
+  do {
+    const result = await listAdminResponseSummaries({ filters, page, limit });
+    responseIds.push(...result.responses.map((response) => response.id));
+    total = result.total;
+    page += 1;
+  } while (responseIds.length < total);
+
+  const responses = await listFormResponsesByIds(responseIds);
   if (responses.length === 0) return "";
 
   return stringify(

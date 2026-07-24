@@ -57,7 +57,19 @@ export async function uploadFileToDrive(
 }
 
 export async function deleteDriveFile(fileId: string) {
-  await drive.files.delete({
-    fileId,
-  });
+  try {
+    await drive.files.delete({ fileId });
+  } catch (error) {
+    const status =
+      typeof error === "object" &&
+      error !== null &&
+      "response" in error &&
+      typeof error.response === "object" &&
+      error.response !== null &&
+      "status" in error.response
+        ? error.response.status
+        : undefined;
+
+    if (status !== 404) throw error;
+  }
 }

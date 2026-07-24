@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { LuArchive, LuPencil, LuPlus } from "react-icons/lu";
+import { useRouter } from "next/navigation";
 
 import { SelectField } from "@/components/forms/SelectField";
 import { useToast } from "@/components/ui/Toast";
@@ -48,6 +49,7 @@ export default function StudyScheduler({
   initialData: StudiesPayload;
 }) {
   const { showToast } = useToast();
+  const router = useRouter();
   const [data, setData] = useState<StudiesPayload>(initialData);
   const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -131,6 +133,7 @@ export default function StudyScheduler({
       });
       setShowForm(false);
       await loadStudies();
+      router.refresh();
     } catch (error) {
       showToast({
         message:
@@ -155,6 +158,7 @@ export default function StudyScheduler({
 
       showToast({ message: "Study archived.", type: "success" });
       await loadStudies();
+      router.refresh();
     } catch (error) {
       showToast({
         message:

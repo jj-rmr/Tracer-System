@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LuLoaderCircle } from "react-icons/lu";
 
 import ManualResponseEntry from "@/components/admin/responses/ManualResponseEntry";
-import Modal from "@/components/ui/Modal";
+import FormModal from "@/components/ui/FormModal";
+import LoadingState from "@/components/ui/LoadingState";
 import { PublishedFormVersion, StudyPeriod, StudyPeriodSummary } from "@/types";
 
 interface StudiesPayload {
@@ -75,18 +75,16 @@ export default function ManualResponseModal({
   }, []);
 
   return (
-    <Modal
+    <FormModal
       open
       onClose={onClose}
       title="Add Manual Response"
       description="Transcribe a historical tracer study response."
       width="xl"
+      confirmationDescription="The manual response and any selected documents will be discarded."
     >
       {loading ? (
-        <div className="flex min-h-72 items-center justify-center gap-3 text-sky-600">
-          <LuLoaderCircle className="h-6 w-6 animate-spin" />
-          <span className="text-sm font-medium">Loading studies...</span>
-        </div>
+        <LoadingState className="min-h-72" message="Loading studies..." />
       ) : error ? (
         <div className="rounded-2xl border border-rose-200 bg-rose-50 p-5 text-sm text-rose-700">
           {error}
@@ -94,6 +92,6 @@ export default function ManualResponseModal({
       ) : (
         <ManualResponseEntry studies={studies} onComplete={onComplete} />
       )}
-    </Modal>
+    </FormModal>
   );
 }

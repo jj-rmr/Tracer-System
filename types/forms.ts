@@ -35,6 +35,8 @@ export type StudyPeriodStatus =
 
 export type FormResponseStatus = "draft" | "submitted";
 export type FormResponseSource = "alumni" | "admin_import";
+export type ManualImportStatus = "processing" | "completed" | "failed";
+export type ResponseDeletionStatus = "active" | "deleting" | "delete_failed";
 
 export interface StudyPeriod {
   id: string;
@@ -79,4 +81,37 @@ export interface FormResponse {
   submittedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  deletionStatus: ResponseDeletionStatus;
+}
+
+export interface AdminResponseSummary {
+  id: string;
+  studyPeriodId: string;
+  academicYear: string;
+  studyTitle: string;
+  source: FormResponseSource;
+  status: FormResponseStatus;
+  respondentName: string | null;
+  respondentEmail: string | null;
+  firstName: string;
+  middleName: string;
+  lastName: string;
+  extensionName: string;
+  sex: string;
+  civilStatus: string;
+  employmentStatus: string;
+  program: string;
+  submittedAt: string | null;
+  createdAt: string;
+  importStatus: ManualImportStatus;
+  deletionStatus: ResponseDeletionStatus;
+}
+
+export interface AdminResponseFilters {
+  search?: string;
+  studyPeriodId?: string;
+  program?: string;
+  source?: FormResponseSource;
+  status?: FormResponseStatus;
+  employmentStatus?: string;
 }

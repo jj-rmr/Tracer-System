@@ -7,6 +7,7 @@ import { Role, Survey } from "@/types";
 import ResponseWorkspace from "@/components/responses/ResponseWorkspace";
 import { defaultSurvey } from "@/lib/surveys/defaults";
 import ConfirmationDialog from "@/components/ui/ConfirmationDialog";
+import LoadingState from "@/components/ui/LoadingState";
 
 interface Account {
   id: string;
@@ -114,15 +115,16 @@ export default function AccountDetails({ id, currentUserId }: Props) {
 
   if (loading) {
     return (
-      <div className="rounded-3xl border border-slate-200 bg-white p-10 text-center text-slate-500">
-        Loading account profile and survey...
-      </div>
+      <LoadingState
+        className="min-h-[60dvh]"
+        message="Loading account details..."
+      />
     );
   }
 
   if (error || !account) {
     return (
-      <div className="rounded-3xl border border-red-200 bg-red-50 p-6 text-red-500">
+      <div className="rounded-3xl border border-rose-200 bg-rose-50 p-6 text-rose-500">
         {error ?? "Account not found."}
       </div>
     );
@@ -207,7 +209,7 @@ export default function AccountDetails({ id, currentUserId }: Props) {
             <button
               onClick={() => setShowDeleteModal(true)}
               disabled={deleting}
-              className="px-4 py-2 rounded-xl text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition-colors"
+              className="px-4 py-2 rounded-xl text-sm font-medium bg-rose-500 text-white hover:bg-rose-600 transition-colors"
             >
               Delete Account
             </button>
@@ -232,7 +234,7 @@ export default function AccountDetails({ id, currentUserId }: Props) {
         </h2>
 
         {loadingSurvey ? (
-          <p className="text-slate-500">Loading survey responses...</p>
+          <LoadingState message="Loading responses..." />
         ) : !survey ? (
           <div className="bg-slate-50 rounded-2xl p-6 text-center border border-dashed border-slate-200">
             <p className="text-slate-500">
@@ -240,7 +242,7 @@ export default function AccountDetails({ id, currentUserId }: Props) {
             </p>
           </div>
         ) : (
-        <ResponseWorkspace
+          <ResponseWorkspace
             survey={{
               ...defaultSurvey,
               ...(survey ?? {}),

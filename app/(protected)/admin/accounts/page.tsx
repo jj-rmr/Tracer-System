@@ -5,21 +5,13 @@
 import { useEffect, useState } from "react";
 import { LuDownload, LuSearch } from "react-icons/lu";
 import AccountsTable from "@/components/admin/accounts/AccountsTable";
+import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 
 export default function AccountsPage() {
   const [searchInput, setSearchInput] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
+  const searchQuery = useDebouncedValue(searchInput, 200);
   const [currentPage, setCurrentPage] = useState(1);
   const [currentUserId, setCurrentUserId] = useState("");
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setSearchQuery(searchInput);
-      setCurrentPage(1);
-    }, 50);
-
-    return () => clearTimeout(timer);
-  }, [searchInput]);
 
   useEffect(() => {
     async function loadCurrentUser() {
@@ -66,7 +58,10 @@ export default function AccountsPage() {
               type="text"
               placeholder="Search..."
               value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
+              onChange={(e) => {
+                setSearchInput(e.target.value);
+                setCurrentPage(1);
+              }}
               className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-3 text-sm text-slate-700 shadow-sm transition duration-200 placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100"
             />
           </label>

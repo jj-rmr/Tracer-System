@@ -1,14 +1,14 @@
-//google/google-drive.ts
 import { google } from "googleapis";
 
-export const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-  process.env.GOOGLE_REDIRECT_URI,
-);
+import {
+  createGoogleDriveAuthorizationClient,
+  getGoogleDriveRefreshToken,
+} from "@/lib/google/oauth";
+
+const oauth2Client = createGoogleDriveAuthorizationClient();
 
 oauth2Client.setCredentials({
-  refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
+  refresh_token: getGoogleDriveRefreshToken(),
 });
 
 export const drive = google.drive({

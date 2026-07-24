@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { SelectField } from "@/components/forms/SelectField";
 import GraduateTracerForm, {
@@ -23,6 +23,18 @@ export default function ManualResponseEntry({
   const router = useRouter();
   const [studyId, setStudyId] = useState(studies[0]?.id ?? "");
   const [respondentEmail, setRespondentEmail] = useState("");
+  const importTokenRef = useRef<string | null>(null);
+  const uploadKeysRef = useRef(new WeakMap<File, string>());
+
+  function getUploadKey(file: File) {
+    const existingKey = uploadKeysRef.current.get(file);
+
+    if (existingKey) return existingKey;
+
+    const uploadKey = crypto.randomUUID();
+    uploadKeysRef.current.set(file, uploadKey);
+    return uploadKey;
+  }
 
   async function saveManualResponse(
     survey: Survey,
@@ -42,53 +54,101 @@ export default function ManualResponseEntry({
       .join(" ")
       .trim();
 
-    const response = await fetch(
-      `/api/admin/studies/${studyId}/responses/manual`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+    const importToken = importTokenRef.current ?? crypto.randomUUID();
+    importTokenRef.current = importToken;
+    let responseId: string | null = null;
+
+    try {
+      const response = await fetch(
+        `/api/admin/studies/${studyId}/responses/manual`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            respondentName,
+            respondentEmail,
+            answers: surveyToAnswers(survey),
+            importToken,
+          }),
         },
-        body: JSON.stringify({
-          respondentName,
-          respondentEmail,
-          answers: surveyToAnswers(survey),
-        }),
-      },
-    );
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.message ?? "Failed to add manual response.");
-    }
-
-    const responseId = result.data?.id;
-    if (typeof responseId !== "string") {
-      throw new Error("The manual response was saved without a response ID.");
-    }
-
-    const uploads = [
-      ...documents.employment.map((file) => ({ file, type: "employment" })),
-      ...documents.awards.map((file) => ({ file, type: "awards" })),
-    ];
-
-    for (const upload of uploads) {
-      const formData = new FormData();
-      formData.set("file", upload.file);
-      formData.set("documentType", upload.type);
-
-      const uploadResponse = await fetch(
-        `/api/form-responses/${responseId}/documents`,
-        { method: "POST", body: formData },
       );
-      const uploadResult = await uploadResponse.json();
 
-      if (!uploadResponse.ok) {
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message ?? "Failed to add manual response.");
+      }
+
+      responseId = result.data?.id;
+      if (typeof responseId !== "string") {
+        throw new Error("The manual response was saved without a response ID.");
+      }
+
+      const uploads = [
+        ...documents.employment.map((file) => ({
+          file,
+          type: "employment",
+          uploadKey: getUploadKey(file),
+        })),
+        ...documents.awards.map((file) => ({
+          file,
+          type: "awards",
+          uploadKey: getUploadKey(file),
+        })),
+      ];
+
+      for (const upload of uploads) {
+        const formData = new FormData();
+        formData.set("file", upload.file);
+        formData.set("documentType", upload.type);
+        formData.set("uploadKey", upload.uploadKey);
+
+        const uploadResponse = await fetch(
+          `/api/form-responses/${responseId}/documents`,
+          { method: "POST", body: formData },
+        );
+        const uploadResult = await uploadResponse.json();
+
+        if (!uploadResponse.ok) {
+          throw new Error(
+            uploadResult.message ?? `Failed to upload ${upload.file.name}.`,
+          );
+        }
+      }
+
+      const completionResponse = await fetch(
+        `/api/admin/responses/${responseId}/import`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            status: "completed",
+            uploadKeys: uploads.map((upload) => upload.uploadKey),
+          }),
+        },
+      );
+      const completionResult = await completionResponse.json();
+
+      if (!completionResponse.ok) {
         throw new Error(
-          uploadResult.message ?? `Failed to upload ${upload.file.name}.`,
+          completionResult.message ?? "Failed to complete the manual import.",
         );
       }
+
+      importTokenRef.current = null;
+      uploadKeysRef.current = new WeakMap<File, string>();
+    } catch (error) {
+      if (responseId) {
+        await fetch(`/api/admin/responses/${responseId}/import`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status: "failed" }),
+        }).catch(() => undefined);
+      }
+
+      throw error;
     }
   }
 
@@ -136,7 +196,7 @@ export default function ManualResponseEntry({
               value={respondentEmail}
               onChange={(event) => setRespondentEmail(event.target.value)}
               placeholder="Optional"
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm focus:border-sky-400 focus:outline-none focus:ring-4 focus:ring-sky-100"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 shadow-sm px-4 py-3 text-sm focus:border-sky-400 focus:outline-none focus:ring-4 focus:ring-sky-100"
             />
           </label>
         </div>

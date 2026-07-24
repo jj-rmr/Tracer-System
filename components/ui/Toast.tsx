@@ -19,7 +19,7 @@ interface ToastProps {
 const toastStyles: Record<NonNullable<ToastProps["type"]>, string> = {
   success: "bg-green-500 text-white",
   warning: "bg-amber-500 text-white",
-  error: "bg-red-500 text-white",
+  error: "bg-rose-500 text-white",
   info: "bg-sky-500 text-white",
 };
 
@@ -80,7 +80,7 @@ export function Toast({
             isLargeScreen ? "max-w-sm" : "max-w-11/12"
           } rounded-2xl px-4 py-3 text-sm shadow-lg ${
             toastStyles[type]
-          } z-50`}
+          } z-9999`}
         >
           {message}
         </motion.div>
