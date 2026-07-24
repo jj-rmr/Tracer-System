@@ -182,7 +182,7 @@ export default function StudyScheduler({
         <button
           type="button"
           onClick={openCreateForm}
-          className="inline-flex items-center gap-2 rounded-2xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-sky-700"
+          className="inline-flex items-center gap-2 rounded-2xl bg-sky-600 px-4 py-2.5 text-sm font-semibold whitespace-nowrap text-white shadow-sm hover:bg-sky-700"
         >
           <LuPlus size={16} />
           Schedule Study
@@ -217,7 +217,7 @@ export default function StudyScheduler({
             required
           />
 
-          <label className="space-y-2 text-sm font-medium text-slate-700">
+          <label className="min-w-0 space-y-2 text-sm font-medium text-slate-700">
             <span>Academic year</span>
             <input
               value={draft.academicYear}
@@ -230,12 +230,12 @@ export default function StudyScheduler({
               }
               placeholder="2026-2027"
               pattern="[0-9]{4}-[0-9]{4}"
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+              className="min-w-0 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
               required
             />
           </label>
 
-          <label className="space-y-2 text-sm font-medium text-slate-700 md:col-span-2">
+          <label className="min-w-0 space-y-2 text-sm font-medium text-slate-700 md:col-span-2">
             <span>Study title</span>
             <input
               value={draft.title}
@@ -245,12 +245,12 @@ export default function StudyScheduler({
                   title: event.target.value,
                 }))
               }
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+              className="min-w-0 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
               required
             />
           </label>
 
-          <label className="space-y-2 text-sm font-medium text-slate-700">
+          <label className="min-w-0 space-y-2 text-sm font-medium text-slate-700">
             <span>Opens</span>
             <input
               type="datetime-local"
@@ -266,12 +266,12 @@ export default function StudyScheduler({
                   opensAt: event.target.value,
                 }))
               }
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+              className="min-w-0 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
               required
             />
           </label>
 
-          <label className="space-y-2 text-sm font-medium text-slate-700">
+          <label className="min-w-0 space-y-2 text-sm font-medium text-slate-700">
             <span>Closes</span>
             <input
               type="datetime-local"
@@ -282,7 +282,7 @@ export default function StudyScheduler({
                   closesAt: event.target.value,
                 }))
               }
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+              className="min-w-0 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
               required
             />
           </label>

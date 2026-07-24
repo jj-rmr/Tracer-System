@@ -133,7 +133,7 @@ export default function SettingsPage({ name, email, role }: SettingsPageProps) {
         </div>
       </section>
 
-      <div className="flex justify-end border-t border-slate-200 pt-6">
+      <div className="flex justify-center border-t border-slate-200 pt-12">
         <SignOutButton />
       </div>
     </div>

@@ -15,7 +15,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Tracer System Demo",
+  title: "Placement Tracer System (Demo)",
   description: "Tracer System by the ParSU Placement Unit (Demo)",
 };
 

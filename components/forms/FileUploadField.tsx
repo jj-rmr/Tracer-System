@@ -243,7 +243,7 @@ export function FileUploadField({
       >
         <LuCloudUpload
           size={36}
-          className={`shrink-0 ${
+          className={`shrink-0 pointer-events-none ${
             disabled
               ? "text-slate-400"
               : dragActive || hasFile
@@ -252,7 +252,7 @@ export function FileUploadField({
           }`}
         />
 
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 pointer-events-none">
           <h4
             className={`text-base font-semibold ${
               disabled ? "text-slate-500" : "text-slate-900"

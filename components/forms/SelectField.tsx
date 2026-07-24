@@ -158,7 +158,7 @@ export function SelectField({
   }
 
   return (
-    <div ref={containerRef} className="relative flex w-full flex-col">
+    <div ref={containerRef} className="relative flex min-w-0 w-full flex-col">
       <label
         htmlFor={id}
         className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-600"
@@ -192,13 +192,13 @@ export function SelectField({
           else openDropdown();
         }}
         onKeyDown={handleKeyDown}
-        className={`flex w-full items-center justify-between gap-3 rounded-2xl border bg-slate-50 px-4 py-3 text-left text-sm transition duration-200 focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 disabled:shadow-none ${
+        className={`flex min-w-0 w-full items-center justify-between gap-3 rounded-2xl border bg-slate-50 px-4 py-3 text-left text-sm transition duration-200 focus:outline-none disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500 disabled:shadow-none ${
           isInvalid
             ? "border-rose-400 focus:bg-white focus:ring-4 focus:ring-rose-100"
             : "border-slate-200 shadow-sm hover:border-slate-300 focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-100"
         }`}
       >
-        <span className={`truncate ${selectedOption ? "text-slate-900" : "text-slate-400"}`}>
+        <span className={`min-w-0 flex-1 truncate ${selectedOption ? "text-slate-900" : "text-slate-400"}`}>
           {selectedOption?.label ?? placeholder}
         </span>
         <LuChevronDown

@@ -163,7 +163,7 @@ export default function ManualResponseEntry({
 
   return (
     <div className="space-y-6">
-      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="rounded-3xl md:border border-slate-200 bg-white md:p-6 md:shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">Import details</h2>
         <p className="mt-1 text-sm text-slate-500">
           Record where this historical response belongs.
