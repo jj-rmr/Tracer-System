@@ -19,7 +19,10 @@ export async function POST(request: NextRequest) {
 
     if (!match || Number(match[2]) !== Number(match[1]) + 1) {
       return NextResponse.json(
-        { success: false, message: "Enter an academic year such as 2026-2027." },
+        {
+          success: false,
+          message: "Enter an academic year such as 2026-2027.",
+        },
         { status: 400 },
       );
     }
@@ -33,8 +36,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        message:
-          error instanceof Error ? error.message : "Failed to generate folders.",
+        message: "Failed to generate folders.",
       },
       { status: 500 },
     );

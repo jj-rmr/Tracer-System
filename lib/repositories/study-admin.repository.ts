@@ -99,7 +99,9 @@ export async function listStudyPeriodSummaries(): Promise<
       Number(right.status === "open") - Number(left.status === "open");
     if (statusOrder !== 0) return statusOrder;
 
-    const academicYearOrder = right.academicYear.localeCompare(left.academicYear);
+    const academicYearOrder = right.academicYear.localeCompare(
+      left.academicYear,
+    );
     if (academicYearOrder !== 0) return academicYearOrder;
 
     return left.title.localeCompare(right.title, undefined, {

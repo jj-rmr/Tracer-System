@@ -18,6 +18,10 @@ export async function GET(request: NextRequest) {
     return new NextResponse(null, { status: 404 });
   }
 
+  if (!["localhost", "127.0.0.1", "[::1]"].includes(request.nextUrl.hostname)) {
+    return new NextResponse(null, { status: 404 });
+  }
+
   const code = request.nextUrl.searchParams.get("code");
   const returnedState = request.nextUrl.searchParams.get("state");
   const storedState = request.cookies.get(STATE_COOKIE)?.value;
@@ -25,7 +29,10 @@ export async function GET(request: NextRequest) {
 
   if (googleError) {
     return noStoreJson(
-      { success: false, message: `Google authorization failed: ${googleError}` },
+      {
+        success: false,
+        message: `Google authorization failed: ${googleError}`,
+      },
       400,
     );
   }

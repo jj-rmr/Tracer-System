@@ -20,7 +20,10 @@ interface ResponseRouteProps {
   params: Promise<{ id: string }>;
 }
 
-export async function GET(_request: NextRequest, { params }: ResponseRouteProps) {
+export async function GET(
+  _request: NextRequest,
+  { params }: ResponseRouteProps,
+) {
   try {
     await requireAdmin();
     const { id } = await params;
@@ -47,11 +50,11 @@ export async function GET(_request: NextRequest, { params }: ResponseRouteProps)
         studyStatus: context?.study.status ?? "closed",
       },
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       {
         success: false,
-        message: error instanceof Error ? error.message : "Failed to load response.",
+        message: "Failed to load response.",
       },
       { status: 400 },
     );
@@ -62,7 +65,10 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-export async function PATCH(request: NextRequest, { params }: ResponseRouteProps) {
+export async function PATCH(
+  request: NextRequest,
+  { params }: ResponseRouteProps,
+) {
   try {
     await requireAdmin();
     const { id } = await params;
@@ -152,8 +158,7 @@ export async function PATCH(request: NextRequest, { params }: ResponseRouteProps
     return NextResponse.json(
       {
         success: false,
-        message:
-          error instanceof Error ? error.message : "Failed to edit response.",
+        message: "Failed to edit response.",
       },
       { status: 500 },
     );

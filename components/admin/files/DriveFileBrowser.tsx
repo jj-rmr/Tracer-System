@@ -1,5 +1,9 @@
 "use client";
 
+import { Input } from "@/components/ui/input";
+
+import { Button } from "@/components/ui/button";
+
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   LuChevronRight,
@@ -15,7 +19,6 @@ import {
   LuPencil,
   LuPlus,
   LuRefreshCw,
-  LuSearch,
   LuUpload,
   LuTrash2,
 } from "react-icons/lu";
@@ -26,6 +29,7 @@ import ConfirmationDialog from "@/components/ui/ConfirmationDialog";
 import FormModal from "@/components/ui/FormModal";
 import LoadingState from "@/components/ui/LoadingState";
 import Modal from "@/components/ui/Modal";
+import { SearchInput } from "@/components/ui/search-input";
 import { useToast } from "@/components/ui/Toast";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import type { DriveBreadcrumb, DriveBrowserItem } from "@/types";
@@ -84,11 +88,11 @@ function formatFileType(item: DriveBrowserItem) {
 }
 
 function FileIcon({ item }: { item: DriveBrowserItem }) {
-  if (item.isFolder) return <LuFolder className="text-amber-500" size={22} />;
+  if (item.isFolder) return <LuFolder className="text-warning" size={22} />;
   if (item.mimeType.startsWith("image/")) {
-    return <LuImage className="text-violet-500" size={22} />;
+    return <LuImage className="text-secondary-foreground" size={22} />;
   }
-  return <LuFile className="text-sky-500" size={22} />;
+  return <LuFile className="text-muted-foreground" size={22} />;
 }
 
 function FileSearchField({ onSearch }: { onSearch: (value: string) => void }) {
@@ -104,18 +108,15 @@ function FileSearchField({ onSearch }: { onSearch: (value: string) => void }) {
   }, [debouncedValue, onSearch]);
 
   return (
-    <label className="relative block">
-      <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-600">
+    <label className="block">
+      <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         Search all files
       </span>
-      <LuSearch className="pointer-events-none absolute bottom-3.5 left-3 h-4 w-4 text-slate-400" />
-      <input
-        type="search"
+      <SearchInput
         value={value}
         maxLength={100}
         onChange={(event) => setValue(event.target.value)}
         placeholder="Search file or folder name"
-        className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pr-4 pl-9 text-sm text-slate-900 shadow-sm transition placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100"
       />
     </label>
   );
@@ -302,6 +303,11 @@ export default function DriveFileBrowser() {
     }
 
     setPreview(item);
+  }
+
+  function openBrowserItem(item: DriveBrowserItem) {
+    if (item.isFolder) openFolder(item.id);
+    else openFile(item);
   }
 
   async function prepareFolders() {
@@ -602,32 +608,32 @@ export default function DriveFileBrowser() {
 
   return (
     <div className="space-y-6 pb-16">
-      <header className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white/80 p-5 shadow-[0_12px_30px_-5px_rgba(0,0,0,0.04)] shadow-sky-100/80 md:flex-row md:items-center md:justify-between">
+      <header className="flex flex-col gap-4 rounded-3xl border border-border bg-card/80 p-5 shadow-lg  md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
             Files
           </h1>
-          <p className="text-slate-500">
+          <p className="text-muted-foreground">
             Browse and preview files stored in the tracer system Drive.
           </p>
         </div>
-        <button
+        <Button
           type="button"
           onClick={() => setShowSyncInfo(true)}
           aria-label="About Drive synchronization"
-          className="inline-flex items-center justify-center self-start rounded-2xl border border-slate-200 bg-white p-2.5 text-slate-600 shadow-sm transition-all duration-200 hover:bg-slate-50 hover:text-sky-700 md:self-auto"
+          className="inline-flex items-center justify-center self-start rounded-xl border border-border bg-card p-2.5 text-muted-foreground shadow-sm transition-[color,background-color,border-color,box-shadow,transform] duration-200 hover:bg-muted hover:text-muted-foreground md:self-auto"
         >
           <LuInfo size={19} />
-        </button>
+        </Button>
       </header>
-      <section className="rounded-3xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 p-5">
+      <section className="rounded-3xl border border-border bg-card shadow-sm">
+        <div className={loading ? "p-5" : "border-b border-border p-5"}>
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
             <div className="min-w-0 flex-1">
               <FileSearchField key={searchInputKey} onSearch={handleSearch} />
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">
-              <button
+              <Button
                 type="button"
                 disabled={!canUpload}
                 onClick={() => setShowUpload(true)}
@@ -636,18 +642,18 @@ export default function DriveFileBrowser() {
                     ? "Upload files to this folder"
                     : "Open a folder inside Admin Files to upload"
                 }
-                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-sky-200 bg-white px-4 py-3 text-sm font-semibold text-sky-700 shadow-sm hover:bg-sky-50 disabled:cursor-not-allowed disabled:opacity-45"
+                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-border bg-card px-4 py-3 text-sm font-semibold text-muted-foreground shadow-sm hover:bg-muted disabled:cursor-not-allowed disabled:opacity-45"
               >
                 <LuUpload size={17} /> Upload files
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 disabled={!canUpload}
                 onClick={() => setShowNewFolder(true)}
-                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-sky-600 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-45"
+                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/85 disabled:cursor-not-allowed disabled:opacity-45"
               >
                 <LuPlus size={17} /> New folder
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -659,23 +665,23 @@ export default function DriveFileBrowser() {
               {folder.breadcrumbs.map((crumb, index) => (
                 <div key={crumb.id} className="flex min-w-0 items-center gap-1">
                   {index > 0 && (
-                    <LuChevronRight className="shrink-0 text-slate-300" />
+                    <LuChevronRight className="shrink-0 text-primary" />
                   )}
-                  <button
+                  <Button
                     type="button"
                     disabled={crumb.id === folder.folderId}
                     aria-current={
                       crumb.id === folder.folderId ? "page" : undefined
                     }
                     onClick={() => openFolder(crumb.id)}
-                    className={`truncate rounded-lg px-2 py-1 enabled:hover:bg-sky-50 enabled:hover:text-sky-700 ${
+                    className={`truncate rounded-lg px-2 py-1 enabled:hover:bg-muted enabled:hover:text-muted-foreground ${
                       index === folder.breadcrumbs.length - 1
-                        ? "cursor-default font-semibold text-slate-800"
-                        : "text-slate-500"
+                        ? "cursor-default font-semibold text-foreground"
+                        : "text-muted-foreground"
                     }`}
                   >
                     {crumb.name}
-                  </button>
+                  </Button>
                 </div>
               ))}
             </nav>
@@ -687,9 +693,9 @@ export default function DriveFileBrowser() {
             message={isSearching ? "Searching files..." : "Loading files..."}
           />
         ) : items.length === 0 ? (
-          <div className="flex min-h-64 flex-col items-center justify-center p-8 text-center text-slate-500">
-            <LuCloud size={36} className="mb-3 text-slate-300" />
-            <p className="font-semibold text-slate-700">
+          <div className="flex min-h-64 flex-col items-center justify-center p-8 text-center text-muted-foreground">
+            <LuCloud size={36} className="mb-3 text-primary" />
+            <p className="font-semibold text-foreground">
               {isSearching ? "No matching files found" : "This folder is empty"}
             </p>
             <p className="mt-1 text-sm">
@@ -701,8 +707,8 @@ export default function DriveFileBrowser() {
         ) : (
           <div>
             {canUpload && (
-              <label className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-5 py-3 text-sm font-medium text-slate-600 md:hidden">
-                <input
+              <label className="flex items-center gap-2 border-b border-border bg-muted px-5 py-3 text-sm font-medium text-muted-foreground md:hidden">
+                <Input
                   type="checkbox"
                   checked={allVisibleItemsSelected}
                   onChange={(event) =>
@@ -712,48 +718,48 @@ export default function DriveFileBrowser() {
                         : new Set(),
                     )
                   }
-                  className="h-4 w-4 rounded border-slate-300 accent-sky-600"
+                  className="h-4 w-4 rounded border-input accent-primary"
                 />
                 Select all
               </label>
             )}
             {canUpload && selectedItems.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2 border-b border-sky-100 bg-sky-50 px-5 py-3">
-                <span className="mr-auto text-sm font-semibold text-sky-900">
+              <div className="flex flex-wrap items-center gap-2 border-b border-border bg-muted px-5 py-3">
+                <span className="mr-auto text-sm font-semibold text-foreground">
                   {selectedItems.length} selected
                 </span>
-                <button
+                <Button
                   type="button"
                   onClick={() => void openMoveDialog(selectedItems)}
-                  className="inline-flex items-center gap-2 rounded-xl border border-sky-200 bg-white px-3 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-100"
+                  className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-sm font-semibold text-muted-foreground hover:bg-secondary"
                 >
                   <LuMove size={15} /> Move
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   onClick={() => setDeletingItems(selectedItems)}
-                  className="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-white px-3 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50"
+                  className="inline-flex items-center gap-2 rounded-xl border border-destructive/30 bg-card px-3 py-2 text-sm font-semibold text-destructive hover:bg-destructive/10"
                 >
                   <LuTrash2 size={15} /> Delete
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
                   onClick={() => setSelectedItemIds(new Set())}
-                  className="rounded-xl px-3 py-2 text-sm font-medium text-slate-600 hover:bg-white"
+                  className="rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-card"
                 >
                   Clear
-                </button>
+                </Button>
               </div>
             )}
             <div
-              className={`hidden items-center gap-3 border-b border-slate-200 bg-slate-50 px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-slate-500 lg:grid ${
+              className={`hidden items-center gap-3 border-b border-border bg-muted px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:grid ${
                 canUpload
                   ? "lg:grid-cols-[auto_auto_minmax(0,1fr)_7rem_9rem_11rem_auto]"
                   : "lg:grid-cols-[auto_auto_minmax(0,1fr)_7rem_9rem_11rem]"
               }`}
             >
               {canUpload ? (
-                <input
+                <Input
                   type="checkbox"
                   aria-label="Select all files and folders"
                   checked={allVisibleItemsSelected}
@@ -764,7 +770,7 @@ export default function DriveFileBrowser() {
                         : new Set(),
                     )
                   }
-                  className="h-4 w-4 rounded border-slate-300 accent-sky-600"
+                  className="h-4 w-4 rounded border-input accent-primary"
                 />
               ) : (
                 <span />
@@ -776,21 +782,43 @@ export default function DriveFileBrowser() {
               <span>Modified</span>
               {canUpload && <span className="w-9 text-center">Menu</span>}
             </div>
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-border">
               {items.map((item) => (
                 <div
                   key={item.id}
-                  className={`relative grid w-full items-center gap-3 px-5 py-4 text-left transition-colors hover:bg-sky-50/70 ${
+                  onPointerUp={(event) => {
+                    if (
+                      event.pointerType === "mouse" ||
+                      (event.target as HTMLElement).closest(
+                        "button,input,[data-file-menu]",
+                      )
+                    ) {
+                      return;
+                    }
+                    openBrowserItem(item);
+                  }}
+                  onDoubleClick={(event) => {
+                    if (
+                      (event.target as HTMLElement).closest(
+                        "button,input,[data-file-menu]",
+                      )
+                    ) {
+                      return;
+                    }
+                    openBrowserItem(item);
+                  }}
+                  className={`relative grid w-full cursor-pointer items-center gap-3 px-5 py-4 text-left transition-colors duration-200 hover:bg-muted last:rounded-b-[calc(var(--radius-3xl)-1px)] ${
                     canUpload
                       ? "grid-cols-[auto_auto_minmax(0,1fr)_auto] lg:grid-cols-[auto_auto_minmax(0,1fr)_7rem_9rem_11rem_auto]"
                       : "grid-cols-[auto_auto_minmax(0,1fr)] lg:grid-cols-[auto_auto_minmax(0,1fr)_7rem_9rem_11rem]"
                   } ${activeMenuId === item.id ? "z-40" : "z-0"}`}
                 >
                   {canUpload ? (
-                    <input
+                    <Input
                       type="checkbox"
                       aria-label={`Select ${item.name}`}
                       checked={selectedItemIds.has(item.id)}
+                      onClick={(event) => event.stopPropagation()}
                       onChange={(event) => {
                         setSelectedItemIds((current) => {
                           const next = new Set(current);
@@ -799,32 +827,44 @@ export default function DriveFileBrowser() {
                           return next;
                         });
                       }}
-                      className="relative z-10 h-4 w-4 rounded border-slate-300 accent-sky-600"
+                      className="relative z-10 h-4 w-4 rounded border-input accent-primary"
                     />
                   ) : (
                     <span />
                   )}
-                  <button
+                  <Button
                     type="button"
-                    onClick={() =>
-                      item.isFolder ? openFolder(item.id) : openFile(item)
-                    }
+                    variant="plain"
+                    onPointerUp={(event) => {
+                      event.stopPropagation();
+                      if (event.pointerType !== "mouse") openBrowserItem(item);
+                    }}
+                    onDoubleClick={(event) => {
+                      event.stopPropagation();
+                      openBrowserItem(item);
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key !== "Enter" && event.key !== " ") return;
+                      event.preventDefault();
+                      openBrowserItem(item);
+                    }}
                     aria-label={`${item.isFolder ? "Open folder" : "Open file"} ${item.name}`}
-                    className="absolute inset-0 z-0 rounded-xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-sky-500"
-                  />
-                  <FileIcon item={item} />
-                  <span className="min-w-0">
-                    <span className="block truncate text-sm font-semibold text-slate-800">
-                      {item.name}
+                    className="col-span-2 flex h-auto w-full min-w-0 justify-start gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <FileIcon item={item} />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-semibold text-foreground">
+                        {item.name}
+                      </span>
                     </span>
-                  </span>
-                  <span className="hidden text-sm text-slate-500 lg:block">
+                  </Button>
+                  <span className="hidden text-sm text-muted-foreground lg:block">
                     {item.isFolder ? "" : formatSize(item.size)}
                   </span>
-                  <span className="hidden truncate text-sm text-slate-500 lg:block">
+                  <span className="hidden truncate text-sm text-muted-foreground lg:block">
                     {formatFileType(item)}
                   </span>
-                  <span className="hidden text-sm text-slate-500 lg:block">
+                  <span className="hidden text-sm text-muted-foreground lg:block">
                     {item.modifiedTime
                       ? new Date(item.modifiedTime).toLocaleDateString(
                           "en-PH",
@@ -839,11 +879,12 @@ export default function DriveFileBrowser() {
                   {canUpload && (
                     <div
                       data-file-menu
+                      onClick={(event) => event.stopPropagation()}
                       className={`relative flex shrink-0 items-center ${
                         activeMenuId === item.id ? "z-50" : "z-10"
                       }`}
                     >
-                      <button
+                      <Button
                         type="button"
                         onClick={() =>
                           setActiveMenuId((current) =>
@@ -852,53 +893,57 @@ export default function DriveFileBrowser() {
                         }
                         aria-label={`Open menu for ${item.name}`}
                         aria-expanded={activeMenuId === item.id}
-                        className="rounded-lg p-2 text-slate-400 hover:bg-white hover:text-sky-600"
+                        className="rounded-lg p-2 text-muted-foreground hover:bg-card hover:text-muted-foreground"
                       >
                         <LuEllipsisVertical size={18} />
-                      </button>
+                      </Button>
                       {activeMenuId === item.id && (
-                        <div className="absolute top-[calc(100%+0.25rem)] right-0 z-50 w-36 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
-                          <button
+                        <div className="absolute top-[calc(100%+0.25rem)] right-0 z-50 w-40 overflow-hidden rounded-xl border border-border bg-card p-1.5 shadow-xl">
+                          <Button
                             type="button"
+                            variant="ghost"
+                            size="menu"
                             onClick={() => {
                               setActiveMenuId(null);
                               setRenameValue(item.name);
                               setRenamingItem(item);
                             }}
-                            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
                           >
                             <LuPencil size={15} /> Rename
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
+                            variant="ghost"
+                            size="menu"
                             onClick={() => {
                               setActiveMenuId(null);
                               void openMoveDialog([item]);
                             }}
-                            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
                           >
                             <LuMove size={15} /> Move
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
+                            variant="ghost"
+                            size="menu"
                             onClick={() => {
                               setActiveMenuId(null);
                               setInfoItem(item);
                             }}
-                            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50"
                           >
                             <LuInfo size={15} /> Info
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
+                            variant="destructive"
+                            size="menu"
                             onClick={() => {
                               setActiveMenuId(null);
                               setDeletingItems([item]);
                             }}
-                            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50"
                           >
                             <LuTrash2 size={15} /> Delete
-                          </button>
+                          </Button>
                         </div>
                       )}
                     </div>
@@ -910,8 +955,8 @@ export default function DriveFileBrowser() {
         )}
 
         {!isSearching && folder?.nextPageToken && (
-          <div className="border-t border-slate-200 p-4 text-center">
-            <button
+          <div className="border-t border-border p-4 text-center">
+            <Button
               type="button"
               disabled={loadingMore}
               onClick={() =>
@@ -921,11 +966,11 @@ export default function DriveFileBrowser() {
                   append: true,
                 })
               }
-              className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-50 disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted disabled:opacity-50"
             >
               <LuRefreshCw className={loadingMore ? "animate-spin" : ""} />
               {loadingMore ? "Loading..." : "Load more"}
-            </button>
+            </Button>
           </div>
         )}
       </section>
@@ -957,21 +1002,21 @@ export default function DriveFileBrowser() {
               onError={(message) => showToast({ message, type: "error" })}
             />
             <div className="flex justify-end gap-3">
-              <button
+              <Button
                 type="button"
                 disabled={uploading}
                 onClick={requestClose}
-                className="rounded-xl px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+                className="rounded-xl px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-secondary disabled:opacity-50"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
                 disabled={uploading || uploadFiles.length === 0}
-                className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/85 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {uploading ? "Uploading..." : "Upload files"}
-              </button>
+              </Button>
             </div>
           </form>
         )}
@@ -991,7 +1036,7 @@ export default function DriveFileBrowser() {
           <form onSubmit={renameItem} className="space-y-5">
             <label>
               <span className={styles.label}>New name</span>
-              <input
+              <Input
                 value={renameValue}
                 maxLength={180}
                 onChange={(event) => setRenameValue(event.target.value)}
@@ -1002,21 +1047,21 @@ export default function DriveFileBrowser() {
               />
             </label>
             <div className="flex justify-end gap-3">
-              <button
+              <Button
                 type="button"
                 disabled={mutating}
                 onClick={requestClose}
-                className="rounded-xl px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+                className="rounded-xl px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-secondary disabled:opacity-50"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
                 disabled={mutating || !renameValue.trim()}
-                className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-50"
+                className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/85 disabled:opacity-50"
               >
                 {mutating ? "Renaming..." : "Rename"}
-              </button>
+              </Button>
             </div>
           </form>
         )}
@@ -1042,28 +1087,26 @@ export default function DriveFileBrowser() {
       >
         {(requestClose) => (
           <form onSubmit={moveItem} className="space-y-5">
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+            <div className="overflow-hidden rounded-2xl border border-border bg-card">
               {moveBreadcrumbs.length > 0 && (
                 <nav
                   aria-label="Destination folder path"
-                  className="flex flex-wrap items-center gap-1 border-b border-slate-200 bg-slate-50 px-4 py-3 text-sm"
+                  className="flex flex-wrap items-center gap-1 border-b border-border bg-muted px-4 py-3 text-sm"
                 >
                   {moveBreadcrumbs.map((crumb, index) => (
                     <div
                       key={crumb.id}
                       className="flex min-w-0 items-center gap-1"
                     >
-                      {index > 0 && (
-                        <LuChevronRight className="text-slate-300" />
-                      )}
-                      <button
+                      {index > 0 && <LuChevronRight className="text-primary" />}
+                      <Button
                         type="button"
                         disabled={crumb.id === moveBrowser?.folderId}
                         onClick={() => void loadMoveFolder(crumb.id)}
-                        className="truncate rounded-lg px-2 py-1 text-slate-600 enabled:hover:bg-white enabled:hover:text-sky-700 disabled:font-semibold disabled:text-slate-900"
+                        className="truncate rounded-lg px-2 py-1 text-muted-foreground enabled:hover:bg-card enabled:hover:text-muted-foreground disabled:font-semibold disabled:text-foreground"
                       >
                         {crumb.name}
-                      </button>
+                      </Button>
                     </div>
                   ))}
                 </nav>
@@ -1076,7 +1119,7 @@ export default function DriveFileBrowser() {
                 />
               ) : moveBrowser ? (
                 <div className="max-h-80 overflow-y-auto">
-                  <div className="border-b border-sky-100 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+                  <div className="border-b border-border bg-muted px-4 py-3 text-sm text-foreground">
                     Destination:{" "}
                     <span className="font-semibold">
                       {moveBrowser.breadcrumbs.at(-1)?.name}
@@ -1084,29 +1127,29 @@ export default function DriveFileBrowser() {
                   </div>
 
                   {moveBrowser.items.length === 0 ? (
-                    <p className="px-4 py-8 text-center text-sm text-slate-500">
+                    <p className="px-4 py-8 text-center text-sm text-muted-foreground">
                       This folder has no subfolders.
                     </p>
                   ) : (
                     moveBrowser.items.map((item) => (
                       <div
                         key={item.id}
-                        className="border-b border-slate-100 last:border-b-0"
+                        className="border-b border-border last:border-b-0"
                       >
-                        <button
+                        <Button
                           type="button"
                           onClick={() => void loadMoveFolder(item.id)}
-                          className="flex w-full min-w-0 items-center gap-3 px-4 py-3 text-left hover:bg-slate-50"
+                          className="flex w-full min-w-0 items-center gap-3 px-4 py-3 text-left hover:bg-muted"
                         >
                           <LuFolder
-                            className="shrink-0 text-amber-500"
+                            className="shrink-0 text-warning"
                             size={21}
                           />
-                          <span className="truncate text-sm font-semibold text-slate-700">
+                          <span className="truncate text-sm font-semibold text-foreground">
                             {item.name}
                           </span>
-                          <LuChevronRight className="ml-auto shrink-0 text-slate-300" />
-                        </button>
+                          <LuChevronRight className="ml-auto shrink-0 text-primary" />
+                        </Button>
                       </div>
                     ))
                   )}
@@ -1114,21 +1157,21 @@ export default function DriveFileBrowser() {
               ) : null}
             </div>
             <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row">
-              <button
+              <Button
                 type="button"
                 disabled={mutating}
                 onClick={requestClose}
-                className="rounded-xl px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+                className="rounded-xl px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-secondary disabled:opacity-50"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
                 disabled={mutating || loadingDestinations || !moveBrowser}
-                className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-50"
+                className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/85 disabled:opacity-50"
               >
                 {mutating ? "Moving..." : "Move here"}
-              </button>
+              </Button>
             </div>
           </form>
         )}
@@ -1151,7 +1194,7 @@ export default function DriveFileBrowser() {
           <form onSubmit={createFolder} className="space-y-5">
             <label className="block">
               <span className={styles.label}>Folder name *</span>
-              <input
+              <Input
                 value={newFolderName}
                 onChange={(event) => setNewFolderName(event.target.value)}
                 placeholder="Folder name"
@@ -1163,21 +1206,21 @@ export default function DriveFileBrowser() {
               />
             </label>
             <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row">
-              <button
+              <Button
                 type="button"
                 disabled={creatingFolder}
                 onClick={requestClose}
-                className="rounded-xl px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+                className="rounded-xl px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-secondary disabled:opacity-50"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 type="submit"
                 disabled={creatingFolder || !newFolderName.trim()}
-                className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-50"
+                className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/85 disabled:opacity-50"
               >
                 {creatingFolder ? "Creating..." : "Create folder"}
-              </button>
+              </Button>
             </div>
           </form>
         )}
@@ -1191,24 +1234,24 @@ export default function DriveFileBrowser() {
         bodyClassName="p-5"
       >
         <div className="space-y-5">
-          <p className="text-sm leading-6 text-slate-600">
+          <p className="text-sm leading-6 text-muted-foreground">
             To ensure real-time updates, edit files using this browser. If you
             make changes directly in Google Drive, sync it to update the tracer
             system.
           </p>
           <div className="flex justify-end">
-            <button
+            <Button
               type="button"
               disabled={preparing}
               onClick={() => void prepareFolders()}
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-sky-700 disabled:cursor-wait disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors duration-200 hover:bg-primary/85 disabled:cursor-wait disabled:opacity-60"
             >
               <LuFolderCog
                 className={preparing ? "animate-spin" : ""}
                 size={17}
               />
               {preparing ? "Syncing Drive..." : "Sync Drive"}
-            </button>
+            </Button>
           </div>
         </div>
       </Modal>
@@ -1221,22 +1264,22 @@ export default function DriveFileBrowser() {
         bodyClassName="p-5"
       >
         {infoItem && (
-          <dl className="divide-y divide-slate-100 text-sm">
+          <dl className="divide-y divide-border text-sm">
             <div className="grid grid-cols-[6rem_minmax(0,1fr)] gap-3 py-3 first:pt-0">
-              <dt className="font-medium text-slate-500">File type</dt>
-              <dd className="wrap-break-word text-slate-800">
+              <dt className="font-medium text-muted-foreground">File type</dt>
+              <dd className="wrap-break-word text-foreground">
                 {formatFileType(infoItem)}
               </dd>
             </div>
             <div className="grid grid-cols-[6rem_minmax(0,1fr)] gap-3 py-3">
-              <dt className="font-medium text-slate-500">Size</dt>
-              <dd className="text-slate-800">
+              <dt className="font-medium text-muted-foreground">Size</dt>
+              <dd className="text-foreground">
                 {infoItem.isFolder ? "" : formatSize(infoItem.size)}
               </dd>
             </div>
             <div className="grid grid-cols-[6rem_minmax(0,1fr)] gap-3 py-3">
-              <dt className="font-medium text-slate-500">Modified</dt>
-              <dd className="text-slate-800">
+              <dt className="font-medium text-muted-foreground">Modified</dt>
+              <dd className="text-foreground">
                 {infoItem.modifiedTime
                   ? new Date(infoItem.modifiedTime).toLocaleString("en-PH", {
                       year: "numeric",
@@ -1249,8 +1292,8 @@ export default function DriveFileBrowser() {
               </dd>
             </div>
             <div className="grid grid-cols-[6rem_minmax(0,1fr)] gap-3 py-3 last:pb-0">
-              <dt className="font-medium text-slate-500">MIME type</dt>
-              <dd className="break-all text-slate-800">{infoItem.mimeType}</dd>
+              <dt className="font-medium text-muted-foreground">MIME type</dt>
+              <dd className="break-all text-foreground">{infoItem.mimeType}</dd>
             </div>
           </dl>
         )}
@@ -1288,7 +1331,7 @@ export default function DriveFileBrowser() {
             : undefined
         }
         width="xl"
-        bodyClassName="flex min-h-0 flex-col bg-slate-100 p-3 md:p-4"
+        bodyClassName="flex min-h-0 flex-col bg-secondary p-3 md:p-4"
       >
         {preview && (
           <div className="flex min-h-0 flex-1 flex-col gap-3">
@@ -1296,15 +1339,15 @@ export default function DriveFileBrowser() {
               <iframe
                 title={`Preview ${preview.name}`}
                 src={`/api/admin/files/${encodeURIComponent(preview.id)}/content`}
-                className="min-h-96 w-full flex-1 rounded-xl border border-slate-200 bg-white"
+                className="min-h-96 w-full flex-1 rounded-xl border border-border bg-card"
               />
             ) : (
-              <div className="flex min-h-96 flex-1 flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-8 text-center">
-                <LuFile size={40} className="text-slate-300" />
-                <p className="mt-4 font-semibold text-slate-800">
+              <div className="flex min-h-96 flex-1 flex-col items-center justify-center rounded-xl border border-border bg-card p-8 text-center">
+                <LuFile size={40} className="text-primary" />
+                <p className="mt-4 font-semibold text-foreground">
                   This format cannot be previewed securely in the browser.
                 </p>
-                <p className="mt-1 max-w-md text-sm text-slate-500">
+                <p className="mt-1 max-w-md text-sm text-muted-foreground">
                   The file remains private and is not being shared through a
                   Google Drive link.
                 </p>
@@ -1316,7 +1359,7 @@ export default function DriveFileBrowser() {
                 href={`/api/admin/files/${encodeURIComponent(preview.id)}/content`}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-2 rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700"
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/85"
               >
                 <LuExternalLink size={16} /> Open in new tab
               </a>

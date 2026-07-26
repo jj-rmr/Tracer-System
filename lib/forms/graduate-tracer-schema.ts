@@ -140,19 +140,59 @@ export const graduateTracerEmploymentSchema = conditionalFields.superRefine(
     );
 
     if (answers.employmentStatus === "Yes") {
-      addRequiredText(context, answers, "currentEmploymentStatus", "Please select your present employment status.");
-      addRequiredText(context, answers, "currentOccupation", "Please enter your current occupation.");
-      addRequiredText(context, answers, "companyName", "Please enter your company or employer's name.");
-      addRequiredText(context, answers, "companyAddress", "Please enter your company or employer's address.");
-      addRequiredText(context, answers, "businessIndustry", "Please select your employer's industry.");
-      addRequiredText(context, answers, "placeOfWork", "Please select whether you work locally or abroad.");
+      addRequiredText(
+        context,
+        answers,
+        "currentEmploymentStatus",
+        "Please select your present employment status.",
+      );
+      addRequiredText(
+        context,
+        answers,
+        "currentOccupation",
+        "Please enter your current occupation.",
+      );
+      addRequiredText(
+        context,
+        answers,
+        "companyName",
+        "Please enter your company or employer's name.",
+      );
+      addRequiredText(
+        context,
+        answers,
+        "companyAddress",
+        "Please enter your company or employer's address.",
+      );
+      addRequiredText(
+        context,
+        answers,
+        "businessIndustry",
+        "Please select your employer's industry.",
+      );
+      addRequiredText(
+        context,
+        answers,
+        "placeOfWork",
+        "Please select whether you work locally or abroad.",
+      );
     } else if (
       answers.employmentStatus === "No" ||
       answers.employmentStatus === "Never Employed"
     ) {
-      addRequiredList(context, answers, "unemploymentReasons", "Please select at least one reason for your unemployment.");
+      addRequiredList(
+        context,
+        answers,
+        "unemploymentReasons",
+        "Please select at least one reason for your unemployment.",
+      );
       if (includes(answers.unemploymentReasons, "Others")) {
-        addRequiredText(context, answers, "unemploymentReasonOther", "Please specify your other reason for unemployment.");
+        addRequiredText(
+          context,
+          answers,
+          "unemploymentReasonOther",
+          "Please specify your other reason for unemployment.",
+        );
       }
     }
   },
@@ -166,42 +206,153 @@ export const graduateTracerJobHistorySchema = conditionalFields.superRefine(
       context.addIssue({
         code: "custom",
         path: ["isFirstJob"],
-        message: "Please indicate whether this is your first job after college.",
+        message:
+          "Please indicate whether this is your first job after college.",
       });
     } else if (answers.isFirstJob) {
-      addRequiredList(context, answers, "stayingReasons", "Please select at least one reason for staying in your first job.");
+      addRequiredList(
+        context,
+        answers,
+        "stayingReasons",
+        "Please select at least one reason for staying in your first job.",
+      );
       if (includes(answers.stayingReasons, "Others")) {
-        addRequiredText(context, answers, "stayingReasonOther", "Please specify your other reason for staying in your first job.");
+        addRequiredText(
+          context,
+          answers,
+          "stayingReasonOther",
+          "Please specify your other reason for staying in your first job.",
+        );
       }
-      if (answers.isFirstJobRelated !== true && answers.isFirstJobRelated !== false) {
-        context.addIssue({ code: "custom", path: ["isFirstJobRelated"], message: "Please indicate whether your first job was related to your degree program." });
+      if (
+        answers.isFirstJobRelated !== true &&
+        answers.isFirstJobRelated !== false
+      ) {
+        context.addIssue({
+          code: "custom",
+          path: ["isFirstJobRelated"],
+          message:
+            "Please indicate whether your first job was related to your degree program.",
+        });
       } else if (answers.isFirstJobRelated === false) {
-        addRequiredList(context, answers, "acceptingReasons", "Please select at least one reason for accepting your first job.");
+        addRequiredList(
+          context,
+          answers,
+          "acceptingReasons",
+          "Please select at least one reason for accepting your first job.",
+        );
         if (includes(answers.acceptingReasons, "Others")) {
-          addRequiredText(context, answers, "acceptingReasonOther", "Please specify your other reason for accepting your first job.");
+          addRequiredText(
+            context,
+            answers,
+            "acceptingReasonOther",
+            "Please specify your other reason for accepting your first job.",
+          );
         }
       }
     } else {
-      addRequiredList(context, answers, "changingReasons", "Please select at least one reason for changing jobs.");
+      addRequiredList(
+        context,
+        answers,
+        "changingReasons",
+        "Please select at least one reason for changing jobs.",
+      );
       if (includes(answers.changingReasons, "Others")) {
-        addRequiredText(context, answers, "changingReasonOther", "Please specify your other reason for changing jobs.");
+        addRequiredText(
+          context,
+          answers,
+          "changingReasonOther",
+          "Please specify your other reason for changing jobs.",
+        );
       }
     }
 
-    addRequiredText(context, answers, "firstJobTitle", "Please enter the title of your first job.");
-    addRequiredText(context, answers, "firstJobDuration", "Please select how long you stayed in your first job.");
-    if (answers.firstJobDuration === "Others") addRequiredText(context, answers, "firstJobDurationOther", "Please specify the duration of your first job.");
-    addRequiredText(context, answers, "firstJobSource", "Please select how you found your first job.");
-    if (answers.firstJobSource === "Others") addRequiredText(context, answers, "firstJobSourceOther", "Please specify how you found your first job.");
-    addRequiredText(context, answers, "firstJobSearchDuration", "Please select how long it took you to find your first job.");
-    if (answers.firstJobSearchDuration === "Others") addRequiredText(context, answers, "firstJobSearchDurationOther", "Please specify how long it took you to find your first job.");
-    addRequiredText(context, answers, "firstJobLevel", "Please select the level of your first job.");
-    addRequiredText(context, answers, "currentJobLevel", "Please select your current job level.");
-    addRequiredText(context, answers, "initialMonthlyIncome", "Please select your initial monthly income range.");
-    if (answers.curriculumRelevant !== true && answers.curriculumRelevant !== false) {
-      context.addIssue({ code: "custom", path: ["curriculumRelevant"], message: "Please indicate whether your curriculum was relevant to your employment." });
+    addRequiredText(
+      context,
+      answers,
+      "firstJobTitle",
+      "Please enter the title of your first job.",
+    );
+    addRequiredText(
+      context,
+      answers,
+      "firstJobDuration",
+      "Please select how long you stayed in your first job.",
+    );
+    if (answers.firstJobDuration === "Others")
+      addRequiredText(
+        context,
+        answers,
+        "firstJobDurationOther",
+        "Please specify the duration of your first job.",
+      );
+    addRequiredText(
+      context,
+      answers,
+      "firstJobSource",
+      "Please select how you found your first job.",
+    );
+    if (answers.firstJobSource === "Others")
+      addRequiredText(
+        context,
+        answers,
+        "firstJobSourceOther",
+        "Please specify how you found your first job.",
+      );
+    addRequiredText(
+      context,
+      answers,
+      "firstJobSearchDuration",
+      "Please select how long it took you to find your first job.",
+    );
+    if (answers.firstJobSearchDuration === "Others")
+      addRequiredText(
+        context,
+        answers,
+        "firstJobSearchDurationOther",
+        "Please specify how long it took you to find your first job.",
+      );
+    addRequiredText(
+      context,
+      answers,
+      "firstJobLevel",
+      "Please select the level of your first job.",
+    );
+    addRequiredText(
+      context,
+      answers,
+      "currentJobLevel",
+      "Please select your current job level.",
+    );
+    addRequiredText(
+      context,
+      answers,
+      "initialMonthlyIncome",
+      "Please select your initial monthly income range.",
+    );
+    if (
+      answers.curriculumRelevant !== true &&
+      answers.curriculumRelevant !== false
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["curriculumRelevant"],
+        message:
+          "Please indicate whether your curriculum was relevant to your employment.",
+      });
     }
-    addRequiredList(context, answers, "usefulCompetencies", "Please select at least one competency that has been useful in your career.");
-    if (includes(answers.usefulCompetencies, "Others")) addRequiredText(context, answers, "usefulCompetencyOther", "Please specify the other competency you found useful.");
+    addRequiredList(
+      context,
+      answers,
+      "usefulCompetencies",
+      "Please select at least one competency that has been useful in your career.",
+    );
+    if (includes(answers.usefulCompetencies, "Others"))
+      addRequiredText(
+        context,
+        answers,
+        "usefulCompetencyOther",
+        "Please specify the other competency you found useful.",
+      );
   },
 );

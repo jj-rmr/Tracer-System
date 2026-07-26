@@ -19,12 +19,11 @@ export async function GET() {
       success: true,
       accounts,
     });
-  } catch (error: unknown) {
+  } catch {
     return NextResponse.json(
       {
         success: false,
-        message:
-          error instanceof Error ? error.message : "Failed to load accounts.",
+        message: "Failed to load accounts.",
       },
       {
         status: 500,

@@ -4,8 +4,17 @@ import { createGoogleDriveAuthorizationClient } from "@/lib/google/oauth";
 
 const STATE_COOKIE = "google_drive_oauth_state";
 
-export async function GET() {
+export async function GET(request: Request) {
   if (process.env.NODE_ENV !== "development") {
+    return new NextResponse(null, { status: 404 });
+  }
+
+  const url = new URL(request.url);
+  if (
+    url.hostname !== "localhost" &&
+    url.hostname !== "127.0.0.1" &&
+    url.hostname !== "[::1]"
+  ) {
     return new NextResponse(null, { status: 404 });
   }
 

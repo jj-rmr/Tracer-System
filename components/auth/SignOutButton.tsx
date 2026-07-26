@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -25,12 +27,14 @@ export function SignOutButton() {
   }
 
   return (
-    <button
+    <Button
+      type="button"
+      variant="destructive"
       onClick={signOut}
       disabled={isPending}
-      className="rounded-2xl bg-rose-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-rose-600 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+      className="w-full"
     >
       {isPending ? "Signing out..." : "Sign Out"}
-    </button>
+    </Button>
   );
 }

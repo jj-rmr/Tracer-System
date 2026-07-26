@@ -1,3 +1,5 @@
+import { Input } from "@/components/ui/input";
+
 import { FileUploadField } from "@/components/forms/FileUploadField";
 import { SelectField } from "@/components/forms/SelectField";
 import { getGraduateTracerConditionalSections } from "@/lib/forms/graduate-tracer-validation";
@@ -113,7 +115,9 @@ export function EmploymentSection({
 
   return (
     <div className="space-y-6">
-      <h3 className="text-xl font-bold text-slate-900">Employment Profile</h3>
+      <h3 className="text-xl font-semibold text-foreground">
+        Employment Profile
+      </h3>
 
       <SelectField
         disabled={readOnly}
@@ -168,7 +172,7 @@ export function EmploymentSection({
       <ErrorMessage message={errors.employmentStatus} />
 
       {conditions.showEmployedFields && (
-        <div className="space-y-6 border-t border-slate-200 pt-4 animate-fadeIn">
+        <div className="space-y-6 border-t border-border pt-4 animate-fadeIn">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <SelectField
               disabled={readOnly}
@@ -176,7 +180,10 @@ export function EmploymentSection({
               label="Current Employment Status *"
               value={form.currentEmploymentStatus}
               onChange={(val) =>
-                updateField("currentEmploymentStatus", val as any)
+                updateField(
+                  "currentEmploymentStatus",
+                  val as Survey["currentEmploymentStatus"],
+                )
               }
               options={[
                 { value: "Regular/Permanent", label: "Regular/Permanent" },
@@ -193,7 +200,7 @@ export function EmploymentSection({
             />
             <div>
               <label className={styles.label}>Present Occupation *</label>
-              <input
+              <Input
                 disabled={readOnly}
                 type="text"
                 className={styles.input(!!errors.currentOccupation, readOnly)}
@@ -209,7 +216,7 @@ export function EmploymentSection({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className={styles.label}>Company Name *</label>
-              <input
+              <Input
                 disabled={readOnly}
                 type="text"
                 className={styles.input(!!errors.companyName, readOnly)}
@@ -220,7 +227,7 @@ export function EmploymentSection({
             </div>
             <div>
               <label className={styles.label}>Company Address *</label>
-              <input
+              <Input
                 disabled={readOnly}
                 type="text"
                 className={styles.input(!!errors.companyAddress, readOnly)}
@@ -237,7 +244,12 @@ export function EmploymentSection({
               id="businessIndustry"
               label="Business Industry *"
               value={form.businessIndustry}
-              onChange={(val) => updateField("businessIndustry", val as any)}
+              onChange={(val) =>
+                updateField(
+                  "businessIndustry",
+                  val as Survey["businessIndustry"],
+                )
+              }
               options={[
                 { value: "Agriculture", label: "Agriculture" },
                 { value: "Fishing", label: "Fishing" },
@@ -270,7 +282,9 @@ export function EmploymentSection({
               id="placeOfWork"
               label="Place of Work *"
               value={form.placeOfWork}
-              onChange={(val) => updateField("placeOfWork", val as any)}
+              onChange={(val) =>
+                updateField("placeOfWork", val as Survey["placeOfWork"])
+              }
               options={FORM_OPTIONS.placeOfWork}
               placeholder="Select"
               required
@@ -317,9 +331,9 @@ export function EmploymentSection({
         </div>
       )}
 
-      <div className="space-y-4 border-t border-slate-200 pt-4">
+      <div className="space-y-4 border-t border-border pt-4">
         {conditions.showUnemploymentReasons && (
-          <div className="space-y-2 border-t border-slate-200 pt-4">
+          <div className="space-y-2 border-t border-border pt-4">
             <label className={styles.label}>
               Please state the reason(s) why you are not yet employed. You may
               check more than one answer. *
@@ -339,7 +353,7 @@ export function EmploymentSection({
                     readOnly,
                   )}
                 >
-                  <input
+                  <Input
                     disabled={readOnly}
                     type="checkbox"
                     className={styles.checkbox(!!errors.unemploymentReasons)}
@@ -364,7 +378,7 @@ export function EmploymentSection({
 
             {form.unemploymentReasons.includes("Others") && (
               <div>
-                <input
+                <Input
                   disabled={readOnly}
                   type="text"
                   className={styles.input(

@@ -118,7 +118,9 @@ async function findClaimOrCreateFolder({
       const existingClaim = await getRegisteredDriveFolderById(candidate.id);
 
       if (!existingClaim) {
-        throw new Error(`Drive folder claim was lost without a winner: ${folderKey}`);
+        throw new Error(
+          `Drive folder claim was lost without a winner: ${folderKey}`,
+        );
       }
 
       await rekeyRegisteredDriveFolder({

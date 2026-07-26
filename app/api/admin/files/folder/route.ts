@@ -20,7 +20,9 @@ export async function POST(request: NextRequest) {
 
     const body = (await request.json()) as Record<string, unknown>;
     const parentId = typeof body.parentId === "string" ? body.parentId : "";
-    const name = sanitizeFolderName(typeof body.name === "string" ? body.name : "");
+    const name = sanitizeFolderName(
+      typeof body.name === "string" ? body.name : "",
+    );
 
     if (!parentId || !name) {
       return NextResponse.json(
@@ -47,7 +49,8 @@ export async function POST(request: NextRequest) {
       fields: "id,name,mimeType,modifiedTime,webViewLink",
     });
 
-    if (!response.data.id) throw new Error("Google Drive did not return a folder ID.");
+    if (!response.data.id)
+      throw new Error("Google Drive did not return a folder ID.");
 
     await upsertDriveIndexItems([
       {
@@ -70,7 +73,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        message: error instanceof Error ? error.message : "Failed to create folder.",
+        message: "Failed to create folder.",
       },
       { status: 500 },
     );

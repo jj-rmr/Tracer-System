@@ -206,7 +206,10 @@ export async function DELETE(
 
     if (context.study.status !== "open") {
       return NextResponse.json(
-        { success: false, message: "Closed study responses cannot be deleted." },
+        {
+          success: false,
+          message: "Closed study responses cannot be deleted.",
+        },
         { status: 423 },
       );
     }
@@ -227,7 +230,10 @@ export async function DELETE(
 
     for (let attempt = 0; !claimedResponse && attempt < 20; attempt += 1) {
       const activeResponse = await getFormResponse(studyId, user.$id);
-      if (!activeResponse || activeResponse.driveOrganizationStatus !== "organizing") {
+      if (
+        !activeResponse ||
+        activeResponse.driveOrganizationStatus !== "organizing"
+      ) {
         break;
       }
 

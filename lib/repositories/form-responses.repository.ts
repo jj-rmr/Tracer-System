@@ -135,6 +135,35 @@ export async function listFormResponsesByUser(userId: string) {
   return (data as FormResponseRow[]).map(mapFormResponse);
 }
 
+export async function listDraftResponsesOwnedByAccount(accountId: string) {
+  const [alumniDrafts, manualDrafts] = await Promise.all([
+    supabase
+      .from("form_responses")
+      .select("*")
+      .eq("user_id", accountId)
+      .eq("status", "draft")
+      .eq("deletion_status", "active"),
+    supabase
+      .from("form_responses")
+      .select("*")
+      .eq("entered_by_user_id", accountId)
+      .eq("source", "admin_import")
+      .eq("status", "draft")
+      .eq("deletion_status", "active"),
+  ]);
+
+  if (alumniDrafts.error) throw alumniDrafts.error;
+  if (manualDrafts.error) throw manualDrafts.error;
+
+  const rows = [
+    ...alumniDrafts.data,
+    ...manualDrafts.data,
+  ] as FormResponseRow[];
+  return [...new Map(rows.map((row) => [row.id, row])).values()].map(
+    mapFormResponse,
+  );
+}
+
 export async function deleteFormResponse(responseId: string) {
   const { error } = await supabase
     .from("form_responses")
@@ -385,8 +414,7 @@ function mapFormResponseDocument(row: Record<string, unknown>): SurveyDocument {
     googleDriveFileId: String(row.google_drive_file_id),
     googleDriveFolderId: String(row.google_drive_folder_id),
     documentType: row.document_type as SurveyDocument["documentType"],
-    uploadKey:
-      typeof row.upload_key === "string" ? row.upload_key : undefined,
+    uploadKey: typeof row.upload_key === "string" ? row.upload_key : undefined,
     uploadedAt: String(row.uploaded_at),
     metadata: (row.metadata as Record<string, unknown> | null) ?? {},
   };
@@ -539,9 +567,8 @@ export async function createManualFormResponse({
     .single();
 
   if (error?.code === "23505") {
-    const concurrentResponse = await getManualFormResponseByImportToken(
-      importToken,
-    );
+    const concurrentResponse =
+      await getManualFormResponseByImportToken(importToken);
 
     if (concurrentResponse) {
       return { response: concurrentResponse, importToken };

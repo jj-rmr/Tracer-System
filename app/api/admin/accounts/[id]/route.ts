@@ -6,13 +6,10 @@ import { isAdmin } from "@/lib/auth/roles";
 import {
   deleteAccount,
   getAccount,
+  updateAccountRole,
   updateAccountName,
 } from "@/lib/repositories/accounts.repository";
-import {
-  getFormResponseDocuments,
-  listFormResponsesByUser,
-} from "@/lib/repositories/form-responses.repository";
-import { formResponseToSurvey } from "@/lib/forms/graduate-tracer-adapter";
+import { deleteAccountDraftResponses } from "@/lib/forms/account-role-change";
 
 async function authorize(): Promise<
   Models.User<Models.Preferences> | NextResponse
@@ -49,27 +46,15 @@ export async function GET(
 
     const account = await getAccount(id);
 
-    const response = (await listFormResponsesByUser(id))[0];
-    const survey = response
-      ? formResponseToSurvey(
-          response,
-          await getFormResponseDocuments(response.id),
-        )
-      : null;
-
     return NextResponse.json({
       success: true,
       account,
-      survey,
     });
-  } catch (error: unknown) {
+  } catch {
     return NextResponse.json(
       {
         success: false,
-        message:
-          error instanceof Error
-            ? error.message
-            : "Failed to load account details.",
+        message: "Failed to load account details.",
       },
       {
         status: 500,
@@ -90,7 +75,54 @@ export async function PATCH(
 
   try {
     const { id } = await params;
-    const { name } = await request.json();
+    const body = (await request.json()) as {
+      action?: unknown;
+      confirmation?: unknown;
+      name?: unknown;
+    };
+
+    if (body.action === "promote" || body.action === "demote") {
+      const targetRole = body.action === "promote" ? "admin" : "alumni";
+      const expectedConfirmation =
+        targetRole === "admin" ? "PROMOTE TO ADMIN" : "DEMOTE TO ALUMNI";
+
+      if (body.confirmation !== expectedConfirmation) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "The role-change confirmation is invalid.",
+          },
+          { status: 400 },
+        );
+      }
+
+      if (auth.$id === id && targetRole !== "admin") {
+        return NextResponse.json(
+          { success: false, message: "You cannot demote your own account." },
+          { status: 400 },
+        );
+      }
+
+      const account = await getAccount(id);
+      if (account.role === targetRole) {
+        return NextResponse.json(
+          { success: false, message: `This account is already ${targetRole}.` },
+          { status: 409 },
+        );
+      }
+
+      const deletedDrafts = await deleteAccountDraftResponses(id);
+      await updateAccountRole(id, targetRole);
+      return NextResponse.json({
+        success: true,
+        message:
+          targetRole === "admin"
+            ? `Account promoted to administrator. ${deletedDrafts} draft response${deletedDrafts === 1 ? " was" : "s were"} permanently deleted.`
+            : `Administrator changed to an alumni account. ${deletedDrafts} draft response${deletedDrafts === 1 ? " was" : "s were"} permanently deleted.`,
+      });
+    }
+
+    const name = typeof body.name === "string" ? body.name : "";
 
     if (!name?.trim()) {
       return NextResponse.json(
@@ -110,12 +142,11 @@ export async function PATCH(
       success: true,
       message: "Account updated successfully.",
     });
-  } catch (error: unknown) {
+  } catch {
     return NextResponse.json(
       {
         success: false,
-        message:
-          error instanceof Error ? error.message : "Failed to update account.",
+        message: "Failed to update account.",
       },
       {
         status: 500,
@@ -138,6 +169,28 @@ export async function DELETE(
 
   try {
     const { id } = await params;
+    const body = (await request.json().catch(() => null)) as {
+      confirmation?: unknown;
+    } | null;
+
+    if (body?.confirmation !== "DELETE ACCOUNT") {
+      return NextResponse.json(
+        { success: false, message: "The deletion confirmation is invalid." },
+        { status: 400 },
+      );
+    }
+
+    const account = await getAccount(id);
+
+    if (account.role === "admin") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Administrator accounts must be demoted before deletion.",
+        },
+        { status: 409 },
+      );
+    }
 
     if (user.$id === id) {
       return NextResponse.json(
@@ -151,18 +204,18 @@ export async function DELETE(
       );
     }
 
+    const deletedDrafts = await deleteAccountDraftResponses(id);
     await deleteAccount(id);
 
     return NextResponse.json({
       success: true,
-      message: "Account deleted successfully.",
+      message: `Account deleted successfully. ${deletedDrafts} draft response${deletedDrafts === 1 ? " was" : "s were"} permanently deleted.`,
     });
-  } catch (error: unknown) {
+  } catch {
     return NextResponse.json(
       {
         success: false,
-        message:
-          error instanceof Error ? error.message : "Failed to delete account.",
+        message: "Failed to delete account.",
       },
       {
         status: 500,

@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+
 import { useCallback, useRef, useState } from "react";
 import GraduateTracerForm from "@/components/forms/GraduateTracerForm";
 import {
@@ -254,62 +256,67 @@ export default function ResponseWorkspace({
       bodyClassName="p-6"
       showCloseButton={false}
     >
-      <p className="text-sm leading-6 text-slate-500">
+      <p className="text-sm leading-6 text-muted-foreground">
         Save your latest answers as a draft, continue editing, or permanently
         discard this form and its uploaded documents.
       </p>
-      <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-        <button
+      <div className="mt-6 flex flex-row flex-wrap-reverse gap-3">
+        <Button
           type="button"
-          disabled={draftCloseAction !== null}
-          onClick={() => setShowDraftCloseModal(false)}
-          className="rounded-xl px-4 py-2 text-sm font-medium text-slate-700 whitespace-nowrap hover:bg-slate-100 disabled:opacity-50"
-        >
-          Keep Editing
-        </button>
-        <button
-          type="button"
+          variant="destructive"
+          size="icon"
           disabled={draftCloseAction !== null}
           onClick={() => void discardDraft()}
-          className="rounded-xl bg-rose-500 px-3 py-2 text-sm font-semibold text-white whitespace-nowrap hover:bg-rose-600 disabled:opacity-50"
         >
           {draftCloseAction === "discarding" ? (
             <LuLoaderCircle size={18} className="animate-spin" />
           ) : (
             <LuTrash2 size={18} />
           )}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="outline"
+          disabled={draftCloseAction !== null}
+          onClick={() => setShowDraftCloseModal(false)}
+          className="flex-1"
+        >
+          Keep Editing
+        </Button>
+        <Button
+          type="button"
+          variant="elevated"
           disabled={draftCloseAction !== null}
           onClick={() => void saveDraftAndClose()}
-          className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white whitespace-nowrap hover:bg-sky-700 disabled:opacity-50"
+          className="flex-1"
         >
           {draftCloseAction === "saving" ? "Saving..." : "Save as Draft"}
-        </button>
+        </Button>
       </div>
     </Modal>
   );
 
   if (isNew) {
     return (
-      <div className="w-full max-w-5xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-[0_12px_30px_-5px_rgba(0,0,0,0.04)] shadow-sky-100/80">
-        <h2 className="text-xl font-semibold text-slate-900">
-          No Alumni Tracer Response Found
+      <div className="w-full max-w-5xl rounded-3xl border border-border bg-card p-8 text-center shadow-lg ">
+        <h2 className="text-xl font-semibold text-foreground">
+          No Tracer Response Found
         </h2>
 
-        <p className="mt-2 text-sm text-slate-500">
-          You haven&apos;t submitted an Alumni Tracer Response yet. Click the
-          button below to start answering the form.
+        <p className="mt-2 text-sm text-muted-foreground">
+          You haven&apos;t submitted a Tracer Response yet. Click the button
+          below to start answering the form.
         </p>
 
-        <button
+        <Button
+          variant="elevated"
+          size="lg"
           onClick={() => setOpen(true)}
-          className="mt-6 inline-flex items-center justify-center gap-2 rounded-2xl bg-sky-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-sky-700 hover:shadow-md"
+          className="mt-6"
         >
           <LuPlus size={16} />
           Add New Response
-        </button>
+        </Button>
 
         <FormModal
           open={open}
@@ -339,16 +346,18 @@ export default function ResponseWorkspace({
 
   return (
     <div className="space-y-6 w-full flex flex-col items-center relative">
-      <div className="w-full max-w-5xl rounded-3xl border border-slate-200 bg-white p-5 text-left shadow-[0_12px_30px_-5px_rgba(0,0,0,0.04)] shadow-sky-100/80">
+      <div className="w-full max-w-5xl rounded-3xl border border-border bg-card p-5 text-left shadow-lg ">
         <div className="flex flex-col gap-2 lg:flex-row justify-center md:justify-between">
           <div>
             <div className="flex flex-wrap items-center gap-2">
-              <p className="text-xs uppercase text-slate-500">Response ID</p>
+              <p className="text-xs uppercase text-muted-foreground">
+                Response ID
+              </p>
               <span
                 className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${
                   responseStatus === "draft"
-                    ? "bg-amber-100 text-amber-700"
-                    : "bg-emerald-100 text-emerald-700"
+                    ? "bg-warning/15 text-warning"
+                    : "bg-success/15 text-success"
                 }`}
               >
                 {responseStatus}
@@ -356,9 +365,9 @@ export default function ResponseWorkspace({
             </div>
             <p className="mt-1 font-medium text-sm">{responseId}</p>
           </div>
-          <div className="flex flex-col-reverse items-center justify-center lg:flex-row gap-4">
+          <div className="flex flex-col-reverse lg:flex-row items-center justify-center gap-4">
             <div className="text-left md:text-right inline-flex items-center gap-4 text-xs font-semibold tracking-wider uppercase">
-              <div className=" text-slate-400 divide-x-2 inline-flex text-[10px] md:text-xs">
+              <div className=" text-muted-foreground divide-x-2 inline-flex text-[10px] md:text-xs">
                 <p className="pr-2">Updated</p>
                 <p className="pl-2 whitespace-nowrap">
                   {updatedAt
@@ -376,23 +385,27 @@ export default function ResponseWorkspace({
             </div>
 
             <div className="flex w-full items-center gap-2 lg:w-auto">
-              <button
+              <Button
+                variant="elevated"
                 onClick={() => setOpen(true)}
                 disabled={open}
-                className="w-full rounded-2xl bg-sky-600 px-4 py-2.5 whitespace-nowrap text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-sky-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none disabled:hover:bg-slate-300"
+                className="flex-1"
               >
-                {readOnly ? "View" : "Edit"} Form
-              </button>
+                <span className="whitespace-nowrap">
+                  {readOnly ? "View" : "Edit"} Form
+                </span>
+              </Button>
               {!readOnly && (
-                <button
+                <Button
                   type="button"
+                  variant="destructive"
+                  size="icon-lg"
                   onClick={() => setShowDeleteResponseModal(true)}
                   aria-label="Delete response"
                   title="Delete response"
-                  className="inline-flex shrink-0 items-center justify-center rounded-2xl bg-rose-100 p-3 text-rose-600 transition-colors hover:bg-rose-200 focus:outline-none focus:ring-4 focus:ring-rose-100"
                 >
                   <LuTrash2 aria-hidden="true" size={18} />
-                </button>
+                </Button>
               )}
             </div>
           </div>

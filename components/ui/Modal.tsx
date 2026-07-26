@@ -1,13 +1,11 @@
 "use client";
 
-import {
-  useEffect,
-  useId,
-  useRef,
-  type ReactNode,
-} from "react";
+import { Button } from "@/components/ui/button";
+
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { LuX } from "react-icons/lu";
+import { AnimatePresence, motion, useDragControls } from "motion/react";
 
 type ModalWidth = "sm" | "md" | "lg" | "xl";
 
@@ -23,6 +21,7 @@ interface ModalProps {
   closeLabel?: string;
   fitContent?: boolean;
   showCloseButton?: boolean;
+  placement?: "center" | "bottom";
 }
 
 const widthStyles: Record<ModalWidth, string> = {
@@ -53,6 +52,7 @@ export default function Modal({
   closeLabel = "Close dialog",
   fitContent = false,
   showCloseButton = true,
+  placement = "center",
 }: ModalProps) {
   const titleId = useId();
   const descriptionId = useId();
@@ -60,6 +60,8 @@ export default function Modal({
   const panelRef = useRef<HTMLDivElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const onCloseRef = useRef(onClose);
+  const dragControls = useDragControls();
+  const [isDragDismissing, setIsDragDismissing] = useState(false);
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -73,9 +75,8 @@ export default function Modal({
     document.body.style.overflow = "hidden";
 
     const focusFrame = window.requestAnimationFrame(() => {
-      const firstFocusable = panelRef.current?.querySelector<HTMLElement>(
-        focusableSelector,
-      );
+      const firstFocusable =
+        panelRef.current?.querySelector<HTMLElement>(focusableSelector);
       (firstFocusable ?? panelRef.current)?.focus();
     });
 
@@ -129,61 +130,131 @@ export default function Modal({
     };
   }, [open]);
 
-  if (!open || typeof document === "undefined") return null;
+  if (typeof document === "undefined") return null;
 
   return createPortal(
-    <div
-      ref={rootRef}
-      data-modal-root
-      className={`fixed inset-0 flex h-dvh items-center justify-center overflow-y-auto bg-black/40 p-3 [padding-bottom:max(0.75rem,env(safe-area-inset-bottom))] [padding-top:max(0.75rem,env(safe-area-inset-top))] backdrop-blur-sm md:p-6 md:[padding-bottom:max(1.5rem,env(safe-area-inset-bottom))] md:[padding-top:max(1.5rem,env(safe-area-inset-top))] ${
-        layer === "nested" ? "z-110" : "z-100"
-      }`}
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
-      <div
-        ref={panelRef}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby={titleId}
-        aria-describedby={description ? descriptionId : undefined}
-        tabIndex={-1}
-        className={`relative flex max-h-full w-full flex-col overflow-hidden rounded-2xl bg-white shadow-2xl outline-none ${widthStyles[width]} ${
-          fitContent || width === "sm" || width === "md" ? "h-fit" : "h-full"
-        }`}
-      >
-        <header className="flex shrink-0 items-start justify-between gap-4 border-b border-slate-200 px-5 py-4 md:px-6">
-          <div className="min-w-0">
-            <h2 id={titleId} className="text-lg font-semibold text-slate-900">
-              {title}
-            </h2>
-            {description && (
-              <p id={descriptionId} className="mt-0.5 text-sm text-slate-500">
-                {description}
-              </p>
-            )}
-          </div>
-          {showCloseButton && (
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label={closeLabel}
-              className="shrink-0 rounded-xl p-2 text-slate-500 transition-colors hover:bg-slate-100"
-            >
-              <LuX aria-hidden="true" size={22} />
-            </button>
-          )}
-        </header>
-
-        <div
-          ref={bodyRef}
-          className={`min-h-0 flex-1 overflow-y-auto ${bodyClassName}`}
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          ref={rootRef}
+          data-modal-root
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+          className={`fixed inset-0 flex h-dvh justify-center bg-overlay p-3 [padding-bottom:max(0.75rem,env(safe-area-inset-bottom))] [padding-top:max(0.75rem,env(safe-area-inset-top))] md:p-6 md:[padding-bottom:max(1.5rem,env(safe-area-inset-bottom))] md:[padding-top:max(1.5rem,env(safe-area-inset-top))] ${
+            placement === "bottom"
+              ? "items-end overflow-hidden md:items-center"
+              : "items-center overflow-y-auto backdrop-blur-sm"
+          } ${layer === "nested" ? "z-110" : "z-100"}`}
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) onClose();
+          }}
         >
-          {children}
-        </div>
-      </div>
-    </div>,
+          <motion.div
+            ref={panelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            aria-describedby={description ? descriptionId : undefined}
+            tabIndex={-1}
+            initial={placement === "bottom" ? { y: 48 } : false}
+            animate={
+              placement === "bottom"
+                ? { y: isDragDismissing ? "100dvh" : 0 }
+                : { y: 0 }
+            }
+            exit={placement === "bottom" ? { y: "100dvh" } : undefined}
+            transition={
+              placement === "bottom"
+                ? { duration: 0.28, ease: [0.22, 1, 0.36, 1] }
+                : undefined
+            }
+            drag={placement === "bottom" ? "y" : false}
+            dragControls={dragControls}
+            dragListener={false}
+            dragConstraints={{ top: 0, bottom: 1000 }}
+            dragElastic={0}
+            dragMomentum={false}
+            onDragEnd={(_, info) => {
+              if (info.offset.y > 100 || info.velocity.y > 700) {
+                setIsDragDismissing(true);
+              }
+            }}
+            onAnimationComplete={() => {
+              if (!isDragDismissing) return;
+              setIsDragDismissing(false);
+              onClose();
+            }}
+            className={`relative flex max-h-full w-full flex-col overflow-hidden bg-card shadow-2xl outline-none ${widthStyles[width]} ${
+              placement === "bottom"
+                ? "transform-gpu will-change-transform rounded-t-3xl rounded-b-xl md:rounded-2xl"
+                : "rounded-2xl"
+            } ${
+              fitContent || width === "sm" || width === "md"
+                ? "h-fit"
+                : "h-full"
+            }`}
+          >
+            {placement === "bottom" && (
+              <span
+                aria-hidden="true"
+                className="pointer-events-none absolute left-1/2 top-3 z-10 flex -translate-x-1/2 items-center justify-center"
+              >
+                <span className="h-1 w-10 rounded-full bg-muted-foreground/40" />
+              </span>
+            )}
+            <header
+              onPointerDown={
+                placement === "bottom"
+                  ? (event) => dragControls.start(event)
+                  : undefined
+              }
+              className={`flex shrink-0 items-start justify-between gap-4 border-b border-border px-5 pb-4 md:px-6 ${
+                placement === "bottom"
+                  ? "touch-none cursor-grab select-none pt-7 active:cursor-grabbing"
+                  : "pt-4"
+              }`}
+            >
+              <div className="min-w-0">
+                <h2
+                  id={titleId}
+                  className="text-lg font-semibold text-foreground"
+                >
+                  {title}
+                </h2>
+                {description && (
+                  <p
+                    id={descriptionId}
+                    className="mt-0.5 text-sm text-muted-foreground"
+                  >
+                    {description}
+                  </p>
+                )}
+              </div>
+              {showCloseButton && placement !== "bottom" && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={onClose}
+                  aria-label={closeLabel}
+                >
+                  <LuX aria-hidden="true" size={22} />
+                </Button>
+              )}
+            </header>
+
+            <div
+              ref={bodyRef}
+              className={`min-h-0 flex-1 overflow-y-auto ${bodyClassName}`}
+            >
+              {children}
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>,
     document.body,
   );
 }

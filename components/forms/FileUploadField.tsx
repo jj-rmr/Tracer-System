@@ -1,5 +1,9 @@
 "use client";
 
+import { Input } from "@/components/ui/input";
+
+import { Button } from "@/components/ui/button";
+
 import { SurveyDocument } from "@/types";
 import { useEffect, useRef, useState } from "react";
 import { LuCloudUpload, LuFileText, LuFileType2, LuX } from "react-icons/lu";
@@ -23,7 +27,7 @@ interface FileUploadFieldProps {
 
 const styles = {
   label:
-    "mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-600",
+    "mb-2 block text-xs font-semibold uppercase tracking-wider text-muted-foreground",
 
   input: (
     err: boolean,
@@ -32,20 +36,17 @@ const styles = {
     hasFile: boolean,
   ) => {
     const stateClass = disabled
-      ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-500 shadow-none"
+      ? "cursor-not-allowed border-border bg-secondary text-muted-foreground shadow-none"
       : err
-        ? "border-rose-400 bg-rose-50/60 text-slate-900 focus-within:ring-4 focus-within:ring-rose-100"
+        ? "border-destructive bg-destructive/10 text-foreground focus-within:ring-4 focus-within:ring-destructive/20"
         : isDragActive
-        ? "border-sky-400 bg-sky-50"
-        : hasFile
-          ? "border-sky-400 bg-sky-50"
-          : "border-slate-200 bg-slate-50 hover:border-sky-400 hover:bg-white";
+          ? "border-ring bg-muted"
+          : hasFile
+            ? "border-ring bg-muted"
+            : "border-border bg-muted hover:border-ring hover:bg-card";
 
-    return `flex min-h-32 w-full cursor-pointer items-center gap-3 rounded-2xl border border-dashed px-5 py-5 text-sm transition duration-200 ${stateClass}`;
+    return `flex min-h-32 w-full cursor-default items-center gap-3 rounded-2xl border border-dashed px-5 py-5 text-sm transition duration-200 ${stateClass}`;
   },
-
-  removeButton:
-    "shrink-0 rounded-xl p-2 text-slate-400 transition duration-200 hover:bg-rose-50 hover:text-rose-500 focus:outline-none focus:ring-4 focus:ring-rose-100",
 };
 
 function isAcceptedFile(file: File, accept: string) {
@@ -195,14 +196,14 @@ export function FileUploadField({
     onChange(files.filter((_, fileIndex) => fileIndex !== index));
   };
 
-  const handleDragEnter = (event: React.DragEvent<HTMLLabelElement>) => {
+  const handleDragEnter = (event: React.DragEvent<HTMLDivElement>) => {
     if (disabled) return;
 
     event.preventDefault();
     setIsDragActive(true);
   };
 
-  const handleDragOver = (event: React.DragEvent<HTMLLabelElement>) => {
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
     if (disabled) return;
 
     event.preventDefault();
@@ -210,14 +211,14 @@ export function FileUploadField({
     setIsDragActive(true);
   };
 
-  const handleDragLeave = (event: React.DragEvent<HTMLLabelElement>) => {
+  const handleDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
     if (disabled) return;
 
     event.preventDefault();
     setIsDragActive(false);
   };
 
-  const handleDrop = (event: React.DragEvent<HTMLLabelElement>) => {
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     if (disabled) return;
 
     event.preventDefault();
@@ -233,8 +234,7 @@ export function FileUploadField({
         {required && " *"}
       </label>
 
-      <label
-        htmlFor={id}
+      <div
         onDragEnter={handleDragEnter}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -245,30 +245,43 @@ export function FileUploadField({
           size={36}
           className={`shrink-0 pointer-events-none ${
             disabled
-              ? "text-slate-400"
+              ? "text-muted-foreground"
               : dragActive || hasFile
-                ? "text-sky-500"
-                : "text-slate-400"
+                ? "text-muted-foreground"
+                : "text-muted-foreground"
           }`}
         />
 
         <div className="min-w-0 flex-1 pointer-events-none">
           <h4
             className={`text-base font-semibold ${
-              disabled ? "text-slate-500" : "text-slate-900"
+              disabled ? "text-muted-foreground" : "text-foreground"
             }`}
           >
             {dragActive ? "Drop files here" : `Choose ${label.toLowerCase()}`}
           </h4>
 
-          {hint && <span className="text-xs text-slate-400">{hint}</span>}
+          {hint && (
+            <span className="text-xs text-muted-foreground">{hint}</span>
+          )}
 
-          <p className="mt-1 text-xs text-slate-400">
+          <p className="mt-1 text-xs text-muted-foreground">
             {totalFiles}/{maxFiles} files selected
           </p>
         </div>
 
-        <input
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={disabled || totalFiles >= maxFiles}
+          onClick={() => inputRef.current?.click()}
+          className="shrink-0"
+        >
+          Choose files
+        </Button>
+
+        <Input
           ref={inputRef}
           type="file"
           id={id}
@@ -284,7 +297,7 @@ export function FileUploadField({
             }
           }}
         />
-      </label>
+      </div>
 
       {/* Existing uploaded files */}
       {existingDocuments.length > 0 && (
@@ -295,17 +308,20 @@ export function FileUploadField({
             return (
               <div
                 key={document.id}
-                className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
+                className="flex items-center justify-between gap-3 rounded-xl border border-border bg-muted px-4 py-3"
               >
                 <div className="flex min-w-0 items-center gap-3">
-                  <FileIcon size={24} className="shrink-0 text-sky-500" />
+                  <FileIcon
+                    size={24}
+                    className="shrink-0 text-muted-foreground"
+                  />
 
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-slate-700">
+                    <p className="truncate text-sm font-semibold text-foreground">
                       {document.filename}
                     </p>
 
-                    <p className="text-xs font-medium text-emerald-600">
+                    <p className="text-xs font-medium text-success">
                       {getFileType(document.mimeType, document.filename)} •{" "}
                       {formatFileSize(document.size)} • Uploaded
                     </p>
@@ -313,14 +329,15 @@ export function FileUploadField({
                 </div>
 
                 {!disabled && onRequestDeleteDocument && (
-                  <button
+                  <Button
                     type="button"
+                    variant="destructive"
+                    size="icon-sm"
                     onClick={() => onRequestDeleteDocument(document)}
-                    className={styles.removeButton}
                     aria-label={`Remove ${document.filename}`}
                   >
                     <LuX size={18} />
-                  </button>
+                  </Button>
                 )}
               </div>
             );
@@ -336,17 +353,20 @@ export function FileUploadField({
             return (
               <div
                 key={`${file.name}-${file.lastModified}-${index}`}
-                className="flex items-center justify-between gap-3 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3"
+                className="flex items-center justify-between gap-3 rounded-xl border border-border bg-muted px-4 py-3"
               >
                 <div className="flex min-w-0 items-center gap-3">
-                  <FileIcon size={24} className="shrink-0 text-sky-500" />
+                  <FileIcon
+                    size={24}
+                    className="shrink-0 text-muted-foreground"
+                  />
 
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-slate-800">
+                    <p className="truncate text-sm font-semibold text-foreground">
                       {file.name}
                     </p>
 
-                    <p className="text-xs text-sky-600">
+                    <p className="text-xs text-muted-foreground">
                       {getFileType(file.type, file.name)} •{" "}
                       {formatFileSize(file.size)} • Ready to upload
                     </p>
@@ -354,14 +374,15 @@ export function FileUploadField({
                 </div>
 
                 {!disabled && (
-                  <button
+                  <Button
                     type="button"
+                    variant="destructive"
+                    size="icon-sm"
                     onClick={() => removeFile(index)}
-                    className={styles.removeButton}
                     aria-label={`Remove ${file.name}`}
                   >
                     <LuX size={18} />
-                  </button>
+                  </Button>
                 )}
               </div>
             );
@@ -369,7 +390,7 @@ export function FileUploadField({
         </div>
       )}
 
-      <p className="mt-2 text-xs text-slate-400">
+      <p className="mt-2 text-xs text-muted-foreground">
         Maximum file size: {MAX_FILE_SIZE_LABEL}
         {accept && ` • Accepted file types: ${accept}`}
       </p>

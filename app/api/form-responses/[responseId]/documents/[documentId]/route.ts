@@ -66,8 +66,7 @@ export async function DELETE(
     return NextResponse.json(
       {
         success: false,
-        message:
-          error instanceof Error ? error.message : "Failed to delete document.",
+        message: "Failed to delete document.",
       },
       { status: 500 },
     );

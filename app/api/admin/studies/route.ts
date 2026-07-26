@@ -56,11 +56,7 @@ export async function POST(request: NextRequest) {
       typeof body.academicYear === "string" ? body.academicYear.trim() : "";
     const title = typeof body.title === "string" ? body.title.trim() : "";
 
-    if (
-      !formVersionId ||
-      !isValidAcademicYear(academicYear) ||
-      !title
-    ) {
+    if (!formVersionId || !isValidAcademicYear(academicYear) || !title) {
       return NextResponse.json(
         {
           success: false,
@@ -88,10 +84,7 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    return NextResponse.json(
-      { success: true, data: study },
-      { status: 201 },
-    );
+    return NextResponse.json({ success: true, data: study }, { status: 201 });
   } catch (error) {
     console.error("Failed to create study period:", error);
 

@@ -6,10 +6,6 @@ export default async function AdminSettingsPage() {
   const user = await requireUserRole([ROLES.ADMIN]);
 
   return (
-    <SettingsPage
-      name={user.name}
-      email={user.email}
-      role={ROLES.ADMIN}
-    />
+    <SettingsPage name={user.name} email={user.email} role={ROLES.ADMIN} />
   );
 }

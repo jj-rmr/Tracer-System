@@ -17,10 +17,10 @@ interface ToastProps {
 }
 
 const toastStyles: Record<NonNullable<ToastProps["type"]>, string> = {
-  success: "bg-green-500 text-white",
-  warning: "bg-amber-500 text-white",
-  error: "bg-rose-500 text-white",
-  info: "bg-sky-500 text-white",
+  success: "bg-success text-success-foreground",
+  warning: "bg-warning text-warning-foreground",
+  error: "bg-destructive text-destructive-foreground",
+  info: "bg-muted-foreground text-background",
 };
 
 export function Toast({
@@ -30,9 +30,6 @@ export function Toast({
   onClose,
 }: ToastProps) {
   const [isVisible, setIsVisible] = useState(true);
-  const [isLargeScreen, setIsLargeScreen] = useState(
-    () => typeof window !== "undefined" && window.innerWidth >= 1024,
-  );
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -41,15 +38,6 @@ export function Toast({
 
     return () => clearTimeout(timer);
   }, [duration, message]);
-
-  useEffect(() => {
-    const checkScreenSize = () => {
-      setIsLargeScreen(window.innerWidth >= 1024);
-    };
-
-    window.addEventListener("resize", checkScreenSize);
-    return () => window.removeEventListener("resize", checkScreenSize);
-  }, []);
 
   const getInitialPosition = () => {
     return { y: -100, opacity: 0 };
@@ -76,11 +64,7 @@ export function Toast({
           animate={getAnimatePosition()}
           exit={getExitPosition()}
           transition={{ duration: 0.3, ease: "backInOut" }}
-          className={`font-semibold fixed top-4 left-1/2 -translate-x-1/2 w-fit text-center  ${
-            isLargeScreen ? "max-w-sm" : "max-w-11/12"
-          } rounded-2xl px-4 py-3 text-sm shadow-lg ${
-            toastStyles[type]
-          } z-9999`}
+          className={`fixed top-4 left-1/2 z-9999 w-fit max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-2xl px-4 py-3 text-center text-sm font-semibold shadow-lg lg:max-w-sm ${toastStyles[type]}`}
         >
           {message}
         </motion.div>

@@ -1,3 +1,5 @@
+import { Input } from "@/components/ui/input";
+
 import { SelectField } from "@/components/forms/SelectField";
 import { getGraduateTracerConditionalSections } from "@/lib/forms/graduate-tracer-validation";
 import { graduateTracerV1 } from "@/lib/forms/registry";
@@ -85,22 +87,22 @@ export function JobHistorySection({
       | "acceptingReasons"
       | "changingReasons"
       | "usefulCompetencies",
-    val: any,
+    val: string,
   ) => {
-    const list = [...form[field]] as any[];
+    const list: string[] = [...form[field]];
     const idx = list.indexOf(val);
     if (idx > -1) list.splice(idx, 1);
     else list.push(val);
-    updateField(field, list);
+    updateField(field, list as Survey[typeof field]);
   };
 
   if (!conditions.hasJobHistory) {
     return (
       <div className="space-y-3">
-        <h3 className="text-xl font-bold text-slate-900">
+        <h3 className="text-xl font-semibold text-foreground">
           First Job & Curriculum Feedback
         </h3>
-        <p className="rounded-2xl border border-sky-100 bg-sky-50 p-4 text-sm text-slate-700">
+        <p className="rounded-2xl border border-border bg-muted p-4 text-sm text-foreground">
           This section does not apply because you selected Never Employed.
         </p>
       </div>
@@ -109,7 +111,7 @@ export function JobHistorySection({
 
   return (
     <div className="space-y-6">
-      <h3 className="text-xl font-bold text-slate-900">
+      <h3 className="text-xl font-semibold text-foreground">
         First Job & Curriculum Feedback
       </h3>
 
@@ -177,7 +179,7 @@ export function JobHistorySection({
 
       {conditions.showStayingReasons && (
         <>
-          <div className="space-y-2 border-t border-slate-200 pt-4">
+          <div className="space-y-2 border-t border-border pt-4">
             <label className={styles.label}>
               Reasons for staying in your first job *
             </label>
@@ -192,11 +194,13 @@ export function JobHistorySection({
                   key={r}
                   className={styles.choice(!!errors.stayingReasons, readOnly)}
                 >
-                  <input
+                  <Input
                     disabled={readOnly}
                     type="checkbox"
                     className={styles.checkbox(!!errors.stayingReasons)}
-                    checked={form.stayingReasons.includes(r as any)}
+                    checked={form.stayingReasons.includes(
+                      r as Survey["stayingReasons"][number],
+                    )}
                     onChange={() => toggleList("stayingReasons", r)}
                   />
                   <span>{r}</span>
@@ -206,7 +210,7 @@ export function JobHistorySection({
             <ErrorMessage message={errors.stayingReasons} />
             {form.stayingReasons.includes("Others") && (
               <div>
-                <input
+                <Input
                   disabled={readOnly}
                   type="text"
                   className={styles.input(
@@ -251,13 +255,13 @@ export function JobHistorySection({
                         readOnly,
                       )}
                     >
-                      <input
+                      <Input
                         disabled={readOnly}
                         type="checkbox"
-                        className={styles.checkbox(
-                          !!errors.acceptingReasons,
+                        className={styles.checkbox(!!errors.acceptingReasons)}
+                        checked={form.acceptingReasons.includes(
+                          r as Survey["acceptingReasons"][number],
                         )}
-                        checked={form.acceptingReasons.includes(r as any)}
                         onChange={() => toggleList("acceptingReasons", r)}
                       />
                       <span>{r}</span>
@@ -267,7 +271,7 @@ export function JobHistorySection({
               <ErrorMessage message={errors.acceptingReasons} />
               {form.acceptingReasons.includes("Others") && (
                 <div>
-                  <input
+                  <Input
                     disabled={readOnly}
                     type="text"
                     className={styles.input(
@@ -289,7 +293,7 @@ export function JobHistorySection({
       )}
 
       {conditions.showChangingReasons && (
-        <div className="space-y-4 border-t border-slate-200 pt-4">
+        <div className="space-y-4 border-t border-border pt-4">
           <div>
             <label className={styles.label}>
               Reasons for changing your job *
@@ -317,11 +321,13 @@ export function JobHistorySection({
                       readOnly,
                     )}
                   >
-                    <input
+                    <Input
                       disabled={readOnly}
                       type="checkbox"
                       className={styles.checkbox(!!errors.changingReasons)}
-                      checked={form.changingReasons.includes(r as any)}
+                      checked={form.changingReasons.includes(
+                        r as Survey["changingReasons"][number],
+                      )}
                       onChange={() => toggleList("changingReasons", r)}
                     />
                     <span>{r}</span>
@@ -331,7 +337,7 @@ export function JobHistorySection({
             <ErrorMessage message={errors.changingReasons} />
             {form.changingReasons.includes("Others") && (
               <div>
-                <input
+                <Input
                   disabled={readOnly}
                   type="text"
                   className={styles.input(
@@ -352,10 +358,10 @@ export function JobHistorySection({
       )}
 
       {/* Standard Fields block */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-slate-200 pt-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-border pt-4">
         <div>
           <label className={styles.label}>First Job Title *</label>
-          <input
+          <Input
             disabled={readOnly}
             type="text"
             className={styles.input(!!errors.firstJobTitle, readOnly)}
@@ -371,7 +377,10 @@ export function JobHistorySection({
             label="First Job Search Duration *"
             value={form.firstJobSearchDuration}
             onChange={(val) =>
-              updateField("firstJobSearchDuration", val as any)
+              updateField(
+                "firstJobSearchDuration",
+                val as Survey["firstJobSearchDuration"],
+              )
             }
             options={durations.map((d) => ({
               value: d,
@@ -385,7 +394,7 @@ export function JobHistorySection({
 
           {form.firstJobSearchDuration === "Others" && (
             <>
-              <input
+              <Input
                 disabled={readOnly}
                 type="text"
                 className={`${styles.input(
@@ -407,7 +416,9 @@ export function JobHistorySection({
             id="firstJobDuration"
             label="First Job Duration *"
             value={form.firstJobDuration}
-            onChange={(val) => updateField("firstJobDuration", val as any)}
+            onChange={(val) =>
+              updateField("firstJobDuration", val as Survey["firstJobDuration"])
+            }
             options={durations.map((d) => ({
               value: d,
               label: d,
@@ -420,7 +431,7 @@ export function JobHistorySection({
 
           {form.firstJobDuration === "Others" && (
             <>
-              <input
+              <Input
                 disabled={readOnly}
                 type="text"
                 className={`${styles.input(!!errors.firstJobDurationOther, readOnly)} mt-2`}
@@ -439,7 +450,9 @@ export function JobHistorySection({
             id="firstJobSource"
             label="First Job Source *"
             value={form.firstJobSource}
-            onChange={(val) => updateField("firstJobSource", val as any)}
+            onChange={(val) =>
+              updateField("firstJobSource", val as Survey["firstJobSource"])
+            }
             options={sources.map((s) => ({
               value: s,
               label: s,
@@ -452,7 +465,7 @@ export function JobHistorySection({
 
           {form.firstJobSource === "Others" && (
             <>
-              <input
+              <Input
                 disabled={readOnly}
                 type="text"
                 className={`${styles.input(!!errors.firstJobSourceOther, readOnly)} mt-2`}
@@ -474,7 +487,9 @@ export function JobHistorySection({
             id="firstJobLevel"
             label="First Job Level *"
             value={form.firstJobLevel}
-            onChange={(val) => updateField("firstJobLevel", val as any)}
+            onChange={(val) =>
+              updateField("firstJobLevel", val as Survey["firstJobLevel"])
+            }
             options={levels.map((l) => ({
               value: l,
               label: l,
@@ -491,7 +506,9 @@ export function JobHistorySection({
             id="currentJobLevel"
             label="Current Job Level *"
             value={form.currentJobLevel}
-            onChange={(val) => updateField("currentJobLevel", val as any)}
+            onChange={(val) =>
+              updateField("currentJobLevel", val as Survey["currentJobLevel"])
+            }
             options={levels.map((l) => ({
               value: l,
               label: l,
@@ -508,7 +525,12 @@ export function JobHistorySection({
             id="initialMonthlyIncome"
             label="Initial Monthly Income *"
             value={form.initialMonthlyIncome}
-            onChange={(val) => updateField("initialMonthlyIncome", val as any)}
+            onChange={(val) =>
+              updateField(
+                "initialMonthlyIncome",
+                val as Survey["initialMonthlyIncome"],
+              )
+            }
             options={incomes.map((l) => ({
               value: l,
               label: l,
@@ -520,7 +542,7 @@ export function JobHistorySection({
           <ErrorMessage message={errors.initialMonthlyIncome} />
         </div>
       </div>
-      <div className="space-y-4 border-t border-slate-200 pt-4">
+      <div className="space-y-4 border-t border-border pt-4">
         <SelectField
           disabled={readOnly}
           id="curriculumRelevant"
@@ -553,16 +575,15 @@ export function JobHistorySection({
             {compList.map((c) => (
               <label
                 key={c}
-                className={styles.choice(
-                  !!errors.usefulCompetencies,
-                  readOnly,
-                )}
+                className={styles.choice(!!errors.usefulCompetencies, readOnly)}
               >
-                <input
+                <Input
                   disabled={readOnly}
                   type="checkbox"
                   className={styles.checkbox(!!errors.usefulCompetencies)}
-                  checked={form.usefulCompetencies.includes(c as any)}
+                  checked={form.usefulCompetencies.includes(
+                    c as Survey["usefulCompetencies"][number],
+                  )}
                   onChange={() => toggleList("usefulCompetencies", c)}
                 />
                 <span>{c}</span>
@@ -572,7 +593,7 @@ export function JobHistorySection({
           <ErrorMessage message={errors.usefulCompetencies} />
           {form.usefulCompetencies.includes("Others") && (
             <div className="mt-2">
-              <input
+              <Input
                 disabled={readOnly}
                 type="text"
                 className={styles.input(

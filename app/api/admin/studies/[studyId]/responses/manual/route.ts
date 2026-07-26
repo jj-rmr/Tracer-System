@@ -48,9 +48,7 @@ export async function POST(
 
     const body = (await request.json()) as ManualResponseBody;
     const respondentName =
-      typeof body.respondentName === "string"
-        ? body.respondentName.trim()
-        : "";
+      typeof body.respondentName === "string" ? body.respondentName.trim() : "";
     const respondentEmail =
       typeof body.respondentEmail === "string"
         ? body.respondentEmail.trim()

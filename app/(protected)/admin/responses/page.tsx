@@ -1,10 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { SearchInput } from "@/components/ui/search-input";
+
+import { Button } from "@/components/ui/button";
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { LuDownload, LuFilterX, LuPencil, LuPlus, LuSearch } from "react-icons/lu";
+import { LuFilterX, LuPencil, LuPlus, LuRefreshCw } from "react-icons/lu";
 
 import ManualResponseModal from "@/components/admin/responses/ManualResponseModal";
+import ExportButton from "@/components/admin/ExportButton";
 import { SelectField } from "@/components/forms/SelectField";
 import ResponseTable from "@/components/responses/ResponseTable";
 import { useToast } from "@/components/ui/Toast";
@@ -28,17 +33,14 @@ function ResponseSearchField({
 
   return (
     <label className="relative flex w-full flex-col xl:col-span-2">
-      <span className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-600">
+      <span className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         Search responses
       </span>
-      <LuSearch className="pointer-events-none absolute bottom-3.5 left-3 h-4 w-4 text-slate-400" />
-      <input
-        type="search"
+      <SearchInput
         maxLength={100}
         placeholder="Name, email, or program"
         value={value}
         onChange={(event) => setValue(event.target.value)}
-        className="w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-9 pr-3 text-sm text-slate-700 shadow-sm transition placeholder:text-slate-400 focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100"
       />
     </label>
   );
@@ -54,6 +56,8 @@ export default function ResponsesPage() {
   const [hasManualDraft, setHasManualDraft] = useState(false);
   const [showManualResponse, setShowManualResponse] = useState(false);
   const [tableKey, setTableKey] = useState(0);
+  const [refreshOnCooldown, setRefreshOnCooldown] = useState(false);
+  const refreshCooldownRef = useRef<number | null>(null);
   const parsedPage = Number(searchParams.get("page") ?? "1");
   const currentPage =
     Number.isInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1;
@@ -125,7 +129,8 @@ export default function ResponsesPage() {
   }, []);
 
   useEffect(() => {
-    void refreshManualDraft();
+    const timeout = window.setTimeout(() => void refreshManualDraft(), 0);
+    return () => window.clearTimeout(timeout);
   }, [refreshManualDraft]);
 
   function openManualResponse() {
@@ -145,12 +150,13 @@ export default function ResponsesPage() {
       search: searchValue || undefined,
       studyPeriodId: searchParams.get("study") || undefined,
       program: searchParams.get("program") || undefined,
-      source: (searchParams.get("source") as AdminResponseFilters["source"]) ||
+      source:
+        (searchParams.get("source") as AdminResponseFilters["source"]) ||
         undefined,
-      status: (searchParams.get("status") as AdminResponseFilters["status"]) ||
+      status:
+        (searchParams.get("status") as AdminResponseFilters["status"]) ||
         undefined,
-      employmentStatus:
-        searchParams.get("employmentStatus") || undefined,
+      employmentStatus: searchParams.get("employmentStatus") || undefined,
     }),
     [searchParams, searchValue],
   );
@@ -164,52 +170,70 @@ export default function ResponsesPage() {
     router.replace("/admin/responses", { scroll: false });
   }
 
-  function exportResponses() {
+  function refreshResponses() {
+    if (refreshOnCooldown) return;
+
+    setRefreshOnCooldown(true);
+    setTableKey((current) => current + 1);
+    refreshCooldownRef.current = window.setTimeout(() => {
+      setRefreshOnCooldown(false);
+      refreshCooldownRef.current = null;
+    }, 2_000);
+  }
+
+  useEffect(
+    () => () => {
+      if (refreshCooldownRef.current !== null) {
+        window.clearTimeout(refreshCooldownRef.current);
+      }
+    },
+    [],
+  );
+
+  function responseExportUrl() {
     const exportQuery = new URLSearchParams(searchParams.toString());
     exportQuery.delete("page");
     exportQuery.delete("limit");
     const query = exportQuery.toString();
 
-    window.location.href = `/api/admin/responses/export${query ? `?${query}` : ""}`;
+    return `/api/admin/responses/export${query ? `?${query}` : ""}`;
   }
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col flex-wrap gap-4 rounded-3xl border border-slate-200 bg-white/80 p-5 shadow-[0_12px_30px_-5px_rgba(0,0,0,0.04)] shadow-sky-100/80 md:flex-row md:items-center md:justify-between">
+      <header className="flex flex-col flex-wrap gap-4 rounded-3xl border border-border bg-card/80 p-5 shadow-lg  md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
             Responses
           </h1>
-          <p className="text-slate-500">View and manage alumni tracer forms.</p>
+          <p className="text-muted-foreground">
+            View and manage alumni tracer forms.
+          </p>
         </div>
         <div className="flex flex-col-reverse gap-2 md:flex-row">
-          <button
+          <Button
             type="button"
+            variant="outline-elevated"
             onClick={openManualResponse}
             disabled={!studiesLoaded}
-            className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-sky-200 bg-white px-4 py-2.5 text-sm font-semibold text-sky-700 shadow-sm transition-all duration-200 hover:bg-sky-50 hover:shadow-md disabled:cursor-wait disabled:opacity-50"
           >
             {hasManualDraft ? <LuPencil size={16} /> : <LuPlus size={16} />}
             {hasManualDraft ? "Edit Draft Response" : "Add Manual Response"}
-          </button>
-          <button
-            type="button"
-            onClick={exportResponses}
-            className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-sky-700 hover:shadow-md"
-          >
-            <LuDownload size={16} />
-            Export CSV
-          </button>
+          </Button>
+          <ExportButton baseUrl={responseExportUrl()} />
         </div>
       </header>
 
-      <section className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <section className="rounded-3xl border border-border bg-card p-5 shadow-sm">
+        <div className="grid gap-4 md:grid-cols-1 xl:grid-cols-3">
           <ResponseSearchField
             key={searchValue}
             initialValue={searchValue}
             onChange={(value) =>
-              updateQuery({ search: value.trim() || undefined, page: undefined })
+              updateQuery({
+                search: value.trim() || undefined,
+                page: undefined,
+              })
             }
           />
 
@@ -277,16 +301,38 @@ export default function ResponsesPage() {
             placeholder="All employment statuses"
           />
 
-          <div className="flex items-end">
-            <button
+          <div className="flex flex-col md:flex-row col-span-1 xl:col-span-2 items-end gap-2">
+            <Button
               type="button"
+              variant="outline-elevated"
+              size="lg"
               disabled={!hasFilters}
               onClick={clearFilters}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex-1"
             >
               <LuFilterX size={16} />
               Clear filters
-            </button>
+            </Button>
+            <Button
+              type="button"
+              variant="outline-elevated"
+              size="lg"
+              onClick={refreshResponses}
+              disabled={refreshOnCooldown}
+              aria-label="Refresh responses table"
+              title={
+                refreshOnCooldown
+                  ? "Refresh available again in 2 seconds"
+                  : "Refresh responses table"
+              }
+              className="flex-1"
+            >
+              <LuRefreshCw
+                size={16}
+                className={refreshOnCooldown ? "animate-spin" : undefined}
+              />
+              Refresh
+            </Button>
           </div>
         </div>
       </section>

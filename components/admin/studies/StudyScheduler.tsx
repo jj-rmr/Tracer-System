@@ -1,7 +1,11 @@
 "use client";
 
+import { Input } from "@/components/ui/input";
+
+import { Button } from "@/components/ui/button";
+
 import { useCallback, useState } from "react";
-import { LuDownload, LuLock, LuPlay, LuPlus } from "react-icons/lu";
+import { LuLock, LuPlay, LuPlus } from "react-icons/lu";
 import { useRouter } from "next/navigation";
 
 import { SelectField } from "@/components/forms/SelectField";
@@ -10,6 +14,7 @@ import FormModal from "@/components/ui/FormModal";
 import ConfirmationDialog from "@/components/ui/ConfirmationDialog";
 import { useToast } from "@/components/ui/Toast";
 import { PublishedFormVersion, StudyPeriodSummary } from "@/types";
+import ExportButton from "@/components/admin/ExportButton";
 
 export interface StudiesPayload {
   studies: StudyPeriodSummary[];
@@ -29,10 +34,10 @@ const emptyDraft: ScheduleDraft = {
 };
 
 const statusStyles = {
-  upcoming: "bg-amber-100 text-amber-700",
-  open: "bg-emerald-100 text-emerald-700",
-  closed: "bg-slate-200 text-slate-700",
-  archived: "bg-violet-100 text-violet-700",
+  upcoming: "bg-warning/15 text-warning",
+  open: "bg-success/15 text-success",
+  closed: "bg-secondary text-foreground",
+  archived: "bg-secondary text-secondary-foreground",
 };
 
 export default function StudyScheduler({
@@ -91,12 +96,12 @@ export default function StudyScheduler({
 
     try {
       const response = await fetch("/api/admin/studies", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            ...draft,
-          }),
-        });
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...draft,
+        }),
+      });
       const result = await response.json();
 
       if (!response.ok) throw new Error(result.message);
@@ -156,23 +161,19 @@ export default function StudyScheduler({
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white/80 p-5 shadow-[0_12px_30px_-5px_rgba(0,0,0,0.04)] shadow-sky-100/80 md:flex-row md:items-center md:justify-between">
+      <header className="flex flex-col gap-4 rounded-3xl border border-border bg-card/80 p-5 shadow-lg  md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
+          <h1 className="text-3xl font-semibold tracking-tight text-foreground">
             Tracer Studies
           </h1>
-          <p className="text-slate-500">
+          <p className="text-muted-foreground">
             Create studies, manually control access, and export responses.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={openCreateForm}
-          className="inline-flex items-center gap-2 rounded-2xl bg-sky-600 px-4 py-2.5 text-sm font-semibold whitespace-nowrap text-white shadow-sm hover:bg-sky-700"
-        >
+        <Button type="button" variant="elevated" onClick={openCreateForm}>
           <LuPlus size={16} />
           Create Study
-        </button>
+        </Button>
       </header>
 
       <FormModal
@@ -187,77 +188,65 @@ export default function StudyScheduler({
         confirmationDescription="Any unsaved changes to this study schedule will be lost."
       >
         {(requestClose) => (
-          <form
-            onSubmit={saveSchedule}
-            className="grid gap-5 md:grid-cols-2"
-          >
-
-          <SelectField
-            id="formVersionId"
-            label="Form version *"
-            value={draft.formVersionId}
-            onChange={(formVersionId) =>
-              setDraft((current) => ({
-                ...current,
-                formVersionId,
-              }))
-            }
-            options={data.formVersions.map((version) => ({
-              value: version.id,
-              label: `${version.title} — v${version.version}`,
-            }))}
-            placeholder="Select a published form"
-            required
-          />
-
-          <label className="min-w-0">
-            <span className={styles.label}>Academic year</span>
-            <input
-              value={draft.academicYear}
-              onChange={(event) =>
+          <form onSubmit={saveSchedule} className="grid gap-5 md:grid-cols-2">
+            <SelectField
+              id="formVersionId"
+              label="Form version *"
+              value={draft.formVersionId}
+              onChange={(formVersionId) =>
                 setDraft((current) => ({
                   ...current,
-                  academicYear: event.target.value,
+                  formVersionId,
                 }))
               }
-              placeholder="2026-2027"
-              pattern="[0-9]{4}-[0-9]{4}"
-              className={styles.input(false, false)}
+              options={data.formVersions.map((version) => ({
+                value: version.id,
+                label: `${version.title} — v${version.version}`,
+              }))}
+              placeholder="Select a published form"
               required
             />
-          </label>
 
-          <label className="min-w-0 md:col-span-2">
-            <span className={styles.label}>Study title</span>
-            <input
-              value={draft.title}
-              onChange={(event) =>
-                setDraft((current) => ({
-                  ...current,
-                  title: event.target.value,
-                }))
-              }
-              className={styles.input(false, false)}
-              required
-            />
-          </label>
+            <label className="min-w-0">
+              <span className={styles.label}>Academic year</span>
+              <Input
+                value={draft.academicYear}
+                onChange={(event) =>
+                  setDraft((current) => ({
+                    ...current,
+                    academicYear: event.target.value,
+                  }))
+                }
+                placeholder="2026-2027"
+                pattern="[0-9]{4}-[0-9]{4}"
+                className={styles.input(false, false)}
+                required
+              />
+            </label>
 
-          <div className="flex justify-end gap-3 md:col-span-2">
-            <button
-              type="button"
-              onClick={requestClose}
-              className="rounded-xl px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="rounded-xl bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-700 disabled:opacity-50"
-            >
-              {saving ? "Creating..." : "Create Study"}
-            </button>
-          </div>
+            <label className="min-w-0 md:col-span-2">
+              <span className={styles.label}>Study title</span>
+              <Input
+                value={draft.title}
+                onChange={(event) =>
+                  setDraft((current) => ({
+                    ...current,
+                    title: event.target.value,
+                  }))
+                }
+                className={styles.input(false, false)}
+                required
+              />
+            </label>
+
+            <div className="flex justify-end gap-3 md:col-span-2">
+              <Button type="button" variant="ghost" onClick={requestClose}>
+                Cancel
+              </Button>
+              <Button type="submit" variant="elevated" disabled={saving}>
+                {saving ? "Creating..." : "Create Study"}
+              </Button>
+            </div>
           </form>
         )}
       </FormModal>
@@ -300,7 +289,7 @@ export default function StudyScheduler({
       />
 
       {data.studies.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-10 text-center text-slate-500">
+        <div className="rounded-3xl border border-dashed border-input bg-card p-10 text-center text-muted-foreground">
           No study periods have been scheduled yet.
         </div>
       ) : (
@@ -308,14 +297,14 @@ export default function StudyScheduler({
           {data.studies.map((study) => (
             <article
               key={study.id}
-              className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm"
+              className="rounded-3xl border border-border bg-card p-6 shadow-sm"
             >
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     AY {study.academicYear}
                   </p>
-                  <h2 className="mt-1 text-lg font-semibold text-slate-900">
+                  <h2 className="mt-1 text-lg font-semibold text-foreground">
                     {study.title}
                   </h2>
                 </div>
@@ -328,49 +317,46 @@ export default function StudyScheduler({
 
               <dl className="mt-5 grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <dt className="text-slate-400">Responses</dt>
-                  <dd className="mt-1 font-semibold text-slate-800">
+                  <dt className="text-muted-foreground">Responses</dt>
+                  <dd className="mt-1 font-semibold text-foreground">
                     {study.responseCount}
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-slate-400">Submitted</dt>
-                  <dd className="mt-1 font-semibold text-slate-800">
+                  <dt className="text-muted-foreground">Submitted</dt>
+                  <dd className="mt-1 font-semibold text-foreground">
                     {study.submittedResponseCount}
                   </dd>
                 </div>
               </dl>
 
-              <div className="mt-6 flex justify-end gap-2 border-t border-slate-100 pt-4">
-                <a
-                  href={`/api/admin/responses/export?study=${encodeURIComponent(study.id)}`}
-                  className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-50"
-                >
-                  <LuDownload size={15} /> Export CSV
-                </a>
+              <div className="mt-6 flex flex-wrap justify-end gap-2 border-t border-border pt-4">
+                <ExportButton
+                  baseUrl={`/api/admin/responses/export?study=${encodeURIComponent(study.id)}`}
+                />
                 {study.status === "closed" ? (
-                  <button
+                  <Button
                     type="button"
+                    variant="secondary"
                     disabled={changingStudyId !== null}
                     onClick={() =>
                       setPendingStatusChange({ study, status: "open" })
                     }
-                    className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-sky-700 hover:bg-sky-50"
                   >
-                    <LuPlay size={15} />
+                    <LuPlay />
                     {study.responseCount > 0 ? "Reopen" : "Open"}
-                  </button>
+                  </Button>
                 ) : (
-                  <button
+                  <Button
                     type="button"
+                    variant="destructive"
                     disabled={changingStudyId !== null}
                     onClick={() =>
                       setPendingStatusChange({ study, status: "closed" })
                     }
-                    className="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50"
                   >
-                    <LuLock size={15} /> Close
-                  </button>
+                    <LuLock /> Close
+                  </Button>
                 )}
               </div>
             </article>

@@ -6,10 +6,6 @@ export default async function AlumniSettingsPage() {
   const user = await requireUserRole([ROLES.ALUMNI]);
 
   return (
-    <SettingsPage
-      name={user.name}
-      email={user.email}
-      role={ROLES.ALUMNI}
-    />
+    <SettingsPage name={user.name} email={user.email} role={ROLES.ALUMNI} />
   );
 }

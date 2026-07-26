@@ -8,8 +8,7 @@ const definitions = [graduateTracerV1] as const;
 
 export function getFormDefinition(slug: string, version: number) {
   return definitions.find(
-    (definition) =>
-      definition.slug === slug && definition.version === version,
+    (definition) => definition.slug === slug && definition.version === version,
   );
 }
 

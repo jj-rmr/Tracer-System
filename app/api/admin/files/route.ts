@@ -26,16 +26,23 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: true, data: { items, search } });
     }
 
-    const pageToken = request.nextUrl.searchParams.get("pageToken") || undefined;
+    const pageToken =
+      request.nextUrl.searchParams.get("pageToken") || undefined;
     const data = await listIndexedFolder({ folderId, pageToken });
     const adminRoot = await getRegisteredDriveFolder(
       getAdminFilesHierarchyKey(getDriveRootId()),
     );
     const uploadAllowed = adminRoot
-      ? await isIndexedDriveDescendant(data.folderId, adminRoot.googleDriveFolderId)
+      ? await isIndexedDriveDescendant(
+          data.folderId,
+          adminRoot.googleDriveFolderId,
+        )
       : false;
 
-    return NextResponse.json({ success: true, data: { ...data, uploadAllowed } });
+    return NextResponse.json({
+      success: true,
+      data: { ...data, uploadAllowed },
+    });
   } catch (error) {
     console.error("Failed to browse Google Drive:", error);
 

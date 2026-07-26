@@ -10,7 +10,12 @@ function answerText(response: FormResponse, key: string) {
 }
 
 function keyPart(value: string) {
-  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-") || "unknown";
+  return (
+    value
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-") || "unknown"
+  );
 }
 
 function getRespondentName(response: FormResponse) {
@@ -33,7 +38,9 @@ async function findExistingResponseFolder(documents: SurveyDocument[]) {
     return undefined;
   }
 
-  return (await getParentFolderId(documentFolderId).catch(() => null)) ?? undefined;
+  return (
+    (await getParentFolderId(documentFolderId).catch(() => null)) ?? undefined
+  );
 }
 
 export async function getResponseDocumentFolder({
@@ -64,7 +71,9 @@ export async function getUploadStagingFolder() {
   const configuredRootId = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID;
 
   if (!configuredRootId) {
-    throw new Error("Missing required environment variable: GOOGLE_DRIVE_ROOT_FOLDER_ID");
+    throw new Error(
+      "Missing required environment variable: GOOGLE_DRIVE_ROOT_FOLDER_ID",
+    );
   }
 
   const hierarchyKey = `drive-root:${configuredRootId}`;
@@ -91,7 +100,9 @@ export async function getResponseFolder({
   const configuredRootId = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID;
 
   if (!configuredRootId) {
-    throw new Error("Missing required environment variable: GOOGLE_DRIVE_ROOT_FOLDER_ID");
+    throw new Error(
+      "Missing required environment variable: GOOGLE_DRIVE_ROOT_FOLDER_ID",
+    );
   }
 
   const studyContext = await getStudyContext(response.studyPeriodId);
@@ -101,7 +112,9 @@ export async function getResponseFolder({
   }
 
   const programValue = answerText(response, "program");
-  const programOption = PROGRAMS.find((program) => program.value === programValue);
+  const programOption = PROGRAMS.find(
+    (program) => program.value === programValue,
+  );
   const programName =
     programOption?.label || programValue || "Program Not Specified";
   const programOrganization = PROGRAM_FOLDER_MAP[programValue];

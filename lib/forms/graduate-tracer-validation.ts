@@ -7,9 +7,7 @@ import {
 } from "./graduate-tracer-schema.ts";
 import type { ZodError } from "zod";
 
-export type GraduateTracerFieldErrors = Partial<
-  Record<keyof Survey, string>
->;
+export type GraduateTracerFieldErrors = Partial<Record<keyof Survey, string>>;
 type GraduateTracerAnswers = Partial<Record<keyof Survey, unknown>>;
 
 function getZodFieldErrors(error: ZodError): GraduateTracerFieldErrors {
@@ -20,7 +18,9 @@ function getZodFieldErrors(error: ZodError): GraduateTracerFieldErrors {
   ) as GraduateTracerFieldErrors;
 }
 
-export function getGraduateTracerConditionalSections(form: GraduateTracerAnswers) {
+export function getGraduateTracerConditionalSections(
+  form: GraduateTracerAnswers,
+) {
   const hasJobHistory = form.employmentStatus !== "Never Employed";
   const hasFirstJob = hasJobHistory && form.isFirstJob === true;
 

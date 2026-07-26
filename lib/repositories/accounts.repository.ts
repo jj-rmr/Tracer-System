@@ -48,6 +48,28 @@ export async function updateAccountName(id: string, name: string) {
   return await users.updateName(id, name);
 }
 
+export async function updateAccountRole(id: string, role: "admin" | "alumni") {
+  const users = getUsersService();
+  const account = await users.get(id);
+  const labels = account.labels.filter(
+    (label) => label !== ROLES.ADMIN && label !== ROLES.ALUMNI,
+  );
+
+  const roleChangeNotice =
+    role === ROLES.ADMIN
+      ? "You have been promoted to admin."
+      : "You have been demoted to alumni.";
+  const nextPrefs = { ...account.prefs, roleChangeNotice };
+
+  await users.updatePrefs(id, nextPrefs);
+  try {
+    return await users.updateLabels(id, [...labels, role]);
+  } catch (error) {
+    await users.updatePrefs(id, account.prefs).catch(() => undefined);
+    throw error;
+  }
+}
+
 export async function deleteAccount(id: string) {
   const users = getUsersService();
 

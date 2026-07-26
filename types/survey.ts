@@ -104,15 +104,12 @@ export type CivilStatus =
   | "Solo Parent"
   | "Widow or Widower";
 
-export type Sex = "" | "Male" | "Female";
+export type Sex = "" | "Male" | "Female" | "Rather not say";
 
 export type AdvancedStudyDegree = "" | "MS" | "MA" | "Others";
 
 export type AdvancedStudyReason =
-  | ""
-  | "For Promotion"
-  | "Professional Development"
-  | "Others";
+  "" | "For Promotion" | "Professional Development" | "Others";
 
 export type EmploymentStatus = "" | "Yes" | "No" | "Never Employed";
 

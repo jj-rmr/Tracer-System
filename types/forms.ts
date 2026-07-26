@@ -27,21 +27,14 @@ export interface FormDefinition {
   optionSets: Record<string, FormOption[]>;
 }
 
-export type StudyPeriodStatus =
-  | "upcoming"
-  | "open"
-  | "closed"
-  | "archived";
+export type StudyPeriodStatus = "upcoming" | "open" | "closed" | "archived";
 
 export type FormResponseStatus = "draft" | "submitted";
 export type FormResponseSource = "alumni" | "admin_import";
 export type ManualImportStatus = "processing" | "completed" | "failed";
 export type ResponseDeletionStatus = "active" | "deleting" | "delete_failed";
 export type DriveOrganizationStatus =
-  | "pending"
-  | "organizing"
-  | "organized"
-  | "failed";
+  "pending" | "organizing" | "organized" | "failed";
 
 export interface StudyPeriod {
   id: string;

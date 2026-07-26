@@ -1,3 +1,5 @@
+import { Input } from "@/components/ui/input";
+
 import { Controller } from "react-hook-form";
 
 import { SelectField } from "@/components/forms/SelectField";
@@ -20,14 +22,14 @@ export function PersonalInfoSection({
 }: RhfSectionProps) {
   return (
     <div className="space-y-6">
-      <h3 className="text-xl font-bold text-slate-900">
+      <h3 className="text-xl font-semibold text-foreground">
         Personal & Contact Details
       </h3>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div>
           <label className={styles.label}>First Name *</label>
-          <input
+          <Input
             {...register("firstName", {
               onChange: () => clearFieldError("firstName"),
             })}
@@ -39,7 +41,7 @@ export function PersonalInfoSection({
         </div>
         <div>
           <label className={styles.label}>Middle Name</label>
-          <input
+          <Input
             {...register("middleName")}
             disabled={readOnly}
             type="text"
@@ -48,7 +50,7 @@ export function PersonalInfoSection({
         </div>
         <div>
           <label className={styles.label}>Last Name *</label>
-          <input
+          <Input
             {...register("lastName", {
               onChange: () => clearFieldError("lastName"),
             })}
@@ -60,7 +62,7 @@ export function PersonalInfoSection({
         </div>
         <div>
           <label className={styles.label}>Extension Name</label>
-          <input
+          <Input
             {...register("extensionName")}
             disabled={readOnly}
             type="text"
@@ -73,7 +75,7 @@ export function PersonalInfoSection({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div>
           <label className={styles.label}>Street</label>
-          <input
+          <Input
             {...register("street")}
             disabled={readOnly}
             type="text"
@@ -83,7 +85,7 @@ export function PersonalInfoSection({
         </div>
         <div>
           <label className={styles.label}>Barangay *</label>
-          <input
+          <Input
             {...register("barangay", {
               onChange: () => clearFieldError("barangay"),
             })}
@@ -95,7 +97,7 @@ export function PersonalInfoSection({
         </div>
         <div>
           <label className={styles.label}>Municipality *</label>
-          <input
+          <Input
             {...register("municipality", {
               onChange: () => clearFieldError("municipality"),
             })}
@@ -107,7 +109,7 @@ export function PersonalInfoSection({
         </div>
         <div>
           <label className={styles.label}>Province *</label>
-          <input
+          <Input
             {...register("province", {
               onChange: () => clearFieldError("province"),
             })}
@@ -132,27 +134,39 @@ export function PersonalInfoSection({
                   clearFieldError("region");
                 }}
                 options={[
-              { value: "NCR", label: "National Capital Region (NCR)" },
-              { value: "CAR", label: "Cordillera Administrative Region (CAR)" },
-              { value: "Region I", label: "Region I (Ilocos Region)" },
-              { value: "Region II", label: "Region II (Cagayan Valley)" },
-              { value: "Region III", label: "Region III (Central Luzon)" },
-              { value: "Region IV-A", label: "Region IV-A (CALABARZON)" },
-              { value: "MIMAROPA", label: "MIMAROPA Region" },
-              { value: "Region V", label: "Region V (Bicol Region)" },
-              { value: "Region VI", label: "Region VI (Western Visayas)" },
-              { value: "Region VII", label: "Region VII (Central Visayas)" },
-              { value: "Region VIII", label: "Region VIII (Eastern Visayas)" },
-              { value: "Region IX", label: "Region IX (Zamboanga Peninsula)" },
-              { value: "Region X", label: "Region X (Northern Mindanao)" },
-              { value: "Region XI", label: "Region XI (Davao Region)" },
-              { value: "Region XII", label: "Region XII (SOCCSKSARGEN)" },
-              { value: "Region XIII", label: "Region XIII (Caraga)" },
-              {
-                value: "BARMM",
-                label:
-                  "Bangsamoro Autonomous Region in Muslim Mindanao (BARMM)",
-              },
+                  { value: "NCR", label: "National Capital Region (NCR)" },
+                  {
+                    value: "CAR",
+                    label: "Cordillera Administrative Region (CAR)",
+                  },
+                  { value: "Region I", label: "Region I (Ilocos Region)" },
+                  { value: "Region II", label: "Region II (Cagayan Valley)" },
+                  { value: "Region III", label: "Region III (Central Luzon)" },
+                  { value: "Region IV-A", label: "Region IV-A (CALABARZON)" },
+                  { value: "MIMAROPA", label: "MIMAROPA Region" },
+                  { value: "Region V", label: "Region V (Bicol Region)" },
+                  { value: "Region VI", label: "Region VI (Western Visayas)" },
+                  {
+                    value: "Region VII",
+                    label: "Region VII (Central Visayas)",
+                  },
+                  {
+                    value: "Region VIII",
+                    label: "Region VIII (Eastern Visayas)",
+                  },
+                  {
+                    value: "Region IX",
+                    label: "Region IX (Zamboanga Peninsula)",
+                  },
+                  { value: "Region X", label: "Region X (Northern Mindanao)" },
+                  { value: "Region XI", label: "Region XI (Davao Region)" },
+                  { value: "Region XII", label: "Region XII (SOCCSKSARGEN)" },
+                  { value: "Region XIII", label: "Region XIII (Caraga)" },
+                  {
+                    value: "BARMM",
+                    label:
+                      "Bangsamoro Autonomous Region in Muslim Mindanao (BARMM)",
+                  },
                 ]}
                 placeholder="Select Region"
                 required
@@ -239,4 +253,3 @@ export function PersonalInfoSection({
     </div>
   );
 }
-

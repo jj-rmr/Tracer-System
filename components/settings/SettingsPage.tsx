@@ -1,4 +1,10 @@
-import { LuCircleHelp, LuInfo, LuUserRound } from "react-icons/lu";
+import {
+  LuCircleHelp,
+  LuInfo,
+  LuMail,
+  LuShieldCheck,
+  LuUserRound,
+} from "react-icons/lu";
 
 import { SignOutButton } from "@/components/auth/SignOutButton";
 import {
@@ -60,83 +66,134 @@ export default function SettingsPage({ name, email, role }: SettingsPageProps) {
     role === ROLES.ADMIN ? adminInformation : alumniInformation;
 
   return (
-    <div className="w-full space-y-6 pb-16">
-      <header className="rounded-3xl border border-slate-200 bg-white/80 p-5 shadow-[0_12px_30px_-5px_rgba(0,0,0,0.04)] shadow-sky-100/80">
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
+    <div className="w-full space-y-5 pb-10 sm:space-y-6 sm:pb-16">
+      <header className="rounded-3xl border border-border bg-card/80 p-5 shadow-lg  sm:p-6">
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
           Settings
         </h1>
-        <p className="text-slate-500">
+        <p className="mt-1 text-sm leading-6 text-muted-foreground sm:text-base">
           Review your access details and Tracer System information.
         </p>
       </header>
 
-      <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-[0_12px_30px_-5px_rgba(0,0,0,0.04)] shadow-sky-100/80">
-        <div className="flex items-start gap-4">
-          <div className="rounded-2xl bg-sky-100 p-3 text-sky-600">
-            <LuUserRound size={22} />
-          </div>
-          <div className="min-w-0">
-            <h2 className="text-lg font-semibold text-slate-900">
-              Account Profile
-            </h2>
-            <p className="mt-1 text-sm text-slate-500">
-              Your profile is managed through your official Google account.
-            </p>
-            <dl className="mt-5 grid gap-4 sm:grid-cols-2">
-              <div>
-                <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                  Name
-                </dt>
-                <dd className="mt-1 text-sm font-medium text-slate-800">
-                  {name}
-                </dd>
+      <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-6">
+        <main className="min-w-0 space-y-5 sm:space-y-6">
+          <section className="rounded-3xl border border-border bg-card p-5 shadow-sm sm:p-6">
+            <div className="flex items-start gap-3 sm:gap-4">
+              <div className="rounded-2xl bg-secondary p-3 text-muted-foreground">
+                <LuInfo aria-hidden="true" size={22} />
               </div>
-              <div>
-                <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                  Email
-                </dt>
-                <dd className="mt-1 break-all text-sm font-medium text-slate-800">
-                  {email}
-                </dd>
+              <div className="min-w-0">
+                <h2 className="text-lg font-semibold text-foreground">
+                  System information
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  Guidance relevant to your {role} access.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5">
+              <InfoAccordion items={informationItems} />
+            </div>
+          </section>
+
+          <section className="rounded-3xl border border-border bg-muted p-5 sm:p-6">
+            <div className="flex items-start gap-3 sm:gap-4">
+              <div className="rounded-2xl bg-card p-3 text-muted-foreground shadow-sm">
+                <LuCircleHelp aria-hidden="true" size={22} />
+              </div>
+              <div className="min-w-0">
+                <h2 className="font-semibold text-foreground">
+                  Help and support
+                </h2>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  For access problems, incorrect account information, or
+                  technical issues, contact the ParSU Placement Unit Office or
+                  your designated Tracer System administrator. The system is
+                  still in development, so please report any issue you
+                  encounter.
+                </p>
+              </div>
+            </div>
+          </section>
+        </main>
+
+        <aside className="min-w-0 space-y-5 lg:sticky lg:top-6">
+          <section className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
+            <div className="flex items-center gap-3 border-b border-border p-5">
+              <div className="rounded-2xl bg-secondary p-3 text-muted-foreground">
+                <LuUserRound aria-hidden="true" size={22} />
+              </div>
+              <div className="min-w-0">
+                <h2 className="font-semibold text-foreground">
+                  Account profile
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Managed through Google
+                </p>
+              </div>
+            </div>
+
+            <dl className="divide-y divide-border">
+              <div className="flex items-start gap-3 p-5">
+                <LuUserRound
+                  aria-hidden="true"
+                  className="mt-0.5 shrink-0 text-muted-foreground"
+                  size={18}
+                />
+                <div className="min-w-0">
+                  <dt className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Name
+                  </dt>
+                  <dd className="mt-1 break-words text-sm font-medium text-foreground">
+                    {name}
+                  </dd>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 p-5">
+                <LuMail
+                  aria-hidden="true"
+                  className="mt-0.5 shrink-0 text-muted-foreground"
+                  size={18}
+                />
+                <div className="min-w-0">
+                  <dt className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Email
+                  </dt>
+                  <dd className="mt-1 break-all text-sm font-medium text-foreground">
+                    {email}
+                  </dd>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 p-5">
+                <LuShieldCheck
+                  aria-hidden="true"
+                  className="mt-0.5 shrink-0 text-muted-foreground"
+                  size={18}
+                />
+                <div className="min-w-0">
+                  <dt className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Access
+                  </dt>
+                  <dd className="mt-1 text-sm font-medium capitalize text-foreground">
+                    {role}
+                  </dd>
+                </div>
               </div>
             </dl>
-          </div>
-        </div>
-      </section>
+          </section>
 
-      <section className="space-y-4">
-        <div className="flex items-center gap-3">
-          <LuInfo className="text-sky-600" size={22} />
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900">
-              System information
-            </h2>
-            <p className="text-sm text-slate-500">
-              Guidance relevant to your {role} access.
+          <section className="rounded-3xl border border-border bg-card p-5 shadow-sm">
+            <h2 className="font-semibold text-foreground">Session</h2>
+            <p className="mt-1 text-sm leading-6 text-muted-foreground">
+              Sign out when you are finished, especially on a shared device.
             </p>
-          </div>
-        </div>
-        <InfoAccordion items={informationItems} />
-      </section>
-
-      <section className="rounded-3xl border border-slate-200 bg-slate-50 p-6">
-        <div className="flex items-start gap-4">
-          <LuCircleHelp className="mt-0.5 shrink-0 text-sky-600" size={22} />
-          <div>
-            <h2 className="font-semibold text-slate-900">Help and support</h2>
-            <p className="mt-1 text-sm leading-6 text-slate-600">
-              For access problems, incorrect account information, or technical
-              issues, contact the ParSU Placement Unit Office or your designated
-              Tracer System administrator. This system is still under its
-              development phase, so if you encounter any issues, please report
-              them to the ParSU Placement Unit Office.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      <div className="flex justify-center border-t border-slate-200 pt-12">
-        <SignOutButton />
+            <div className="mt-4">
+              <SignOutButton />
+            </div>
+          </section>
+        </aside>
       </div>
     </div>
   );

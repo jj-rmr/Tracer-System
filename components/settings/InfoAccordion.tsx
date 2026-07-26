@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+
 import { useState } from "react";
 import { LuChevronDown } from "react-icons/lu";
 
@@ -23,26 +25,28 @@ export function InfoAccordion({ items }: InfoAccordionProps) {
         const contentId = `settings-info-${item.id}`;
 
         return (
-          <div
-            key={item.id}
-            className="overflow-hidden rounded-2xl border border-slate-200 bg-white transition-shadow duration-200 hover:shadow-sm"
-          >
-            <button
+          <div key={item.id} className={`overflow-hidden rounded-xl`}>
+            <Button
               type="button"
+              variant="outline"
+              size="accordion"
               aria-expanded={isOpen}
               aria-controls={contentId}
               onClick={() => setOpenItemId(isOpen ? null : item.id)}
-              className="flex w-full items-center justify-between gap-4 px-5 py-4 text-left"
             >
-              <span className="font-semibold text-slate-800">{item.title}</span>
+              <span className="min-w-0 font-semibold text-foreground">
+                {item.title}
+              </span>
               <LuChevronDown
                 aria-hidden="true"
-                className={`shrink-0 text-sky-500 transition-transform duration-200 ${
-                  isOpen ? "rotate-180" : ""
+                className={`shrink-0 transition-[color,transform] duration-200 ${
+                  isOpen
+                    ? "rotate-180 text-foreground"
+                    : "text-muted-foreground"
                 }`}
                 size={20}
               />
-            </button>
+            </Button>
 
             <div
               id={contentId}
@@ -51,7 +55,7 @@ export function InfoAccordion({ items }: InfoAccordionProps) {
               }`}
             >
               <div className="overflow-hidden">
-                <p className="border-t border-slate-100 px-5 py-4 text-sm leading-6 text-slate-600">
+                <p className="px-5 py-4 text-sm leading-6 text-muted-foreground">
                   {item.content}
                 </p>
               </div>

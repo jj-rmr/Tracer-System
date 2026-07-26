@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+
 import { useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { useRouter } from "next/navigation";
@@ -14,11 +16,7 @@ import {
   type GraduateTracerFieldErrors,
   validateGraduateTracerStep,
 } from "@/lib/forms/graduate-tracer-validation";
-import type {
-  Survey,
-  SurveyDocument,
-  SurveyDocumentType,
-} from "@/types";
+import type { Survey, SurveyDocument, SurveyDocumentType } from "@/types";
 
 interface Props {
   initialData: Survey;
@@ -64,7 +62,9 @@ export default function GraduateTracerForm({
   onValuesChange,
   onRequestClose,
 }: Props) {
-  const { control, getValues, register, reset, setValue } = useForm<Survey>({
+  // Treat server data as mount-time defaults. Resetting when an autosave response
+  // updates the parent would replace edits made while that request was in flight.
+  const { control, getValues, register, setValue } = useForm<Survey>({
     defaultValues: initialData,
   });
   const [errors, setErrors] = useState<FormErrors>({});
@@ -93,11 +93,6 @@ export default function GraduateTracerForm({
   const awardsDocumentsRef = useRef(awardsDocuments);
 
   const router = useRouter();
-
-  useEffect(() => {
-    reset(initialData);
-    lastDraftSignatureRef.current = JSON.stringify(initialData);
-  }, [initialData, reset]);
 
   useEffect(() => {
     employmentDocumentsRef.current = employmentDocuments;
@@ -359,18 +354,18 @@ export default function GraduateTracerForm({
 
   return (
     <div className="space-y-4">
-      <div className="bg-slate-50 md:border border-slate-200 rounded-2xl md:p-4">
-        <div className="flex justify-between text-sm font-medium text-slate-700">
+      <div className="bg-muted md:border border-border rounded-2xl md:p-4">
+        <div className="flex justify-between text-sm font-medium text-foreground">
           <span>
             Step {step} of {sections.length}
           </span>
-          <span className="text-sky-600 font-semibold">
+          <span className="text-muted-foreground font-semibold">
             {sections[step - 1]}
           </span>
         </div>
-        <div className="h-2 bg-slate-200 rounded-full mt-3 overflow-hidden">
+        <div className="h-2 bg-secondary border border-border rounded-full mt-3 overflow-hidden">
           <div
-            className="h-full bg-sky-500 transition-all duration-300"
+            className="h-full bg-muted-foreground transition-[width] duration-300"
             style={{ width: `${(step / sections.length) * 100}%` }}
           />
         </div>
@@ -379,8 +374,8 @@ export default function GraduateTracerForm({
             aria-live="polite"
             className={`mt-2 text-right text-xs font-medium ${
               draftSaveState === "error"
-                ? "text-rose-600"
-                : "text-slate-500"
+                ? "text-destructive"
+                : "text-muted-foreground"
             }`}
           >
             {draftSaveState === "saving"
@@ -388,16 +383,19 @@ export default function GraduateTracerForm({
               : draftSaveState === "error"
                 ? "Draft not saved. Changes will retry after your next edit."
                 : lastSavedAt
-                  ? `Draft saved ${new Date(lastSavedAt).toLocaleTimeString("en-PH", {
-                      hour: "numeric",
-                      minute: "2-digit",
-                    })}`
+                  ? `Draft saved ${new Date(lastSavedAt).toLocaleTimeString(
+                      "en-PH",
+                      {
+                        hour: "numeric",
+                        minute: "2-digit",
+                      },
+                    )}`
                   : "Draft autosave is on"}
           </p>
         )}
       </div>
       {/* Render Steps */}
-      <div className="min-h-100 bg-white md:border border-slate-200 rounded-2xl md:p-6 md:shadow-sm">
+      <div className="min-h-100 bg-card md:border border-border rounded-2xl md:p-6 md:shadow-sm">
         {step === 1 && (
           <PersonalInfoSection
             control={control}
@@ -450,58 +448,58 @@ export default function GraduateTracerForm({
       </div>
       {/* Buttons */}
       {activeDocumentUploads > 0 && (
-        <p className="text-right text-xs font-medium text-sky-600" aria-live="polite">
+        <p
+          className="text-right text-xs font-medium text-muted-foreground"
+          aria-live="polite"
+        >
           Uploading {activeDocumentUploads} document
           {activeDocumentUploads === 1 ? "" : "s"}...
         </p>
       )}
       <div className="flex flex-col-reverse md:flex-row justify-stretch md:justify-end gap-4">
         {onRequestClose && !readOnly && (
-          <button
+          <Button
             type="button"
+            variant="outline-elevated"
             onClick={onRequestClose}
             disabled={isSubmitting}
-            className="rounded-2xl border border-slate-200 bg-white px-4 py-2 whitespace-nowrap text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Close Form
-          </button>
+          </Button>
         )}
         {step > 1 && (
-          <button
-            className="rounded-2xl border border-slate-200 bg-white px-4 py-2 whitespace-nowrap text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:bg-slate-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-500 disabled:shadow-none disabled:hover:bg-slate-100"
+          <Button
+            variant="outline-elevated"
             onClick={() => handleStep("backward")}
             disabled={isSubmitting || activeDocumentUploads > 0}
           >
             Previous Section
-          </button>
+          </Button>
         )}
 
         {!readOnly ? (
           step === sections.length ? (
-            <button
-              className="rounded-2xl bg-sky-600 px-4 py-2.5 whitespace-nowrap text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-sky-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none disabled:hover:bg-slate-300"
+            <Button
+              variant="elevated"
               onClick={handlePreSubmitCheck}
               disabled={isSubmitting || activeDocumentUploads > 0}
             >
               {submitLabel ?? (isNew ? "Submit Response" : "Update Response")}
-            </button>
+            </Button>
           ) : (
-            <button
-              className="rounded-2xl bg-sky-600 px-4 py-2.5 whitespace-nowrap text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-sky-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none disabled:hover:bg-slate-300"
+            <Button
+              variant="elevated"
               onClick={() => validateStep(step) && handleStep("forward")}
               disabled={isSubmitting || activeDocumentUploads > 0}
             >
               Next Section
-            </button>
+            </Button>
           )
         ) : (
           step < sections.length && (
-            <button
-              className="rounded-2xl bg-sky-600 px-4 py-2.5 whitespace-nowrap text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-sky-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none disabled:hover:bg-slate-300"
-              onClick={() => handleStep("forward")}
-            >
+            <Button variant="elevated" onClick={() => handleStep("forward")}>
               Next Section
-            </button>
+            </Button>
           )
         )}
       </div>

@@ -1,5 +1,7 @@
 "use client";
 
+import { Input } from "@/components/ui/input";
+
 import { useRef, useState } from "react";
 
 import GraduateTracerForm, {
@@ -43,10 +45,13 @@ export default function ManualResponseEditor({
     formData.set("file", file);
     formData.set("documentType", documentType);
     formData.set("uploadKey", getUploadKey(file));
-    const response = await fetch(`/api/form-responses/${responseId}/documents`, {
-      method: "POST",
-      body: formData,
-    });
+    const response = await fetch(
+      `/api/form-responses/${responseId}/documents`,
+      {
+        method: "POST",
+        body: formData,
+      },
+    );
     const result = await response.json();
     if (!response.ok || !result.document) {
       throw new Error(result.message ?? `Failed to upload ${file.name}.`);
@@ -104,16 +109,16 @@ export default function ManualResponseEditor({
 
   return (
     <div className="space-y-6">
-      <label className="block space-y-2 text-sm font-medium text-slate-700">
-        <span className="block text-xs font-semibold uppercase tracking-wider text-slate-600">
+      <label className="block space-y-2 text-sm font-medium text-foreground">
+        <span className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Respondent email
         </span>
-        <input
+        <Input
           type="email"
           value={respondentEmail}
           onChange={(event) => setRespondentEmail(event.target.value)}
           placeholder="Optional"
-          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm shadow-sm focus:border-sky-400 focus:outline-none focus:ring-4 focus:ring-sky-100"
+          className="w-full rounded-2xl border border-border bg-muted px-4 py-3 text-sm shadow-sm focus:border-ring focus:outline-none focus:ring-4 focus:ring-ring/30"
         />
       </label>
       <GraduateTracerForm

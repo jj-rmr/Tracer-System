@@ -1,14 +1,25 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+
 import { useEffect, useState } from "react";
 import { AdminResponseFilters, AdminResponseSummary, Survey } from "@/types";
-import GraduateTracerForm from "@/components/forms/GraduateTracerForm";
 import ManualResponseEditor from "@/components/admin/responses/ManualResponseEditor";
+import ReadOnlyResponseDetails from "@/components/responses/ReadOnlyResponseDetails";
 import { LuEye, LuPencil, LuRefreshCw, LuTrash2 } from "react-icons/lu";
 import { useToast } from "@/components/ui/Toast";
 import Modal from "@/components/ui/Modal";
 import ConfirmationDialog from "@/components/ui/ConfirmationDialog";
 import LoadingState from "@/components/ui/LoadingState";
+import { TableActionMenu } from "@/components/ui/table-action-menu";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useRouter } from "next/navigation";
 import { PROGRAMS } from "@/lib/programs/catalog";
 
@@ -83,7 +94,9 @@ export default function ResponseTable({
 
           showToast({
             message:
-              error instanceof Error ? error.message : "Failed to load response.",
+              error instanceof Error
+                ? error.message
+                : "Failed to load response.",
             type: "error",
           });
 
@@ -248,10 +261,10 @@ export default function ResponseTable({
   if (error) {
     return (
       <div
-        className="p-4 w-full text-sm text-rose-500 rounded-2xl bg-rose-50 border border-rose-100 shadow-sm"
+        className="p-4 w-full text-sm text-destructive rounded-2xl bg-destructive/10 border border-destructive/20 shadow-sm"
         role="alert"
       >
-        <span className="font-bold">Error:</span> {error}
+        <span className="font-semibold">Error:</span> {error}
       </div>
     );
   }
@@ -262,23 +275,23 @@ export default function ResponseTable({
 
   if (totalRows === 0) {
     return (
-      <div className="text-center w-full p-12 text-slate-400 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
+      <div className="text-center w-full p-12 text-muted-foreground bg-muted/50 rounded-2xl border border-dashed border-border">
         {Object.values(filters).some(Boolean) ? (
           <>
-            <h3 className="text-base font-semibold text-slate-600">
+            <h3 className="text-base font-semibold text-muted-foreground">
               No matching responses found
             </h3>
-            <p className="mt-2 text-sm text-slate-400">
+            <p className="mt-2 text-sm text-muted-foreground">
               Try adjusting your search terms or clear the search to view all
               response records.
             </p>
           </>
         ) : (
           <>
-            <h3 className="text-base font-semibold text-slate-600">
+            <h3 className="text-base font-semibold text-muted-foreground">
               No response records yet
             </h3>
-            <p className="mt-2 text-sm text-slate-400">
+            <p className="mt-2 text-sm text-muted-foreground">
               Responses will appear here once alumni complete the tracer form.
             </p>
           </>
@@ -306,135 +319,123 @@ export default function ResponseTable({
   );
 
   return (
-    <div className="w-full bg-white rounded-3xl border border-sky-100 shadow-[0_12px_30px_-5px_rgba(0,0,0,0.04)] shadow-sky-100/80 overflow-hidden">
-      <div className="w-full overflow-x-auto overscroll-x-contain scrollbar-thin scrollbar-thumb-sky-200">
-        <table className="w-full min-w-280 table-auto text-left border-collapse">
-          <thead>
-            <tr className="bg-slate-50/70 border-b border-slate-100">
-              <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-400">
-                Full Name
-              </th>
-              <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-400">
-                Academic Year
-              </th>
-              <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-400">
-                Program
-              </th>
-              <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-400">
-                Employment Status
-              </th>
-              <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-400">
-                Created
-              </th>
-              <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-400">
-                Drive
-              </th>
-              <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-400">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-50">
-            {responses.map((response) => (
-              <tr
-                key={response.id}
-                className="hover:bg-sky-50/20 transition-colors group"
-              >
-                <td className="p-4 text-sm font-semibold text-slate-700">
-                  {formatFullName(response)}
-                </td>
-                <td className="p-4 text-sm font-medium text-slate-600">
-                  {response.academicYear}
-                </td>
-                <td className="max-w-xs p-4 text-sm text-slate-600">
-                  <span className="line-clamp-2">
-                    {programLabels.get(response.program) ||
-                      response.program ||
-                      "Unspecified"}
-                  </span>
-                </td>
-                <td className="p-4 text-sm font-medium text-slate-600">
-                  <span className="capitalize">
-                    {response.employmentStatus || "unspecified"}
-                  </span>
-                </td>
-                <td className="p-4 text-sm text-slate-500">
-                  {response.createdAt
-                    ? new Date(response.createdAt).toLocaleDateString()
-                    : "N/A"}
-                </td>
+    <div className="w-full overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
+      <Table className="min-w-280 table-auto">
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            <TableHead>Full Name</TableHead>
+            <TableHead>Academic Year</TableHead>
+            <TableHead>Program</TableHead>
+            <TableHead>Employment Status</TableHead>
+            <TableHead>Created</TableHead>
+            <TableHead>Drive</TableHead>
+            <TableHead className="text-center">Menu</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {responses.map((response) => (
+            <TableRow key={response.id} className="group">
+              <TableCell className="font-semibold text-foreground">
+                {formatFullName(response)}
+              </TableCell>
+              <TableCell className="font-medium text-muted-foreground">
+                {response.academicYear}
+              </TableCell>
+              <TableCell className="max-w-xs text-muted-foreground">
+                <span className="line-clamp-2">
+                  {programLabels.get(response.program) ||
+                    response.program ||
+                    "Unspecified"}
+                </span>
+              </TableCell>
+              <TableCell className="font-medium text-muted-foreground">
+                <span className="capitalize">
+                  {response.employmentStatus || "unspecified"}
+                </span>
+              </TableCell>
+              <TableCell className="text-muted-foreground">
+                {response.createdAt
+                  ? new Date(response.createdAt).toLocaleDateString()
+                  : "N/A"}
+              </TableCell>
 
-                <td className="p-4 text-sm">
-                  <span
-                    title={response.driveOrganizationError ?? undefined}
-                    className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${
-                      response.driveOrganizationStatus === "organized"
-                        ? "bg-emerald-100 text-emerald-700"
-                        : response.driveOrganizationStatus === "failed"
-                          ? "bg-rose-100 text-rose-700"
-                          : "bg-amber-100 text-amber-700"
-                    }`}
-                  >
-                    {response.driveOrganizationStatus}
-                  </span>
-                </td>
+              <TableCell>
+                <span
+                  title={response.driveOrganizationError ?? undefined}
+                  className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${
+                    response.driveOrganizationStatus === "organized"
+                      ? "bg-success/15 text-success"
+                      : response.driveOrganizationStatus === "failed"
+                        ? "bg-destructive/10 text-destructive"
+                        : "bg-warning/15 text-warning"
+                  }`}
+                >
+                  {response.driveOrganizationStatus}
+                </span>
+              </TableCell>
 
-                <td className="p-4 text-sm">
-                  <div className="flex justify-center gap-2">
-                    {response.driveOrganizationStatus !== "organized" && (
-                      <button
-                        type="button"
-                        disabled={organizingResponseId !== null}
-                        onClick={() => void retryDriveOrganization(response.id)}
-                        title="Retry Drive organization"
-                        className="inline-flex items-center justify-center rounded-xl bg-amber-100 p-2.5 font-semibold text-amber-700 transition-colors hover:bg-amber-200 disabled:opacity-50"
-                      >
-                        <LuRefreshCw
-                          size={16}
-                          className={
-                            organizingResponseId === response.id
-                              ? "animate-spin"
-                              : undefined
-                          }
-                        />
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => setSelectedSurveyId(response.id)}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-100 px-4 py-2 font-semibold text-sky-600 transition-colors hover:bg-sky-200"
-                    >
-                      {response.source === "admin_import" ? (
-                        <LuPencil size={16} />
-                      ) : (
-                        <LuEye size={16} />
-                      )}
-                      {response.source === "admin_import"
-                        ? "Edit"
-                        : "View"}
-                    </button>
-
-                    {response.studyStatus === "open" && (
-                      <button
-                        type="button"
-                        disabled={isDeleting}
-                        onClick={() => {
-                          setSurveyToDelete(response.id);
-                          setShowDeleteModal(true);
-                        }}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-100 px-4 py-2 font-semibold text-rose-500 transition-colors hover:bg-rose-200"
-                      >
-                        <LuTrash2 size={16} />
-                        Delete
-                      </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+              <TableCell>
+                <div className="flex justify-center">
+                  <TableActionMenu
+                    label={`Actions for ${formatFullName(response)}`}
+                    items={[
+                      ...(response.driveOrganizationStatus !== "organized"
+                        ? [
+                            {
+                              label: "Retry Drive Organization",
+                              variant: "secondary" as const,
+                              disabled: organizingResponseId !== null,
+                              icon: (
+                                <LuRefreshCw
+                                  aria-hidden="true"
+                                  size={16}
+                                  className={
+                                    organizingResponseId === response.id
+                                      ? "animate-spin"
+                                      : undefined
+                                  }
+                                />
+                              ),
+                              onSelect: () =>
+                                void retryDriveOrganization(response.id),
+                            },
+                          ]
+                        : []),
+                      {
+                        label:
+                          response.source === "admin_import"
+                            ? "Edit Response"
+                            : "View Response",
+                        icon:
+                          response.source === "admin_import" ? (
+                            <LuPencil aria-hidden="true" size={16} />
+                          ) : (
+                            <LuEye aria-hidden="true" size={16} />
+                          ),
+                        onSelect: () => setSelectedSurveyId(response.id),
+                      },
+                      ...(response.studyStatus === "open"
+                        ? [
+                            {
+                              label: "Delete Response",
+                              variant: "destructive" as const,
+                              disabled: isDeleting,
+                              icon: <LuTrash2 aria-hidden="true" size={16} />,
+                              onSelect: () => {
+                                setSurveyToDelete(response.id);
+                                setShowDeleteModal(true);
+                              },
+                            },
+                          ]
+                        : []),
+                    ]}
+                  />
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
       <Modal
         open={Boolean(selectedSurveyId)}
         onClose={() => {
@@ -468,45 +469,48 @@ export default function ResponseTable({
                 }}
               />
             ) : surveyData ? (
-              <GraduateTracerForm
-                initialData={surveyData}
-                isNew={false}
-                readOnly
+              <ReadOnlyResponseDetails
+                response={surveyData}
+                respondentEmail={responseMetadata?.respondentEmail}
               />
             ) : null}
           </div>
         )}
       </Modal>
 
-      <div className="flex items-center justify-between border-t border-slate-100 px-6 py-4 bg-slate-50/10 text-sm">
+      <div className="flex flex-col gap-3 border-t border-border bg-muted/40 px-4 py-4 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-6">
         {totalRows > 1 ? (
-          <span className="text-sky-600 py-2 px-4 bg-sky-50 rounded-lg font-semibold">
+          <span className="rounded-lg bg-muted/60 px-4 py-2 font-semibold text-muted-foreground">
             Showing <span className="">{responses.length}</span> of{" "}
             <span className="">
               <span className="">{totalRows}</span> Entries
             </span>
           </span>
         ) : (
-          <span className="text-sky-600 py-2 px-4 bg-sky-50 rounded-lg font-semibold">
+          <span className="rounded-lg bg-muted/60 px-4 py-2 font-semibold text-muted-foreground">
             Showing 1 Entry
           </span>
         )}
-        <div className="flex gap-2">
-          <button
+        <div className="flex w-full gap-2 sm:w-auto">
+          <Button
             onClick={() => onPageChange(currentPage - 1)}
             disabled={!hasPrevPage}
-            className={`px-4 py-2 whitespace-nowrap disabled:bg-slate-100 bg-white disabled:text-slate-400 shadow-sm disabled:border-none disabled:shadow-none border border-slate-200 text-slate-700 text-sm rounded-xl font-semibold hover:bg-slate-100 transition-colors duration-300`}
+            variant="outline"
+            size="sm"
+            className="flex-1 sm:flex-none"
           >
             Previous
-          </button>
+          </Button>
 
-          <button
+          <Button
             onClick={() => onPageChange(currentPage + 1)}
             disabled={!hasNextPage}
-            className={`px-4 py-2 whitespace-nowrap disabled:bg-slate-100 bg-sky-600 text-white text-sm rounded-xl font-semibold hover:bg-sky-700 transition-colors duration-300`}
+            variant="default"
+            size="sm"
+            className="flex-1 sm:flex-none"
           >
             Next
-          </button>
+          </Button>
         </div>
       </div>
       <ConfirmationDialog

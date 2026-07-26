@@ -1,3 +1,7 @@
+import { Input } from "@/components/ui/input";
+
+import { Button } from "@/components/ui/button";
+
 import { LuPlus, LuX } from "react-icons/lu";
 
 interface StringListFieldProps {
@@ -15,22 +19,16 @@ interface StringListFieldProps {
 const styles = {
   input: (err: boolean, disabled: boolean) => {
     const stateClass = disabled
-      ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-500 shadow-none placeholder:text-slate-400"
+      ? "cursor-not-allowed border-border bg-secondary text-muted-foreground shadow-none placeholder:text-muted-foreground"
       : err
-        ? "border-rose-400 bg-rose-50/60 text-slate-900 shadow-sm focus:border-rose-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-rose-100"
-        : "border-slate-200 bg-slate-50 text-slate-900 shadow-sm focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100";
+        ? "border-destructive bg-destructive/10 text-foreground shadow-sm focus:border-destructive focus:bg-card focus:outline-none focus:ring-4 focus:ring-destructive/20"
+        : "border-border bg-muted text-foreground shadow-sm focus:border-ring focus:bg-card focus:outline-none focus:ring-4 focus:ring-ring/30";
 
-    return `min-w-0 flex-1 rounded-2xl border px-4 py-3 text-sm transition duration-200 placeholder:text-slate-400 ${stateClass}`;
+    return `min-w-0 flex-1 rounded-2xl border px-4 py-3 text-sm transition duration-200 placeholder:text-muted-foreground ${stateClass}`;
   },
 
   label:
-    "mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-600",
-
-  removeButton:
-    "rounded-xl border border-rose-200 p-3 text-rose-500 shadow-sm transition duration-200 hover:bg-rose-50 focus:outline-none focus:ring-4 focus:ring-rose-100",
-
-  addButton:
-    "inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-sky-600 shadow-sm transition duration-200 hover:bg-sky-50 focus:outline-none focus:ring-4 focus:ring-sky-100",
+    "mb-2 block text-xs font-semibold uppercase tracking-wider text-muted-foreground",
 };
 
 export function StringListField({
@@ -64,7 +62,7 @@ export function StringListField({
         readOnly
           ? "border-transparent"
           : hasError
-            ? "border-rose-400 bg-rose-50/60"
+            ? "border-destructive bg-destructive/10"
             : "border-transparent"
       }`}
     >
@@ -75,7 +73,7 @@ export function StringListField({
 
       {value.map((item, index) => (
         <div key={index} className="flex items-center gap-2">
-          <input
+          <Input
             disabled={readOnly}
             type="text"
             name={`${fieldName}-${index}`}
@@ -86,27 +84,29 @@ export function StringListField({
           />
 
           {!readOnly && (
-            <button
+            <Button
               type="button"
               onClick={() => handleRemoveItem(index)}
-              className={styles.removeButton}
+              variant="destructive"
+              size="icon-lg"
               aria-label={`Remove ${fieldName} ${index + 1}`}
             >
               <LuX size={18} />
-            </button>
+            </Button>
           )}
         </div>
       ))}
 
       {!readOnly && (
-        <button
+        <Button
           type="button"
           onClick={handleAddItem}
-          className={styles.addButton}
+          variant="outline"
+          size="sm"
         >
           <LuPlus size={16} />
           {addButtonLabel}
-        </button>
+        </Button>
       )}
     </div>
   );

@@ -13,6 +13,7 @@ import {
   getUploadStagingFolder,
 } from "@/lib/google-drive/response-folders";
 import { cleanupStaleStagedUploads } from "@/lib/google-drive/staged-upload-cleanup";
+import { UploadValidationError } from "@/lib/security/uploads";
 import {
   createFormResponseDocument,
   deleteFormResponseDocument,
@@ -64,7 +65,8 @@ export async function POST(
     const file = formData.get("file");
     const documentType = formData.get("documentType");
     const rawUploadKey = formData.get("uploadKey");
-    const uploadKey = typeof rawUploadKey === "string" ? rawUploadKey : undefined;
+    const uploadKey =
+      typeof rawUploadKey === "string" ? rawUploadKey : undefined;
 
     if (!(file instanceof File)) {
       return NextResponse.json(
@@ -118,7 +120,7 @@ export async function POST(
         console.error("Failed to clean stale staged uploads:", error);
       });
     });
-    const uploaded = await uploadFileToDrive(file, stagingFolderId);
+    const uploaded = await uploadFileToDrive(file, stagingFolderId, "document");
     let stagedDocumentId: string | null = null;
 
     try {
@@ -150,7 +152,9 @@ export async function POST(
     } catch (error) {
       await deleteDriveFile(uploaded.googleDriveFileId).catch(() => undefined);
       if (stagedDocumentId) {
-        await deleteFormResponseDocument(stagedDocumentId).catch(() => undefined);
+        await deleteFormResponseDocument(stagedDocumentId).catch(
+          () => undefined,
+        );
       }
 
       if (uploadKey) {
@@ -171,13 +175,13 @@ export async function POST(
     }
   } catch (error) {
     console.error("Failed to upload response document:", error);
+    const invalidUpload = error instanceof UploadValidationError;
     return NextResponse.json(
       {
         success: false,
-        message:
-          error instanceof Error ? error.message : "Failed to upload document.",
+        message: invalidUpload ? error.message : "Failed to upload document.",
       },
-      { status: 500 },
+      { status: invalidUpload ? 400 : 500 },
     );
   }
 }

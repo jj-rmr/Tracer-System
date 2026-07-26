@@ -1,13 +1,53 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #f8fafc;
-  --foreground: #45556c;
-
-  /* --accent: #055285; */
-  --accent: #21455d;
-  --surface: #b7ebee;
+  --accent: var(--color-sky-400);
+  --surface: var(--color-slate-100);
+  --brand-accent: var(--color-sky-400);
   interpolate-size: allow-keywords;
+  --background: var(--color-slate-50);
+  --foreground: var(--color-sky-950);
+  --card: var(--color-white);
+  --card-foreground: var(--color-sky-950);
+  --popover: var(--color-white);
+  --popover-foreground: var(--color-sky-950);
+  --primary: var(--color-sky-600);
+  --primary-foreground: var(--color-white);
+  --secondary: var(--color-slate-100);
+  --secondary-foreground: var(--color-sky-950);
+  --muted: var(--color-slate-100);
+  --muted-foreground: var(--color-slate-600);
+  --accent-foreground: var(--color-sky-950);
+  --destructive: var(--color-rose-600);
+  --destructive-foreground: var(--color-white);
+  --success: var(--color-emerald-700);
+  --success-foreground: var(--color-white);
+  --warning: var(--color-amber-800);
+  --warning-foreground: var(--color-white);
+  --overlay: color-mix(in oklab, var(--color-black) 40%, transparent);
+  --border: var(--color-slate-200);
+  --input: var(--color-slate-200);
+  --ring: var(--color-sky-400);
+  --chart-1: var(--color-slate-300);
+  --chart-2: var(--color-slate-500);
+  --chart-3: var(--color-slate-600);
+  --chart-4: var(--color-slate-700);
+  --chart-5: var(--color-slate-800);
+  --radius: 0.625rem;
+  --sidebar: var(--color-white);
+  --sidebar-foreground: var(--color-sky-950);
+  --sidebar-primary: var(--color-sky-600);
+  --sidebar-primary-foreground: var(--color-white);
+  --sidebar-accent: var(--color-slate-100);
+  --sidebar-accent-foreground: var(--color-sky-950);
+  --sidebar-border: var(--color-slate-200);
+  --sidebar-ring: var(--color-sky-400);
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
 }
 
 @theme inline {
@@ -17,15 +57,64 @@
   --color-accent: var(--accent);
   --color-surface: var(--surface);
 
-  --font-sans: var(--font-montserrat-sans);
-  --font-mono: var(--font-jetbrains-mono);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+  --color-brand-accent: var(--brand-accent);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-overlay: var(--overlay);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans), Helvetica, sans-serif;
+  font-family: var(--font-sans), Arial, sans-serif;
+  line-height: 1.5;
   margin: 0;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 600;
+  letter-spacing: -0.025em;
 }
 
 html,
@@ -39,6 +128,17 @@ button {
 
 button:disabled {
   cursor: not-allowed;
+}
+
+/* Keep visible labels outside the interactive hitbox. Controls nested in a
+   label remain directly interactive without making the surrounding text a
+   proxy click target. */
+label {
+  pointer-events: none;
+}
+
+label :is(input, textarea, select, button, [role="combobox"]) {
+  pointer-events: auto;
 }
 
 @keyframes fadeIn {
@@ -73,13 +173,74 @@ button:disabled {
 }
 
 .page-transition {
-  animation: fadeIn 0.24 ease-in;
+  animation: fadeIn 240ms ease-in;
 }
 
 .toast-in {
-  animation: toastIn 0.3 ease-out;
+  animation: toastIn 300ms ease-out;
 }
 
 .toast-out {
-  animation: toastOut 0.3 ease-in;
+  animation: toastOut 300ms ease-in;
+}
+
+.theme-changing,
+.theme-changing *,
+.theme-changing *::before,
+.theme-changing *::after {
+  transition: none !important;
+}
+
+.dark {
+  color-scheme: dark;
+  --surface: var(--color-slate-800);
+  --background: var(--color-slate-950);
+  --foreground: var(--color-slate-200);
+  --card: var(--color-slate-900);
+  --card-foreground: var(--color-slate-200);
+  --popover: var(--color-slate-900);
+  --popover-foreground: var(--color-slate-200);
+  --primary: var(--color-sky-500);
+  --primary-foreground: var(--color-slate-950);
+  --secondary: var(--color-slate-800);
+  --secondary-foreground: var(--color-slate-200);
+  --muted: var(--color-slate-800);
+  --muted-foreground: var(--color-slate-400);
+  --accent: var(--color-sky-500);
+  --accent-foreground: var(--color-slate-950);
+  --destructive: var(--color-rose-400);
+  --destructive-foreground: var(--color-slate-950);
+  --success: var(--color-emerald-400);
+  --success-foreground: var(--color-slate-950);
+  --warning: var(--color-amber-300);
+  --warning-foreground: var(--color-slate-950);
+  --overlay: color-mix(in oklab, var(--color-black) 60%, transparent);
+  --border: var(--color-slate-800);
+  --input: var(--color-slate-700);
+  --ring: var(--color-sky-500);
+  --chart-1: var(--color-slate-300);
+  --chart-2: var(--color-slate-500);
+  --chart-3: var(--color-slate-600);
+  --chart-4: var(--color-slate-700);
+  --chart-5: var(--color-slate-800);
+  --sidebar: var(--color-slate-900);
+  --sidebar-foreground: var(--color-slate-200);
+  --sidebar-primary: var(--color-sky-500);
+  --sidebar-primary-foreground: var(--color-slate-950);
+  --sidebar-accent: var(--color-slate-800);
+  --sidebar-accent-foreground: var(--color-slate-200);
+  --sidebar-border: var(--color-slate-800);
+  --sidebar-ring: var(--color-sky-500);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+
 import Modal from "@/components/ui/Modal";
 
 interface ConfirmationDialogProps {
@@ -37,28 +39,26 @@ export default function ConfirmationDialog({
       bodyClassName="p-6"
       showCloseButton={showCloseButton}
     >
-      <p className="text-sm leading-6 text-slate-500">{description}</p>
-      <div className="mt-6 flex justify-end gap-3">
-        <button
+      <p className="text-sm leading-6 text-muted-foreground">{description}</p>
+      <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        <Button
           type="button"
+          variant="outline"
           disabled={busy}
           onClick={onClose}
-          className="rounded-xl px-4 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-100 disabled:opacity-50"
+          className="w-full sm:w-auto"
         >
           {cancelLabel}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant={tone === "danger" ? "destructive" : "elevated"}
           disabled={busy}
           onClick={onConfirm}
-          className={`rounded-xl px-4 py-2 text-sm font-semibold text-white transition-colors disabled:opacity-50 ${
-            tone === "danger"
-              ? "bg-rose-500 hover:bg-rose-600"
-              : "bg-sky-600 hover:bg-sky-700"
-          }`}
+          className="w-full sm:w-auto"
         >
           {busy ? "Please wait..." : confirmLabel}
-        </button>
+        </Button>
       </div>
     </Modal>
   );

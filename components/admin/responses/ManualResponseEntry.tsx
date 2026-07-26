@@ -1,12 +1,9 @@
 "use client";
 
+import { Input } from "@/components/ui/input";
+
 import { useRouter } from "next/navigation";
-import {
-  forwardRef,
-  useImperativeHandle,
-  useRef,
-  useState,
-} from "react";
+import { forwardRef, useImperativeHandle, useRef, useState } from "react";
 
 import { SelectField } from "@/components/forms/SelectField";
 import GraduateTracerForm, {
@@ -61,9 +58,7 @@ const ManualResponseEntry = forwardRef<
   const latestResponseRef = useRef<Survey>(
     structuredClone(initialDraft?.response ?? defaultSurvey),
   );
-  const responseIdRef = useRef<string | null>(
-    initialDraft?.responseId ?? null,
-  );
+  const responseIdRef = useRef<string | null>(initialDraft?.responseId ?? null);
   const importTokenRef = useRef<string>(
     initialDraft?.importToken ?? crypto.randomUUID(),
   );
@@ -229,7 +224,9 @@ const ManualResponseEntry = forwardRef<
       });
       const result = await deleteResponse.json();
       if (!deleteResponse.ok) {
-        throw new Error(result.message ?? "Failed to discard the manual draft.");
+        throw new Error(
+          result.message ?? "Failed to discard the manual draft.",
+        );
       }
 
       responseIdRef.current = null;
@@ -241,7 +238,7 @@ const ManualResponseEntry = forwardRef<
 
   if (!studies.some((study) => study.status === "open")) {
     return (
-      <div className="rounded-3xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-800">
+      <div className="rounded-3xl border border-warning/30 bg-warning/10 p-6 text-sm text-warning">
         Open a Graduate Tracer v1 study before importing historical responses.
       </div>
     );
@@ -249,12 +246,14 @@ const ManualResponseEntry = forwardRef<
 
   return (
     <div className="space-y-6">
-      <section className="rounded-3xl border-slate-200 bg-white md:border md:p-6 md:shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-900">Import details</h2>
-        <p className="mt-1 text-sm text-slate-500">
+      <section className="rounded-3xl border-border bg-card md:border md:p-6 md:shadow-sm">
+        <h2 className="text-lg font-semibold text-foreground">
+          Import details
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
           Record where this historical response belongs.
         </p>
-        <p className="mt-3 rounded-2xl bg-sky-50 px-4 py-3 text-sm text-sky-800">
+        <p className="mt-3 rounded-2xl bg-muted px-4 py-3 text-sm text-foreground">
           All response fields and supporting document uploads are optional for
           manual imports. Required markers only reflect the original alumni
           response form.
@@ -274,16 +273,16 @@ const ManualResponseEntry = forwardRef<
             required
           />
 
-          <label className="space-y-2 text-sm font-medium text-slate-700">
-            <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-slate-600">
+          <label className="space-y-2 text-sm font-medium text-foreground">
+            <span className="mb-2 block text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Respondent email
             </span>
-            <input
+            <Input
               type="email"
               value={respondentEmail}
               onChange={(event) => setRespondentEmail(event.target.value)}
               placeholder="Optional"
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm shadow-sm focus:border-sky-400 focus:outline-none focus:ring-4 focus:ring-sky-100"
+              className="w-full rounded-2xl border border-border bg-muted px-4 py-3 text-sm shadow-sm focus:border-ring focus:outline-none focus:ring-4 focus:ring-ring/30"
             />
           </label>
         </div>

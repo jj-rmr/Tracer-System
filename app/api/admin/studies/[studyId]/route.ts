@@ -21,7 +21,10 @@ export async function PATCH(
       );
     }
 
-    if (context.study.status === "closed" || context.study.status === "archived") {
+    if (
+      context.study.status === "closed" ||
+      context.study.status === "archived"
+    ) {
       return NextResponse.json(
         {
           success: false,

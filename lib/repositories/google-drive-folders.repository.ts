@@ -26,7 +26,9 @@ function mapFolder(row: GoogleDriveFolderRow): GoogleDriveFolderRecord {
 export async function getRegisteredDriveFolder(folderKey: string) {
   const { data, error } = await supabase
     .from("google_drive_folders")
-    .select("folder_key, google_drive_folder_id, name, parent_google_drive_folder_id")
+    .select(
+      "folder_key, google_drive_folder_id, name, parent_google_drive_folder_id",
+    )
     .eq("folder_key", folderKey)
     .maybeSingle();
 
@@ -49,7 +51,9 @@ export async function claimDriveFolder({
       name,
       parent_google_drive_folder_id: parentGoogleDriveFolderId,
     })
-    .select("folder_key, google_drive_folder_id, name, parent_google_drive_folder_id")
+    .select(
+      "folder_key, google_drive_folder_id, name, parent_google_drive_folder_id",
+    )
     .single();
 
   if (error?.code === "23505") {
@@ -83,7 +87,9 @@ export async function updateRegisteredDriveFolder({
 export async function listRegisteredResponseFolders(responseId: string) {
   const { data, error } = await supabase
     .from("google_drive_folders")
-    .select("folder_key, google_drive_folder_id, name, parent_google_drive_folder_id")
+    .select(
+      "folder_key, google_drive_folder_id, name, parent_google_drive_folder_id",
+    )
     .like("folder_key", `%:response:${responseId}%`);
 
   if (error) throw error;
@@ -137,10 +143,14 @@ export async function deleteRegisteredDriveFoldersByIds(folderIds: string[]) {
   if (error) throw error;
 }
 
-export async function getRegisteredDriveFolderById(googleDriveFolderId: string) {
+export async function getRegisteredDriveFolderById(
+  googleDriveFolderId: string,
+) {
   const { data, error } = await supabase
     .from("google_drive_folders")
-    .select("folder_key, google_drive_folder_id, name, parent_google_drive_folder_id")
+    .select(
+      "folder_key, google_drive_folder_id, name, parent_google_drive_folder_id",
+    )
     .eq("google_drive_folder_id", googleDriveFolderId)
     .maybeSingle();
 
@@ -175,10 +185,12 @@ export async function deleteUnseenRegisteredDriveFolders(
   if (error) throw error;
 
   const liveIds = new Set(liveFolderIds);
-  const staleKeys = (data as Pick<
-    GoogleDriveFolderRow,
-    "folder_key" | "google_drive_folder_id"
-  >[])
+  const staleKeys = (
+    data as Pick<
+      GoogleDriveFolderRow,
+      "folder_key" | "google_drive_folder_id"
+    >[]
+  )
     .filter((folder) => !liveIds.has(folder.google_drive_folder_id))
     .map((folder) => folder.folder_key);
 

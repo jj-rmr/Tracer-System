@@ -93,7 +93,8 @@
     ],
     "sex": [
       { "value": "Male", "label": "Male" },
-      { "value": "Female", "label": "Female" }
+      { "value": "Female", "label": "Female" },
+      { "value": "Rather not say", "label": "Rather not say" }
     ],
     "employmentStatus": [
       { "value": "Yes", "label": "Yes" },

@@ -4,7 +4,12 @@ import { getOrCreateManagedFolder } from "./folders";
 import { getDriveRootId } from "./browser";
 
 function keyPart(value: string) {
-  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-") || "unknown";
+  return (
+    value
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-") || "unknown"
+  );
 }
 
 async function runWithConcurrency<T>(
@@ -122,7 +127,9 @@ async function initializeAcademicYearHierarchy({
     name: academicYear,
     parentId: directoryRoot.id,
   });
-  const campuses = [...new Set(Object.values(PROGRAM_FOLDER_MAP).map(({ campus }) => campus))];
+  const campuses = [
+    ...new Set(Object.values(PROGRAM_FOLDER_MAP).map(({ campus }) => campus)),
+  ];
   const campusFolders = new Map<string, string>();
 
   await runWithConcurrency(campuses, async (campus) => {

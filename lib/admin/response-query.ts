@@ -1,5 +1,9 @@
 import { PROGRAMS } from "@/lib/programs/catalog";
-import { AdminResponseFilters, FormResponseSource, FormResponseStatus } from "@/types";
+import {
+  AdminResponseFilters,
+  FormResponseSource,
+  FormResponseStatus,
+} from "@/types";
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -35,7 +39,9 @@ export function parseAdminResponseQuery(searchParams: URLSearchParams) {
   }
 
   if (search && search.length > 100) {
-    throw new InvalidResponseQueryError("Search must not exceed 100 characters.");
+    throw new InvalidResponseQueryError(
+      "Search must not exceed 100 characters.",
+    );
   }
 
   if (studyPeriodId && !UUID_PATTERN.test(studyPeriodId)) {

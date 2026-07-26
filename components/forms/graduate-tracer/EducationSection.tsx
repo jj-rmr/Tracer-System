@@ -1,3 +1,5 @@
+import { Input } from "@/components/ui/input";
+
 import { Controller, useWatch } from "react-hook-form";
 
 import { SelectField } from "@/components/forms/SelectField";
@@ -27,9 +29,11 @@ export function EducationSection({
 
   return (
     <div className="space-y-6">
-      <h3 className="text-xl font-bold text-slate-900">Academic Background</h3>
+      <h3 className="text-xl font-semibold text-foreground">
+        Academic Background
+      </h3>
 
-      <div className="grid grid-cols-1 gap-6 border-b border-slate-100 pb-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 border-b border-border pb-4 md:grid-cols-2">
         <div>
           <Controller
             name="program"
@@ -56,7 +60,7 @@ export function EducationSection({
 
         <div>
           <label className={styles.label}>Year Graduated *</label>
-          <input
+          <Input
             {...register("yearGraduated", {
               valueAsNumber: true,
               onChange: () => clearFieldError("yearGraduated"),
@@ -101,7 +105,7 @@ export function EducationSection({
         )}
       />
 
-      <div className="grid grid-cols-1 gap-6 border-t border-slate-200 pt-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 border-t border-border pt-4 md:grid-cols-2">
         <Controller
           name="advancedStudyDegree"
           control={control}
@@ -152,7 +156,7 @@ export function EducationSection({
       {advancedStudyDegree === "Others" && (
         <div>
           <label className={styles.label}>Specify Advanced Degree *</label>
-          <input
+          <Input
             {...register("advancedStudyOther", {
               onChange: () => clearFieldError("advancedStudyOther"),
             })}
@@ -167,7 +171,7 @@ export function EducationSection({
       {advancedStudyReasons === "Others" && (
         <div>
           <label className={styles.label}>Specify Reason *</label>
-          <input
+          <Input
             {...register("advancedStudyReasonOther", {
               onChange: () => clearFieldError("advancedStudyReasonOther"),
             })}

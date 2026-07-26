@@ -6,6 +6,7 @@ import {
   upsertDriveIndexItems,
 } from "@/lib/repositories/google-drive-items.repository";
 import { DRIVE_FOLDER_MIME_TYPE, getDriveRootId } from "./browser";
+import { validateUpload } from "@/lib/security/uploads";
 
 export interface UploadedDriveFile {
   filename: string;
@@ -25,12 +26,9 @@ function sanitizeFilename(name: string) {
 export async function uploadFileToDrive(
   file: File,
   folderId: string,
+  scope: "document" | "admin" = "document",
 ): Promise<UploadedDriveFile> {
-  const MAX_SIZE = 10 * 1024 * 1024;
-
-  if (file.size > MAX_SIZE) {
-    throw new Error("File exceeds 10MB limit");
-  }
+  await validateUpload(file, scope);
 
   const buffer = Buffer.from(await file.arrayBuffer());
 
@@ -68,7 +66,9 @@ export async function uploadFileToDrive(
       },
     ]);
   } catch (error) {
-    await drive.files.delete({ fileId: response.data.id }).catch(() => undefined);
+    await drive.files
+      .delete({ fileId: response.data.id })
+      .catch(() => undefined);
     throw error;
   }
 

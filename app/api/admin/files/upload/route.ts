@@ -12,6 +12,7 @@ import {
   isIndexedDriveDescendant,
   requireIndexedDriveBrowserItem,
 } from "@/lib/repositories/google-drive-items.repository";
+import { UploadValidationError } from "@/lib/security/uploads";
 
 export async function POST(request: NextRequest) {
   try {
@@ -45,13 +46,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           success: false,
-          message: "Manual uploads are only allowed inside the Admin Files directory.",
+          message:
+            "Manual uploads are only allowed inside the Admin Files directory.",
         },
         { status: 403 },
       );
     }
 
-    const uploaded = await uploadFileToDrive(file, folderId);
+    const uploaded = await uploadFileToDrive(file, folderId, "admin");
 
     return NextResponse.json(
       { success: true, data: uploaded },
@@ -59,14 +61,14 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     console.error("Failed to upload an admin Drive file:", error);
+    const invalidUpload = error instanceof UploadValidationError;
 
     return NextResponse.json(
       {
         success: false,
-        message:
-          error instanceof Error ? error.message : "Failed to upload the file.",
+        message: invalidUpload ? error.message : "Failed to upload the file.",
       },
-      { status: 500 },
+      { status: invalidUpload ? 400 : 500 },
     );
   }
 }

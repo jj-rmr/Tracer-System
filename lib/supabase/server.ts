@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
+import { requiredServerEnv } from "@/lib/server/env";
 
 export const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_SECRET_KEY!,
+  requiredServerEnv("SUPABASE_URL"),
+  requiredServerEnv("SUPABASE_SECRET_KEY"),
 );

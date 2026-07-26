@@ -87,7 +87,6 @@ export async function PATCH(
         );
       }
 
-
       if (source.parent_google_drive_folder_id === destinationId) {
         return NextResponse.json(
           { success: false, message: "The item is already in that folder." },
@@ -95,7 +94,10 @@ export async function PATCH(
         );
       }
 
-      if (item.isFolder && (await isIndexedDriveDescendant(destinationId, fileId))) {
+      if (
+        item.isFolder &&
+        (await isIndexedDriveDescendant(destinationId, fileId))
+      ) {
         return NextResponse.json(
           { success: false, message: "A folder cannot be moved into itself." },
           { status: 400 },
@@ -132,7 +134,7 @@ export async function PATCH(
     return NextResponse.json(
       {
         success: false,
-        message: error instanceof Error ? error.message : "Failed to update the item.",
+        message: "Failed to update the item.",
       },
       { status: 500 },
     );
@@ -169,7 +171,7 @@ export async function DELETE(
     return NextResponse.json(
       {
         success: false,
-        message: error instanceof Error ? error.message : "Failed to delete the item.",
+        message: "Failed to delete the item.",
       },
       { status: 500 },
     );

@@ -18,17 +18,15 @@ export default async function ResponsesPage() {
   const previousResponses = await listFormResponsesByUser(user.$id);
   const response = openContext
     ? await getFormResponse(openContext.study.id, user.$id)
-    : previousResponses[0] ?? null;
+    : (previousResponses[0] ?? null);
   const context =
     openContext ??
     (response ? await getStudyContext(response.studyPeriodId) : null);
-  const documents = response
-    ? await getFormResponseDocuments(response.id)
-    : [];
+  const documents = response ? await getFormResponseDocuments(response.id) : [];
 
   if (!context) {
     return (
-      <div className="w-full max-w-5xl rounded-3xl border border-amber-200 bg-amber-50 p-8 text-center text-amber-900">
+      <div className="w-full max-w-5xl rounded-3xl border border-warning/30 bg-warning/10 p-8 text-center text-warning">
         <h1 className="text-2xl font-semibold">No tracer study available</h1>
         <p className="mt-2 text-sm">
           There is no open study or previous response to display right now.
@@ -45,13 +43,13 @@ export default async function ResponsesPage() {
   return (
     <div className="flex flex-col items-center justify-center gap-8">
       <div className="w-full max-w-5xl text-left">
-        <p className="text-xs font-semibold uppercase tracking-wider text-sky-600">
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Academic Year {context.study.academicYear}
         </p>
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
+        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
           {context.study.title}
         </h1>
-        <p className="text-slate-500">
+        <p className="text-muted-foreground">
           {readOnly
             ? "This study is closed. Your response is available in read-only mode."
             : "Please answer all fields completely and accurately."}

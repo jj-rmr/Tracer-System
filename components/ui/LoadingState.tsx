@@ -34,10 +34,10 @@ export default function LoadingState({
         fullPage ? "h-full min-h-[50dvh]" : "min-h-48"
       } ${className}`}
     >
-      <div className="flex flex-col items-center justify-center gap-3 text-center text-sky-600">
+      <div className="flex flex-col items-center justify-center gap-3 text-center text-muted-foreground">
         <div
           aria-hidden="true"
-          className="h-8 w-8 animate-spin rounded-full border-4 border-sky-100 border-t-sky-500"
+          className="h-8 w-8 animate-spin rounded-full border-4 border-border border-t-sky-500"
         />
         <span className="text-sm font-medium">{message}</span>
       </div>

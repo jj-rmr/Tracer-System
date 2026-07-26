@@ -30,8 +30,7 @@ export default function FormModal({
   width = "xl",
   bodyClassName,
   confirmationTitle = "Discard unsaved changes?",
-  confirmationDescription =
-    "Any information entered in this form will be lost.",
+  confirmationDescription = "Any information entered in this form will be lost.",
   shouldConfirmClose = true,
   fitContent = false,
   showCloseButton = true,

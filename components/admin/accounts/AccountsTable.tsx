@@ -1,13 +1,24 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import { TableActionMenu } from "@/components/ui/table-action-menu";
+
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LuEye, LuTrash2 } from "react-icons/lu";
+import { LuEye, LuShieldCheck, LuTrash2 } from "react-icons/lu";
 import { Role } from "@/types";
 import { useToast } from "@/components/ui/Toast";
-import ConfirmationDialog from "@/components/ui/ConfirmationDialog";
 import LoadingState from "@/components/ui/LoadingState";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import Modal from "@/components/ui/Modal";
+import { Input } from "@/components/ui/input";
 
 interface Account {
   id: string;
@@ -29,6 +40,7 @@ interface AccountsTableProps {
   searchQuery: string;
   onPageChange: (page: number) => void;
   currentUserId: string;
+  roleFilter: Role | "";
 }
 
 export default function AccountsTable({
@@ -36,13 +48,22 @@ export default function AccountsTable({
   searchQuery,
   onPageChange,
   currentUserId,
+  roleFilter,
 }: AccountsTableProps) {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [totalRows, setTotalRows] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [accountToDelete, setAccountToDelete] = useState<string | null>(null);
+  const [accountToDelete, setAccountToDelete] = useState<Account | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [accountToView, setAccountToView] = useState<Account | null>(null);
+  const [roleChange, setRoleChange] = useState<{
+    account: Account;
+    role: Role;
+  } | null>(null);
+  const [roleConfirmation, setRoleConfirmation] = useState("");
+  const [changingRole, setChangingRole] = useState(false);
 
   const router = useRouter();
   const { showToast } = useToast();
@@ -80,6 +101,10 @@ export default function AccountsTable({
           );
         }
 
+        if (roleFilter) {
+          filtered = filtered.filter((account) => account.role === roleFilter);
+        }
+
         if (cancelled) return;
 
         setTotalRows(filtered.length);
@@ -88,10 +113,12 @@ export default function AccountsTable({
         const end = start + itemsPerPage;
 
         setAccounts(filtered.slice(start, end));
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (!cancelled) {
           console.error(err);
-          setError(err.message);
+          setError(
+            err instanceof Error ? err.message : "Failed to load accounts.",
+          );
         }
       } finally {
         if (!cancelled) {
@@ -105,15 +132,75 @@ export default function AccountsTable({
     return () => {
       cancelled = true;
     };
-  }, [currentPage, searchQuery]);
+  }, [currentPage, roleFilter, searchQuery]);
 
-  const confirmDelete = async (id: string) => {
-    setShowDeleteModal(false);
+  const requiredRoleConfirmation =
+    roleChange?.role === "admin" ? "PROMOTE TO ADMIN" : "DEMOTE TO ALUMNI";
+
+  const closeRoleChange = () => {
+    if (changingRole) return;
+    setRoleChange(null);
+    setRoleConfirmation("");
+  };
+
+  const confirmRoleChange = async () => {
+    if (!roleChange || roleConfirmation !== requiredRoleConfirmation) return;
+    setChangingRole(true);
 
     try {
-      const res = await fetch(`/api/admin/accounts/${id}`, {
+      const res = await fetch(`/api/admin/accounts/${roleChange.account.id}`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: roleChange.role === "admin" ? "promote" : "demote",
+          confirmation: roleConfirmation,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok)
+        throw new Error(data.message ?? "Failed to change account role.");
+
+      if (roleFilter && roleFilter !== roleChange.role) {
+        setAccounts((current) =>
+          current.filter((account) => account.id !== roleChange.account.id),
+        );
+        setTotalRows((current) => Math.max(0, current - 1));
+      } else {
+        setAccounts((current) =>
+          current.map((account) =>
+            account.id === roleChange.account.id
+              ? { ...account, role: roleChange.role }
+              : account,
+          ),
+        );
+      }
+      showToast({ message: data.message, type: "success" });
+      setRoleChange(null);
+      setRoleConfirmation("");
+      router.refresh();
+    } catch (error) {
+      showToast({
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to change account role.",
+        type: "error",
+      });
+    } finally {
+      setChangingRole(false);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!accountToDelete || deleteConfirmation !== "DELETE ACCOUNT") return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/accounts/${accountToDelete.id}`, {
         method: "DELETE",
         credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmation: deleteConfirmation }),
       });
 
       const data = await res.json();
@@ -122,9 +209,12 @@ export default function AccountsTable({
         throw new Error(data.message ?? "Failed to delete account.");
       }
 
-      setAccounts((prev) => prev.filter((a) => a.id !== id));
+      setAccounts((prev) =>
+        prev.filter((account) => account.id !== accountToDelete.id),
+      );
       setTotalRows((prev) => Math.max(0, prev - 1));
       setAccountToDelete(null);
+      setDeleteConfirmation("");
 
       showToast({
         message: "Account deleted successfully.",
@@ -132,13 +222,17 @@ export default function AccountsTable({
       });
 
       router.refresh();
-    } catch (err: any) {
+    } catch (err: unknown) {
       showToast({
-        message: err.message || "Failed to delete account.",
+        message:
+          err instanceof Error ? err.message : "Failed to delete account.",
         type: "error",
       });
 
       setAccountToDelete(null);
+      setDeleteConfirmation("");
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -149,17 +243,17 @@ export default function AccountsTable({
   if (error) {
     return (
       <div
-        className="p-4 w-full text-sm text-rose-500 rounded-2xl bg-rose-50 border border-rose-100 shadow-sm"
+        className="p-4 w-full text-sm text-destructive rounded-2xl bg-destructive/10 border border-destructive/20 shadow-sm"
         role="alert"
       >
-        <span className="font-bold">Error:</span> {error}
+        <span className="font-semibold">Error:</span> {error}
       </div>
     );
   }
 
   if (totalRows === 0) {
     return (
-      <div className="text-center w-full p-12 text-slate-400 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+      <div className="text-center w-full p-12 text-muted-foreground bg-muted rounded-2xl border border-dashed border-border">
         No accounts found.
       </div>
     );
@@ -168,179 +262,446 @@ export default function AccountsTable({
   const totalPages = Math.max(1, Math.ceil(totalRows / itemsPerPage));
 
   return (
-    <div className="text-sm w-full bg-white rounded-3xl border border-sky-100 shadow-[0_12px_30px_-5px_rgba(0,0,0,0.04)] shadow-sky-100/80 overflow-hidden">
-      <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-sky-200">
-        <table className="w-full border-collapse text-left">
-          <thead>
-            <tr className="bg-slate-50 border-b border-slate-100">
-              <th className="p-4 text-xs uppercase tracking-wider text-slate-400">
-                Full Name
-              </th>
+    <div className="w-full overflow-hidden rounded-3xl border border-border bg-card text-sm shadow-sm">
+      <Table>
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            <TableHead>Full Name</TableHead>
 
-              <th className="p-4 text-xs uppercase tracking-wider text-slate-400">
-                Email
-              </th>
-              <th className="p-4 text-xs uppercase tracking-wider text-slate-400 text-center">
-                Role
-              </th>
+            <TableHead>Email</TableHead>
+            <TableHead className="text-center">Role</TableHead>
 
-              <th className="p-4 text-xs uppercase tracking-wider text-slate-400 text-center">
-                Verified
-              </th>
+            <TableHead className="text-center">Verified</TableHead>
 
-              <th className="p-4 text-xs uppercase tracking-wider text-slate-400">
-                Created
-              </th>
+            <TableHead>Created</TableHead>
 
-              <th className="p-4 text-xs uppercase tracking-wider text-slate-400">
-                Updated
-              </th>
+            <TableHead>Updated</TableHead>
 
-              <th className="p-4 text-xs uppercase tracking-wider text-slate-400 text-center">
-                Actions
-              </th>
-            </tr>
-          </thead>
+            <TableHead className="text-center">Menu</TableHead>
+          </TableRow>
+        </TableHeader>
 
-          <tbody className="divide-y divide-slate-50">
-            {accounts.map((account) => (
-              <tr
-                key={account.id}
-                className="hover:bg-sky-50/20 transition-colors"
+        <TableBody>
+          {accounts.map((account) => (
+            <TableRow key={account.id}>
+              <TableCell className="font-semibold whitespace-nowrap text-foreground">
+                {account.name || (
+                  <span className="italic text-muted-foreground">
+                    Unnamed User
+                  </span>
+                )}
+              </TableCell>
+
+              <TableCell className="text-muted-foreground">
+                {account.email}
+              </TableCell>
+
+              <TableCell>
+                <div className="flex items-center justify-center">
+                  <span
+                    className={`inline-flex rounded-md px-2.5 py-1 text-xs font-medium ${
+                      account.role === "admin"
+                        ? "bg-secondary text-secondary-foreground border border-border"
+                        : "bg-muted text-muted-foreground border border-border"
+                    }`}
+                  >
+                    {account.role}
+                  </span>
+                </div>
+              </TableCell>
+
+              <TableCell>
+                <div className="flex items-center justify-center">
+                  <span
+                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium ${
+                      account.verified
+                        ? "bg-success/10 text-success border border-success/20"
+                        : "bg-destructive/10 text-destructive border border-destructive/20"
+                    }`}
+                  >
+                    {account.verified ? "Verified" : "Pending"}
+                  </span>
+                </div>
+              </TableCell>
+
+              <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
+                {new Date(account.createdAt).toLocaleDateString("en-PH", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </TableCell>
+
+              <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
+                {new Date(account.updatedAt).toLocaleDateString("en-PH", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </TableCell>
+
+              <TableCell>
+                <div className="flex justify-center">
+                  <TableActionMenu
+                    label={`Actions for ${account.name}`}
+                    items={[
+                      {
+                        label: "View Account",
+                        icon: <LuEye aria-hidden="true" size={16} />,
+                        onSelect: () => setAccountToView(account),
+                      },
+                      ...(account.id !== currentUserId
+                        ? [
+                            {
+                              label:
+                                account.role === "alumni"
+                                  ? "Promote to Admin"
+                                  : "Demote to Alumni",
+                              icon: (
+                                <LuShieldCheck aria-hidden="true" size={16} />
+                              ),
+                              onSelect: () => {
+                                setRoleConfirmation("");
+                                setRoleChange({
+                                  account,
+                                  role:
+                                    account.role === "alumni"
+                                      ? "admin"
+                                      : "alumni",
+                                });
+                              },
+                            },
+                          ]
+                        : []),
+                    ]}
+                  />
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      <Modal
+        open={accountToView !== null}
+        onClose={() => setAccountToView(null)}
+        title="Account details"
+        description={accountToView?.email}
+        width="md"
+        fitContent
+      >
+        {accountToView && (
+          <div className="space-y-5">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Full name
+                </p>
+                <p className="mt-1 text-xl font-semibold text-foreground">
+                  {accountToView.name || "Unnamed User"}
+                </p>
+              </div>
+              <span
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                  accountToView.verified
+                    ? "bg-success/15 text-success"
+                    : "bg-warning/15 text-warning"
+                }`}
               >
-                <td className="p-4 font-semibold text-slate-700 whitespace-nowrap">
-                  {account.name || (
-                    <span className="italic text-slate-400">Unnamed User</span>
-                  )}
-                </td>
+                {accountToView.verified ? "Verified" : "Pending"}
+              </span>
+            </div>
 
-                <td className="p-4 text-slate-600">{account.email}</td>
+            <dl className="grid gap-4 rounded-2xl border border-border bg-muted p-4 sm:grid-cols-2">
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Role
+                </dt>
+                <dd className="mt-1 font-medium capitalize text-foreground">
+                  {accountToView.role}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Account ID
+                </dt>
+                <dd className="mt-1 break-all text-sm text-foreground">
+                  {accountToView.id}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Created
+                </dt>
+                <dd className="mt-1 text-sm text-foreground">
+                  {new Date(accountToView.createdAt).toLocaleString("en-PH")}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Updated
+                </dt>
+                <dd className="mt-1 text-sm text-foreground">
+                  {new Date(accountToView.updatedAt).toLocaleString("en-PH")}
+                </dd>
+              </div>
+            </dl>
 
-                <td className="p-4">
-                  <div className="flex items-center justify-center">
-                    <span
-                      className={`inline-flex rounded-md px-2.5 py-1 text-xs font-medium ${
-                        account.role === "admin"
-                          ? "bg-violet-50 text-violet-700 border border-violet-100"
-                          : "bg-sky-50 text-sky-700 border border-sky-100"
-                      }`}
-                    >
-                      {account.role}
-                    </span>
-                  </div>
-                </td>
-
-                <td className="p-4">
-                  <div className="flex items-center justify-center">
-                    <span
-                      className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium ${
-                        account.verified
-                          ? "bg-emerald-50 text-emerald-500 border border-emerald-100"
-                          : "bg-rose-50 text-rose-500 border border-rose-100"
-                      }`}
-                    >
-                      {account.verified ? "Verified" : "Pending"}
-                    </span>
-                  </div>
-                </td>
-
-                <td className="p-4 text-xs text-slate-500 whitespace-nowrap">
-                  {new Date(account.createdAt).toLocaleDateString("en-PH", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </td>
-
-                <td className="p-4 text-xs text-slate-500 whitespace-nowrap">
-                  {new Date(account.updatedAt).toLocaleDateString("en-PH", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  })}
-                </td>
-
-                <td className="p-4">
-                  <div className="flex justify-center gap-2">
-                    <Link
-                      href={`/admin/accounts/${account.id}`}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-100 px-4 py-2 font-semibold text-sky-600 transition-colors hover:bg-sky-200"
-                    >
-                      <LuEye size={16} />
-                      View
-                    </Link>
-                    {account.id !== currentUserId && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAccountToDelete(account.id);
-                          setShowDeleteModal(true);
-                        }}
-                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-100 px-4 py-2 font-semibold text-rose-500 transition-colors hover:bg-rose-200"
-                      >
-                        <LuTrash2 size={16} />
-                        Delete
-                      </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <ConfirmationDialog
-        open={showDeleteModal}
+            {accountToView.id !== currentUserId && (
+              <div className="flex flex-wrap justify-end gap-3 border-t border-border pt-4">
+                {accountToView.role === "alumni" && (
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() => {
+                      const account = accountToView;
+                      setAccountToView(null);
+                      setDeleteConfirmation("");
+                      setAccountToDelete(account);
+                    }}
+                  >
+                    <LuTrash2 aria-hidden="true" />
+                    Delete Account
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  variant={
+                    accountToView.role === "alumni" ? "success" : "destructive"
+                  }
+                  onClick={() => {
+                    const account = accountToView;
+                    setAccountToView(null);
+                    setRoleConfirmation("");
+                    setRoleChange({
+                      account,
+                      role: account.role === "alumni" ? "admin" : "alumni",
+                    });
+                  }}
+                >
+                  <LuShieldCheck aria-hidden="true" />
+                  {accountToView.role === "alumni"
+                    ? "Promote to Admin"
+                    : "Demote to Alumni"}
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
+      </Modal>
+      <Modal
+        open={accountToDelete !== null}
         onClose={() => {
-          setShowDeleteModal(false);
+          if (deleting) return;
           setAccountToDelete(null);
+          setDeleteConfirmation("");
         }}
-        onConfirm={() => {
-          if (accountToDelete) void confirmDelete(accountToDelete);
-        }}
-        title="Delete account?"
-        description="This account will be permanently deleted. This action cannot be undone."
-        confirmLabel="Delete Account"
-        tone="danger"
-      />
-      <div className="flex items-center justify-between border-t border-slate-100 p-4 bg-slate-50/10 text-sm">
+        title="Permanently delete account?"
+        description={accountToDelete?.email}
+        width="md"
+        fitContent
+        showCloseButton={!deleting}
+      >
+        <div className="space-y-5">
+          <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm leading-6 text-destructive">
+            <p className="font-semibold">This action cannot be undone</p>
+            <p className="mt-1">
+              The Appwrite login account, all draft responses, draft manual
+              imports, draft documents, and their Google Drive folders will be
+              permanently deleted.
+            </p>
+          </div>
+
+          <div>
+            <p className="text-sm font-semibold text-foreground">
+              After deletion:
+            </p>
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-muted-foreground">
+              <li>The person can no longer sign in with this account</li>
+              <li>
+                All unfinished drafts and their files are permanently removed
+              </li>
+              <li>
+                Submitted tracer responses remain available as institutional
+                records
+              </li>
+              <li>A new sign-in may create a separate account in the future</li>
+            </ul>
+          </div>
+
+          <label className="block">
+            <span className="text-sm font-medium text-foreground">
+              Type <strong>DELETE ACCOUNT</strong> to continue
+            </span>
+            <Input
+              className="mt-2"
+              value={deleteConfirmation}
+              disabled={deleting}
+              autoComplete="off"
+              spellCheck={false}
+              onChange={(event) => setDeleteConfirmation(event.target.value)}
+            />
+          </label>
+
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={deleting}
+              onClick={() => {
+                setAccountToDelete(null);
+                setDeleteConfirmation("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={deleting || deleteConfirmation !== "DELETE ACCOUNT"}
+              onClick={() => void confirmDelete()}
+            >
+              {deleting ? "Deleting account..." : "Delete Account"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+      <Modal
+        open={roleChange !== null}
+        onClose={closeRoleChange}
+        title={
+          roleChange?.role === "admin"
+            ? "Promote account to administrator?"
+            : "Demote administrator to alumni?"
+        }
+        description={roleChange?.account.email}
+        width="md"
+        fitContent
+        showCloseButton={!changingRole}
+      >
+        <div className="space-y-5">
+          <div className="rounded-2xl border border-warning/30 bg-warning/10 p-4 text-sm leading-6 text-warning">
+            <p className="font-semibold">Important data and access warning</p>
+            <p className="mt-1">
+              Changing this role permanently deletes every draft owned by this
+              account, including draft alumni responses, draft manual imports,
+              uploaded documents, and their Google Drive folders. Submitted
+              responses and completed manual imports are retained. Draft
+              deletion cannot be undone, and available features change
+              immediately.
+            </p>
+          </div>
+
+          {roleChange?.role === "admin" ? (
+            <div>
+              <p className="text-sm font-semibold text-foreground">
+                This person will receive access to:
+              </p>
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-muted-foreground">
+                <li>All alumni responses and personally identifiable data</li>
+                <li>Manual response creation, editing, imports, and exports</li>
+                <li>Study scheduling, opening, closing, and archiving</li>
+                <li>Google Drive folders, uploads, downloads, and deletion</li>
+                <li>Account deletion and administrator role management</li>
+              </ul>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                Submitted alumni responses remain stored, but all drafts are
+                permanently deleted. This account will use the administrator
+                portal after its next authorization check.
+              </p>
+            </div>
+          ) : (
+            <div>
+              <p className="text-sm font-semibold text-foreground">
+                This person will lose access to:
+              </p>
+              <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-6 text-muted-foreground">
+                <li>The admin dashboard and all-account response views</li>
+                <li>Manual response and import management</li>
+                <li>Study scheduling and lifecycle controls</li>
+                <li>Google Drive administration and system-wide exports</li>
+                <li>Account deletion and role management</li>
+              </ul>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                Completed manual imports remain available to other
+                administrators, and submitted alumni responses remain associated
+                with the account. All drafts are permanently deleted. They will
+                regain alumni survey access.
+              </p>
+            </div>
+          )}
+
+          <label className="block">
+            <span className="text-sm font-medium text-foreground">
+              Type <strong>{requiredRoleConfirmation}</strong> to continue
+            </span>
+            <Input
+              className="mt-2"
+              value={roleConfirmation}
+              disabled={changingRole}
+              autoComplete="off"
+              spellCheck={false}
+              onChange={(event) => setRoleConfirmation(event.target.value)}
+            />
+          </label>
+
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={changingRole}
+              onClick={closeRoleChange}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={
+                changingRole || roleConfirmation !== requiredRoleConfirmation
+              }
+              onClick={() => void confirmRoleChange()}
+            >
+              {changingRole
+                ? "Changing role..."
+                : roleChange?.role === "admin"
+                  ? "Promote to Admin"
+                  : "Demote to Alumni"}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+      <div className="flex flex-col gap-3 border-t border-border bg-muted/40 p-4 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-6">
         {totalRows > 1 ? (
-          <span className="text-sky-600 py-2 px-4 bg-sky-50 rounded-lg font-semibold">
+          <span className="rounded-lg bg-muted/60 px-4 py-2 font-semibold text-muted-foreground">
             Showing <span className="">{accounts.length}</span> of{" "}
             <span className="">
               <span className="">{totalRows}</span> Entries
             </span>
           </span>
         ) : (
-          <span className="text-sky-600 py-2 px-4 bg-sky-50 rounded-lg font-semibold">
+          <span className="rounded-lg bg-muted/60 px-4 py-2 font-semibold text-muted-foreground">
             Showing 1 Entry
           </span>
         )}
 
-        <div className="flex gap-2">
-          <button
+        <div className="flex w-full gap-2 sm:w-auto">
+          <Button
             onClick={() => onPageChange(currentPage - 1)}
             disabled={currentPage <= 1}
-            className={`rounded-xl border px-4 py-2 text-xs font-medium transition ${
-              currentPage > 1
-                ? "border-slate-300 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer"
-                : "border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed"
-            }`}
+            variant="outline"
+            size="sm"
           >
             Previous
-          </button>
+          </Button>
 
-          <button
+          <Button
             onClick={() => onPageChange(currentPage + 1)}
             disabled={currentPage >= totalPages}
-            className={`rounded-xl border px-4 py-2 text-xs font-medium transition ${
-              currentPage < totalPages
-                ? "border-slate-300 bg-white text-slate-700 hover:bg-slate-50 cursor-pointer"
-                : "border-slate-200 bg-slate-50 text-slate-400 cursor-not-allowed"
-            }`}
+            variant="default"
+            size="sm"
           >
             Next
-          </button>
+          </Button>
         </div>
       </div>
     </div>

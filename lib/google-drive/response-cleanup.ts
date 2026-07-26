@@ -26,9 +26,7 @@ export async function deleteResponseDriveData(responseId: string) {
 
   const cleanupResults = await Promise.allSettled([
     ...(responseFolderId ? [deleteDriveFile(responseFolderId)] : []),
-    ...documents.map((document) =>
-      deleteDriveFile(document.googleDriveFileId),
-    ),
+    ...documents.map((document) => deleteDriveFile(document.googleDriveFileId)),
   ]);
 
   const failures = cleanupResults.filter(

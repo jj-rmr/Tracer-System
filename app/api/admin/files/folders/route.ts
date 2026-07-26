@@ -9,7 +9,8 @@ export async function GET(request: NextRequest) {
     await requireAdmin();
 
     const excludeId = request.nextUrl.searchParams.get("exclude") || undefined;
-    const referenceId = excludeId ?? request.nextUrl.searchParams.get("current");
+    const referenceId =
+      excludeId ?? request.nextUrl.searchParams.get("current");
 
     if (!referenceId) {
       return NextResponse.json(
@@ -18,7 +19,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { rootId, adminRootId } = await requireAdminDirectoryItem(referenceId);
+    const { rootId, adminRootId } =
+      await requireAdminDirectoryItem(referenceId);
     const folders = await listIndexedFolderOptions({
       rootId,
       ancestorId: adminRootId,
@@ -34,7 +36,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        message: error instanceof Error ? error.message : "Failed to list folders.",
+        message: "Failed to list folders.",
       },
       { status: 500 },
     );
