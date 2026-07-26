@@ -1,7 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import {
+  forwardRef,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 
 import { SelectField } from "@/components/forms/SelectField";
 import GraduateTracerForm, {
@@ -9,26 +14,63 @@ import GraduateTracerForm, {
 } from "@/components/forms/GraduateTracerForm";
 import { surveyToAnswers } from "@/lib/forms/graduate-tracer-adapter";
 import { defaultSurvey } from "@/lib/surveys/defaults";
-import { StudyPeriod, Survey } from "@/types";
+import {
+  StudyPeriod,
+  Survey,
+  SurveyDocument,
+  SurveyDocumentType,
+} from "@/types";
+
+export interface ManualResponseDraft {
+  responseId: string;
+  studyId: string;
+  respondentEmail: string;
+  importToken: string;
+  updatedAt: string;
+  response: Survey;
+}
+
+export interface ManualResponseEntryHandle {
+  saveDraft: () => Promise<void>;
+  discardDraft: () => Promise<void>;
+}
 
 interface ManualResponseEntryProps {
   studies: StudyPeriod[];
+  initialDraft?: ManualResponseDraft | null;
   onComplete?: () => void;
+  onRequestClose?: () => void;
 }
 
-export default function ManualResponseEntry({
-  studies,
-  onComplete,
-}: ManualResponseEntryProps) {
+const ManualResponseEntry = forwardRef<
+  ManualResponseEntryHandle,
+  ManualResponseEntryProps
+>(function ManualResponseEntry(
+  { studies, initialDraft, onComplete, onRequestClose },
+  ref,
+) {
   const router = useRouter();
-  const [studyId, setStudyId] = useState(studies[0]?.id ?? "");
-  const [respondentEmail, setRespondentEmail] = useState("");
-  const importTokenRef = useRef<string | null>(null);
+  const [studyId, setStudyId] = useState(
+    initialDraft?.studyId ??
+      studies.find((study) => study.status === "open")?.id ??
+      "",
+  );
+  const [respondentEmail, setRespondentEmail] = useState(
+    initialDraft?.respondentEmail ?? "",
+  );
+  const latestResponseRef = useRef<Survey>(
+    structuredClone(initialDraft?.response ?? defaultSurvey),
+  );
+  const responseIdRef = useRef<string | null>(
+    initialDraft?.responseId ?? null,
+  );
+  const importTokenRef = useRef<string>(
+    initialDraft?.importToken ?? crypto.randomUUID(),
+  );
   const uploadKeysRef = useRef(new WeakMap<File, string>());
 
   function getUploadKey(file: File) {
     const existingKey = uploadKeysRef.current.get(file);
-
     if (existingKey) return existingKey;
 
     const uploadKey = crypto.randomUUID();
@@ -36,96 +78,124 @@ export default function ManualResponseEntry({
     return uploadKey;
   }
 
-  async function saveManualResponse(
-    survey: Survey,
-    documents: PendingSurveyDocuments,
+  async function persistManualResponse(
+    response: Survey,
+    mode: "draft" | "submitted",
   ) {
     if (!studyId) {
-      throw new Error("Select a study period before saving the response.");
+      throw new Error("Select an open study before saving the response.");
     }
 
     const respondentName = [
-      survey.firstName,
-      survey.middleName,
-      survey.lastName,
-      survey.extensionName,
+      response.firstName,
+      response.middleName,
+      response.lastName,
+      response.extensionName,
     ]
       .filter(Boolean)
       .join(" ")
       .trim();
+    const saveResponse = await fetch(
+      `/api/admin/studies/${studyId}/responses/manual`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          respondentName,
+          respondentEmail,
+          answers: surveyToAnswers(response),
+          importToken: importTokenRef.current,
+          mode,
+        }),
+      },
+    );
+    const result = await saveResponse.json();
 
-    const importToken = importTokenRef.current ?? crypto.randomUUID();
-    importTokenRef.current = importToken;
-    let responseId: string | null = null;
+    if (!saveResponse.ok || typeof result.data?.id !== "string") {
+      throw new Error(result.message ?? "Failed to save the manual response.");
+    }
+
+    responseIdRef.current = result.data.id;
+    if (typeof result.data.importToken === "string") {
+      importTokenRef.current = result.data.importToken;
+    }
+    latestResponseRef.current = structuredClone(response);
+    return result.data as { id: string; updatedAt?: string };
+  }
+
+  async function uploadManualDocument(
+    response: Survey,
+    file: File,
+    documentType: SurveyDocumentType,
+  ) {
+    const saved = await persistManualResponse(response, "draft");
+    const formData = new FormData();
+    formData.set("file", file);
+    formData.set("documentType", documentType);
+    formData.set("uploadKey", getUploadKey(file));
+
+    const uploadResponse = await fetch(
+      `/api/form-responses/${saved.id}/documents`,
+      { method: "POST", body: formData },
+    );
+    const result = await uploadResponse.json();
+
+    if (!uploadResponse.ok) {
+      throw new Error(result.message ?? `Failed to upload ${file.name}.`);
+    }
+
+    return result.document as SurveyDocument;
+  }
+
+  async function deleteManualDocument(document: SurveyDocument) {
+    const responseId = responseIdRef.current;
+    if (!responseId) throw new Error("The draft has not been saved yet.");
+
+    const deleteResponse = await fetch(
+      `/api/form-responses/${responseId}/documents/${document.id}`,
+      { method: "DELETE" },
+    );
+    const result = await deleteResponse.json();
+    if (!deleteResponse.ok) {
+      throw new Error(result.message ?? "Failed to delete the document.");
+    }
+  }
+
+  async function saveManualResponse(
+    response: Survey,
+    documents: PendingSurveyDocuments,
+  ) {
+    const saved = await persistManualResponse(response, "submitted");
+    const uploadKeys = new Set(
+      response.documents.flatMap((document) =>
+        document.uploadKey ? [document.uploadKey] : [],
+      ),
+    );
 
     try {
-      const response = await fetch(
-        `/api/admin/studies/${studyId}/responses/manual`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            respondentName,
-            respondentEmail,
-            answers: surveyToAnswers(survey),
-            importToken,
-          }),
-        },
-      );
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message ?? "Failed to add manual response.");
-      }
-
-      responseId = result.data?.id;
-      if (typeof responseId !== "string") {
-        throw new Error("The manual response was saved without a response ID.");
-      }
-
-      const uploads = [
-        ...documents.employment.map((file) => ({
-          file,
-          type: "employment",
-          uploadKey: getUploadKey(file),
-        })),
-        ...documents.awards.map((file) => ({
-          file,
-          type: "awards",
-          uploadKey: getUploadKey(file),
-        })),
-      ];
-
-      for (const upload of uploads) {
-        const formData = new FormData();
-        formData.set("file", upload.file);
-        formData.set("documentType", upload.type);
-        formData.set("uploadKey", upload.uploadKey);
-
-        const uploadResponse = await fetch(
-          `/api/form-responses/${responseId}/documents`,
-          { method: "POST", body: formData },
-        );
-        const uploadResult = await uploadResponse.json();
-
-        if (!uploadResponse.ok) {
-          throw new Error(
-            uploadResult.message ?? `Failed to upload ${upload.file.name}.`,
+      for (const [documentType, files] of [
+        ["employment", documents.employment],
+        ["awards", documents.awards],
+      ] as const) {
+        for (const file of files) {
+          const document = await uploadManualDocument(
+            response,
+            file,
+            documentType,
           );
+          if (document.uploadKey) uploadKeys.add(document.uploadKey);
         }
       }
 
+      await persistManualResponse(response, "submitted");
       const completionResponse = await fetch(
-        `/api/admin/responses/${responseId}/import`,
+        `/api/admin/responses/${saved.id}/import`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             status: "completed",
-            uploadKeys: uploads.map((upload) => upload.uploadKey),
+            uploadKeys: [...uploadKeys],
           }),
         },
       );
@@ -133,37 +203,53 @@ export default function ManualResponseEntry({
 
       if (!completionResponse.ok) {
         throw new Error(
-          completionResult.message ?? "Failed to complete the manual import.",
+          completionResult.message ?? "Failed to complete the manual response.",
         );
       }
 
-      importTokenRef.current = null;
+      responseIdRef.current = null;
+      importTokenRef.current = crypto.randomUUID();
       uploadKeysRef.current = new WeakMap<File, string>();
     } catch (error) {
-      if (responseId) {
-        await fetch(`/api/admin/responses/${responseId}/import`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: "failed" }),
-        }).catch(() => undefined);
-      }
-
+      await persistManualResponse(response, "draft").catch(() => undefined);
       throw error;
     }
   }
 
-  if (studies.length === 0) {
+  useImperativeHandle(ref, () => ({
+    async saveDraft() {
+      await persistManualResponse(latestResponseRef.current, "draft");
+    },
+    async discardDraft() {
+      const responseId = responseIdRef.current;
+      if (!responseId) return;
+
+      const deleteResponse = await fetch(`/api/admin/responses/${responseId}`, {
+        method: "DELETE",
+      });
+      const result = await deleteResponse.json();
+      if (!deleteResponse.ok) {
+        throw new Error(result.message ?? "Failed to discard the manual draft.");
+      }
+
+      responseIdRef.current = null;
+      importTokenRef.current = crypto.randomUUID();
+      latestResponseRef.current = structuredClone(defaultSurvey);
+      uploadKeysRef.current = new WeakMap<File, string>();
+    },
+  }));
+
+  if (!studies.some((study) => study.status === "open")) {
     return (
       <div className="rounded-3xl border border-amber-200 bg-amber-50 p-6 text-sm text-amber-800">
-        Create a non-archived Graduate Tracer v1 study period before importing
-        historical responses.
+        Open a Graduate Tracer v1 study before importing historical responses.
       </div>
     );
   }
 
   return (
     <div className="space-y-6">
-      <section className="rounded-3xl md:border border-slate-200 bg-white md:p-6 md:shadow-sm">
+      <section className="rounded-3xl border-slate-200 bg-white md:border md:p-6 md:shadow-sm">
         <h2 className="text-lg font-semibold text-slate-900">Import details</h2>
         <p className="mt-1 text-sm text-slate-500">
           Record where this historical response belongs.
@@ -171,7 +257,7 @@ export default function ManualResponseEntry({
         <p className="mt-3 rounded-2xl bg-sky-50 px-4 py-3 text-sm text-sky-800">
           All response fields and supporting document uploads are optional for
           manual imports. Required markers only reflect the original alumni
-          survey.
+          response form.
         </p>
 
         <div className="mt-5 grid gap-5 md:grid-cols-2">
@@ -183,6 +269,7 @@ export default function ManualResponseEntry({
             options={studies.map((study) => ({
               value: study.id,
               label: `${study.academicYear} — ${study.title} (${study.status})`,
+              disabled: study.status !== "open",
             }))}
             required
           />
@@ -196,17 +283,28 @@ export default function ManualResponseEntry({
               value={respondentEmail}
               onChange={(event) => setRespondentEmail(event.target.value)}
               placeholder="Optional"
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 shadow-sm px-4 py-3 text-sm focus:border-sky-400 focus:outline-none focus:ring-4 focus:ring-sky-100"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm shadow-sm focus:border-sky-400 focus:outline-none focus:ring-4 focus:ring-sky-100"
             />
           </label>
         </div>
       </section>
 
       <GraduateTracerForm
-        initialData={{ ...defaultSurvey }}
-        isNew
+        initialData={structuredClone(initialDraft?.response ?? defaultSurvey)}
+        isNew={!initialDraft}
         requireResponses={false}
         submitLabel="Add Manual Response"
+        initialSavedAt={initialDraft?.updatedAt}
+        onValuesChange={(response) => {
+          latestResponseRef.current = structuredClone(response);
+        }}
+        onDraftSave={async (response) => {
+          const saved = await persistManualResponse(response, "draft");
+          return saved.updatedAt;
+        }}
+        onInstantDocumentUpload={uploadManualDocument}
+        onDeleteDocument={deleteManualDocument}
+        onRequestClose={onRequestClose}
         onSave={saveManualResponse}
         onSuccess={() => {
           if (onComplete) onComplete();
@@ -215,4 +313,6 @@ export default function ManualResponseEntry({
       />
     </div>
   );
-}
+});
+
+export default ManualResponseEntry;

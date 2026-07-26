@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:forms": "node --experimental-strip-types --test --test-isolation=none lib/forms/graduate-tracer-validation.test.ts",
+    "test:forms": "node --experimental-strip-types --test --test-isolation=none lib/forms/graduate-tracer-validation.test.ts lib/forms/response-document-lifecycle.test.ts lib/forms/response-organization-change.test.ts lib/google-drive/organization-lifecycle.test.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },

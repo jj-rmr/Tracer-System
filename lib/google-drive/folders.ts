@@ -1,10 +1,16 @@
 import {
   claimDriveFolder,
+  deleteRegisteredDriveFolders,
   getRegisteredDriveFolder,
+  getRegisteredDriveFolderById,
+  rekeyRegisteredDriveFolder,
   updateRegisteredDriveFolder,
 } from "@/lib/repositories/google-drive-folders.repository";
+import { upsertDriveIndexItems } from "@/lib/repositories/google-drive-items.repository";
 
 import { drive } from "./client";
+
+const DRIVE_FOLDER_MIME_TYPE = "application/vnd.google-apps.folder";
 
 interface ManagedFolderInput {
   folderKey: string;
@@ -19,6 +25,18 @@ interface DriveFolder {
 }
 
 const folderLocks = new Map<string, Promise<DriveFolder>>();
+
+function isDriveNotFound(error: unknown) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "response" in error &&
+    typeof error.response === "object" &&
+    error.response !== null &&
+    "status" in error.response &&
+    error.response.status === 404
+  );
+}
 
 function sanitizeFolderName(name: string) {
   return (
@@ -60,14 +78,19 @@ async function findClaimOrCreateFolder({
   const registered = await getRegisteredDriveFolder(folderKey);
 
   if (registered) {
-    await synchronizeFolder(
-      registered.googleDriveFolderId,
-      name,
-      parentId,
-      folderKey,
-    );
+    try {
+      await synchronizeFolder(
+        registered.googleDriveFolderId,
+        name,
+        parentId,
+        folderKey,
+      );
 
-    return { id: registered.googleDriveFolderId, name };
+      return { id: registered.googleDriveFolderId, name };
+    } catch (error) {
+      if (!isDriveNotFound(error)) throw error;
+      await deleteRegisteredDriveFolders([folderKey]);
+    }
   }
 
   const foundFolder = existingFolderId
@@ -92,7 +115,18 @@ async function findClaimOrCreateFolder({
     const winner = await getRegisteredDriveFolder(folderKey);
 
     if (!winner) {
-      throw new Error(`Drive folder claim was lost without a winner: ${folderKey}`);
+      const existingClaim = await getRegisteredDriveFolderById(candidate.id);
+
+      if (!existingClaim) {
+        throw new Error(`Drive folder claim was lost without a winner: ${folderKey}`);
+      }
+
+      await rekeyRegisteredDriveFolder({
+        currentFolderKey: existingClaim.folderKey,
+        nextFolderKey: folderKey,
+      });
+      await synchronizeFolder(candidate.id, name, parentId, folderKey);
+      return candidate;
     }
 
     if (candidateWasCreated && candidate.id !== winner.googleDriveFolderId) {
@@ -159,7 +193,7 @@ async function synchronizeFolder(
 ) {
   const response = await drive.files.get({
     fileId: folderId,
-    fields: "id,name,parents,trashed",
+    fields: "id,name,parents,trashed,modifiedTime,webViewLink",
   });
 
   if (response.data.trashed) {
@@ -185,6 +219,25 @@ async function synchronizeFolder(
     name,
     parentGoogleDriveFolderId: parentId,
   });
+
+  const rootId = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID;
+
+  if (rootId) {
+    await upsertDriveIndexItems([
+      {
+        id: folderId,
+        rootId,
+        parentId,
+        name,
+        mimeType: DRIVE_FOLDER_MIME_TYPE,
+        isFolder: true,
+        size: null,
+        modifiedTime: response.data.modifiedTime ?? null,
+        webViewLink: response.data.webViewLink ?? null,
+        syncedAt: new Date().toISOString(),
+      },
+    ]);
+  }
 }
 
 export async function getParentFolderId(folderId: string) {

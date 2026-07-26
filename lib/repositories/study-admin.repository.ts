@@ -57,7 +57,7 @@ export async function listStudyPeriodSummaries(): Promise<
 
   if (error) throw error;
 
-  return Promise.all(
+  const studies = await Promise.all(
     (data as StudyRow[]).map(async (study) => {
       const [allResponses, submittedResponses] = await Promise.all([
         supabase
@@ -93,20 +93,43 @@ export async function listStudyPeriodSummaries(): Promise<
       };
     }),
   );
+
+  return studies.sort((left, right) => {
+    const statusOrder =
+      Number(right.status === "open") - Number(left.status === "open");
+    if (statusOrder !== 0) return statusOrder;
+
+    const academicYearOrder = right.academicYear.localeCompare(left.academicYear);
+    if (academicYearOrder !== 0) return academicYearOrder;
+
+    return left.title.localeCompare(right.title, undefined, {
+      sensitivity: "base",
+    });
+  });
+}
+
+export async function listStudyDriveContexts() {
+  const { data, error } = await supabase
+    .from("study_periods")
+    .select("id, academic_year")
+    .order("academic_year", { ascending: false });
+
+  if (error) throw error;
+
+  return data.map((study) => ({
+    studyId: study.id,
+    academicYear: study.academic_year,
+  }));
 }
 
 export async function createStudyPeriod({
   formVersionId,
   academicYear,
   title,
-  opensAt,
-  closesAt,
 }: {
   formVersionId: string;
   academicYear: string;
   title: string;
-  opensAt: string;
-  closesAt: string;
 }) {
   const { data: version, error: versionError } = await supabase
     .from("form_versions")
@@ -124,14 +147,30 @@ export async function createStudyPeriod({
       form_version_id: formVersionId,
       academic_year: academicYear,
       title,
-      opens_at: opensAt,
-      closes_at: closesAt,
+      opens_at: new Date().toISOString(),
+      closes_at: "9999-12-31T23:59:59.999Z",
+      lifecycle_status: "closed",
     })
     .select()
     .single();
 
   if (error) throw error;
 
+  return data;
+}
+
+export async function setStudyPeriodStatus(
+  studyPeriodId: string,
+  status: "open" | "closed",
+) {
+  const { data, error } = await supabase
+    .from("study_periods")
+    .update({ lifecycle_status: status })
+    .eq("id", studyPeriodId)
+    .select()
+    .single();
+
+  if (error) throw error;
   return data;
 }
 

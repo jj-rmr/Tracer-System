@@ -15,8 +15,10 @@ interface FormModalProps {
   bodyClassName?: string;
   confirmationTitle?: string;
   confirmationDescription?: string;
+  shouldConfirmClose?: boolean;
   fitContent?: boolean;
   showCloseButton?: boolean;
+  onCloseRequest?: () => void;
 }
 
 export default function FormModal({
@@ -30,13 +32,25 @@ export default function FormModal({
   confirmationTitle = "Discard unsaved changes?",
   confirmationDescription =
     "Any information entered in this form will be lost.",
+  shouldConfirmClose = true,
   fitContent = false,
   showCloseButton = true,
+  onCloseRequest,
 }: FormModalProps) {
   const [confirmingClose, setConfirmingClose] = useState(false);
 
   function requestClose() {
-    setConfirmingClose(true);
+    if (onCloseRequest) {
+      onCloseRequest();
+      return;
+    }
+
+    if (shouldConfirmClose) {
+      setConfirmingClose(true);
+      return;
+    }
+
+    onClose();
   }
 
   function discardAndClose() {

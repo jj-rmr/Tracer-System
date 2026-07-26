@@ -37,6 +37,11 @@ export type FormResponseStatus = "draft" | "submitted";
 export type FormResponseSource = "alumni" | "admin_import";
 export type ManualImportStatus = "processing" | "completed" | "failed";
 export type ResponseDeletionStatus = "active" | "deleting" | "delete_failed";
+export type DriveOrganizationStatus =
+  | "pending"
+  | "organizing"
+  | "organized"
+  | "failed";
 
 export interface StudyPeriod {
   id: string;
@@ -82,6 +87,9 @@ export interface FormResponse {
   createdAt: string;
   updatedAt: string;
   deletionStatus: ResponseDeletionStatus;
+  driveOrganizationStatus: DriveOrganizationStatus;
+  driveOrganizationError: string | null;
+  driveOrganizedAt: string | null;
 }
 
 export interface AdminResponseSummary {
@@ -89,6 +97,7 @@ export interface AdminResponseSummary {
   studyPeriodId: string;
   academicYear: string;
   studyTitle: string;
+  studyStatus: "open" | "closed";
   source: FormResponseSource;
   status: FormResponseStatus;
   respondentName: string | null;
@@ -105,6 +114,8 @@ export interface AdminResponseSummary {
   createdAt: string;
   importStatus: ManualImportStatus;
   deletionStatus: ResponseDeletionStatus;
+  driveOrganizationStatus: DriveOrganizationStatus;
+  driveOrganizationError: string | null;
 }
 
 export interface AdminResponseFilters {

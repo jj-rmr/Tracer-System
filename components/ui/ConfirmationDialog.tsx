@@ -12,6 +12,7 @@ interface ConfirmationDialogProps {
   cancelLabel?: string;
   busy?: boolean;
   tone?: "primary" | "danger";
+  showCloseButton?: boolean;
 }
 
 export default function ConfirmationDialog({
@@ -24,6 +25,7 @@ export default function ConfirmationDialog({
   cancelLabel = "Cancel",
   busy = false,
   tone = "primary",
+  showCloseButton = true,
 }: ConfirmationDialogProps) {
   return (
     <Modal
@@ -33,6 +35,7 @@ export default function ConfirmationDialog({
       width="md"
       layer="nested"
       bodyClassName="p-6"
+      showCloseButton={showCloseButton}
     >
       <p className="text-sm leading-6 text-slate-500">{description}</p>
       <div className="mt-6 flex justify-end gap-3">

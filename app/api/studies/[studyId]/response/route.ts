@@ -1,12 +1,19 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 
 import { requireRole, requireUser } from "@/lib/auth";
+import { validateGraduateTracerSurvey } from "@/lib/forms/graduate-tracer-validation";
+import { hasResponseOrganizationChanged } from "@/lib/forms/response-organization-change";
+import { organizeResponseDriveFolder } from "@/lib/google-drive/organize-response";
+import { deleteResponseDriveData } from "@/lib/google-drive/response-cleanup";
 import {
+  claimFormResponseDeletion,
+  deleteFormResponse,
   getFormResponse,
+  getFormResponseForUserDeletion,
+  markFormResponseDeletionFailed,
   saveFormResponse,
 } from "@/lib/repositories/form-responses.repository";
 import { getStudyContext } from "@/lib/repositories/forms.repository";
-import { validateGraduateTracerSurvey } from "@/lib/forms/graduate-tracer-validation";
 import { FormResponseStatus, ROLES } from "@/types";
 
 interface SaveResponseBody {
@@ -134,7 +141,7 @@ export async function PUT(
         return NextResponse.json(
           {
             success: false,
-            message: "Please complete all required survey fields.",
+            message: "Please complete all required response fields.",
             errors: validation.errors,
           },
           { status: 400 },
@@ -142,12 +149,28 @@ export async function PUT(
       }
     }
 
+    const existingResponse = await getFormResponse(studyId, user.$id);
+    const shouldOrganize = hasResponseOrganizationChanged(
+      existingResponse?.answers ?? null,
+      body.answers,
+    );
     const response = await saveFormResponse({
       studyPeriodId: studyId,
       userId: user.$id,
       status: body.status,
       answers: body.answers,
+      resetDriveOrganization: shouldOrganize,
     });
+
+    if (shouldOrganize) {
+      after(async () => {
+        try {
+          await organizeResponseDriveFolder(response);
+        } catch (error) {
+          console.error("Failed to organize the new tracer response:", error);
+        }
+      });
+    }
 
     return NextResponse.json({
       success: true,
@@ -159,6 +182,90 @@ export async function PUT(
     return NextResponse.json(
       { success: false, message: "Failed to save the study response." },
       { status: 500 },
+    );
+  }
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ studyId: string }> },
+) {
+  try {
+    const { user } = await requireUser();
+    requireRole(user, [ROLES.ALUMNI]);
+
+    const { studyId } = await params;
+    const context = await getStudyContext(studyId);
+
+    if (!context) {
+      return NextResponse.json(
+        { success: false, message: "Study period not found." },
+        { status: 404 },
+      );
+    }
+
+    if (context.study.status !== "open") {
+      return NextResponse.json(
+        { success: false, message: "Closed study responses cannot be deleted." },
+        { status: 423 },
+      );
+    }
+
+    const existingResponse = await getFormResponseForUserDeletion(
+      studyId,
+      user.$id,
+    );
+
+    if (!existingResponse) {
+      return NextResponse.json({ success: true });
+    }
+
+    let claimedResponse =
+      existingResponse.deletionStatus === "deleting"
+        ? existingResponse
+        : await claimFormResponseDeletion(existingResponse.id);
+
+    for (let attempt = 0; !claimedResponse && attempt < 20; attempt += 1) {
+      const activeResponse = await getFormResponse(studyId, user.$id);
+      if (!activeResponse || activeResponse.driveOrganizationStatus !== "organizing") {
+        break;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      claimedResponse = await claimFormResponseDeletion(existingResponse.id);
+    }
+    if (!claimedResponse) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "This response is still being prepared. Please try deleting it again.",
+        },
+        { status: 409 },
+      );
+    }
+
+    try {
+      await deleteResponseDriveData(claimedResponse.id);
+      await deleteFormResponse(claimedResponse.id);
+    } catch (error) {
+      await markFormResponseDeletionFailed(claimedResponse.id).catch(
+        () => undefined,
+      );
+      throw error;
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Failed to delete study response:", error);
+
+    return NextResponse.json(
+      {
+        success: false,
+        message:
+          "The response could not be fully deleted. It was retained for a safe retry.",
+      },
+      { status: 502 },
     );
   }
 }

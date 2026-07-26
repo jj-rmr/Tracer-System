@@ -87,8 +87,8 @@ export default function AccountDetails({ id, currentUserId }: Props) {
       setAccount((prev) => (prev ? { ...prev, name } : prev));
       setEditing(false);
       router.refresh();
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Failed to update account.");
     } finally {
       setSaving(false);
     }
@@ -106,8 +106,8 @@ export default function AccountDetails({ id, currentUserId }: Props) {
 
       router.replace("/admin/accounts");
       router.refresh();
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : "Failed to delete account.");
     } finally {
       setDeleting(false);
     }
@@ -230,7 +230,7 @@ export default function AccountDetails({ id, currentUserId }: Props) {
       {/* Tracer Survey Section */}
       <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm">
         <h2 className="text-2xl font-bold text-slate-900 mb-6">
-          Tracer Survey Response
+          Tracer Response
         </h2>
 
         {loadingSurvey ? (
@@ -238,7 +238,7 @@ export default function AccountDetails({ id, currentUserId }: Props) {
         ) : !survey ? (
           <div className="bg-slate-50 rounded-2xl p-6 text-center border border-dashed border-slate-200">
             <p className="text-slate-500">
-              No tracer survey data submitted by this user yet.
+              No tracer response submitted by this user yet.
             </p>
           </div>
         ) : (

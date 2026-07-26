@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { LuDownload, LuFilterX, LuPlus, LuSearch } from "react-icons/lu";
+import { LuDownload, LuFilterX, LuPencil, LuPlus, LuSearch } from "react-icons/lu";
 
 import ManualResponseModal from "@/components/admin/responses/ManualResponseModal";
 import { SelectField } from "@/components/forms/SelectField";
 import ResponseTable from "@/components/responses/ResponseTable";
+import { useToast } from "@/components/ui/Toast";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { PROGRAMS } from "@/lib/programs/catalog";
 import { AdminResponseFilters, StudyPeriodSummary } from "@/types";
@@ -45,9 +46,12 @@ function ResponseSearchField({
 
 export default function ResponsesPage() {
   const router = useRouter();
+  const { showToast } = useToast();
   const searchParams = useSearchParams();
   const searchValue = searchParams.get("search") ?? "";
   const [studies, setStudies] = useState<StudyPeriodSummary[]>([]);
+  const [studiesLoaded, setStudiesLoaded] = useState(false);
+  const [hasManualDraft, setHasManualDraft] = useState(false);
   const [showManualResponse, setShowManualResponse] = useState(false);
   const [tableKey, setTableKey] = useState(0);
   const parsedPage = Number(searchParams.get("page") ?? "1");
@@ -90,11 +94,51 @@ export default function ResponsesPage() {
             "Failed to load response filter options:",
             error instanceof Error ? error.message : "Unknown error",
           );
+          showToast({
+            message: "Failed to check available tracer studies.",
+            type: "error",
+          });
         }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setStudiesLoaded(true);
       });
 
     return () => controller.abort();
+  }, [showToast]);
+
+  const refreshManualDraft = useCallback(async () => {
+    try {
+      const response = await fetch("/api/admin/responses/manual-draft", {
+        cache: "no-store",
+        credentials: "include",
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message);
+      setHasManualDraft(Boolean(result.data));
+    } catch (error) {
+      console.error(
+        "Failed to check the manual response draft:",
+        error instanceof Error ? error.message : "Unknown error",
+      );
+    }
   }, []);
+
+  useEffect(() => {
+    void refreshManualDraft();
+  }, [refreshManualDraft]);
+
+  function openManualResponse() {
+    if (!studies.some((study) => study.status === "open")) {
+      showToast({
+        message: "No tracer studies are currently available or open.",
+        type: "warning",
+      });
+      return;
+    }
+
+    setShowManualResponse(true);
+  }
 
   const filters = useMemo<AdminResponseFilters>(
     () => ({
@@ -141,11 +185,12 @@ export default function ResponsesPage() {
         <div className="flex flex-col-reverse gap-2 md:flex-row">
           <button
             type="button"
-            onClick={() => setShowManualResponse(true)}
-            className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-sky-200 bg-white px-4 py-2.5 text-sm font-semibold text-sky-700 shadow-sm transition-all duration-200 hover:bg-sky-50 hover:shadow-md"
+            onClick={openManualResponse}
+            disabled={!studiesLoaded}
+            className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-sky-200 bg-white px-4 py-2.5 text-sm font-semibold text-sky-700 shadow-sm transition-all duration-200 hover:bg-sky-50 hover:shadow-md disabled:cursor-wait disabled:opacity-50"
           >
-            <LuPlus size={16} />
-            Add Manual Response
+            {hasManualDraft ? <LuPencil size={16} /> : <LuPlus size={16} />}
+            {hasManualDraft ? "Edit Draft Response" : "Add Manual Response"}
           </button>
           <button
             type="button"
@@ -255,9 +300,13 @@ export default function ResponsesPage() {
 
       {showManualResponse && (
         <ManualResponseModal
-          onClose={() => setShowManualResponse(false)}
+          onClose={() => {
+            setShowManualResponse(false);
+            void refreshManualDraft();
+          }}
           onComplete={() => {
             setShowManualResponse(false);
+            setHasManualDraft(false);
             updateQuery({ page: undefined });
             setTableKey((current) => current + 1);
           }}

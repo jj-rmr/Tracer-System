@@ -12,6 +12,7 @@ import {
   LuFileSpreadsheet,
   LuUsersRound,
   LuCalendarClock,
+  LuFolderOpen,
 } from "react-icons/lu";
 import { Role } from "@/types";
 
@@ -24,12 +25,13 @@ const ADMIN_PREFETCH_ROUTES = [
   "/admin/accounts",
   "/admin/responses",
   "/admin/studies",
+  "/admin/files",
   "/admin/settings",
 ];
 
 const ALUMNI_PREFETCH_ROUTES = [
   "/alumni",
-  "/alumni/survey",
+  "/alumni/responses",
   "/alumni/settings",
 ];
 
@@ -92,6 +94,11 @@ export default function DashboardNavigation({
       href: "/admin/studies",
       icon: LuCalendarClock,
     },
+    {
+      label: "Files",
+      href: "/admin/files",
+      icon: LuFolderOpen,
+    },
   ];
 
   const alumniNavItems = [
@@ -101,8 +108,8 @@ export default function DashboardNavigation({
       icon: LuHouse,
     },
     {
-      label: "Survey",
-      href: "/alumni/survey",
+      label: "Responses",
+      href: "/alumni/responses",
       icon: LuFileSpreadsheet,
     },
   ];

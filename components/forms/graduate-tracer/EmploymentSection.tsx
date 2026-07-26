@@ -165,6 +165,7 @@ export function EmploymentSection({
         required
         hasError={!!errors.employmentStatus}
       />
+      <ErrorMessage message={errors.employmentStatus} />
 
       {conditions.showEmployedFields && (
         <div className="space-y-6 border-t border-slate-200 pt-4 animate-fadeIn">
@@ -324,15 +325,24 @@ export function EmploymentSection({
               check more than one answer. *
             </label>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+            <div
+              className={`${styles.choiceGroup(
+                !!errors.unemploymentReasons,
+                readOnly,
+              )} grid-cols-1 md:grid-cols-2`}
+            >
               {unempOptions.map((reason) => (
                 <label
                   key={reason.value}
-                  className="flex items-center space-x-2 text-sm"
+                  className={styles.choice(
+                    !!errors.unemploymentReasons,
+                    readOnly,
+                  )}
                 >
                   <input
                     disabled={readOnly}
                     type="checkbox"
+                    className={styles.checkbox(!!errors.unemploymentReasons)}
                     checked={form.unemploymentReasons.includes(reason.value)}
                     onChange={() =>
                       updateField(
@@ -353,19 +363,22 @@ export function EmploymentSection({
             <ErrorMessage message={errors.unemploymentReasons} />
 
             {form.unemploymentReasons.includes("Others") && (
-              <input
-                disabled={readOnly}
-                type="text"
-                className={styles.input(
-                  !!errors.unemploymentReasonOther,
-                  readOnly,
-                )}
-                placeholder="Please specify other reason(s)"
-                value={form.unemploymentReasonOther}
-                onChange={(e) =>
-                  updateField("unemploymentReasonOther", e.target.value)
-                }
-              />
+              <div>
+                <input
+                  disabled={readOnly}
+                  type="text"
+                  className={styles.input(
+                    !!errors.unemploymentReasonOther,
+                    readOnly,
+                  )}
+                  placeholder="Please specify other reason(s)"
+                  value={form.unemploymentReasonOther}
+                  onChange={(e) =>
+                    updateField("unemploymentReasonOther", e.target.value)
+                  }
+                />
+                <ErrorMessage message={errors.unemploymentReasonOther} />
+              </div>
             )}
           </div>
         )}

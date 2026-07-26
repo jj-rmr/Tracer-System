@@ -88,10 +88,7 @@ export async function PATCH(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error(
-      "Failed to update manual import status:",
-      error instanceof Error ? error.message : "Unknown error",
-    );
+    console.error("Failed to update manual import status:", error);
 
     return NextResponse.json(
       { success: false, message: "Failed to update the manual import." },

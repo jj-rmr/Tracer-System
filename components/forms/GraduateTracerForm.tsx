@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect, useRef, useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { useRouter } from "next/navigation";
 
 import { EducationSection } from "@/components/forms/graduate-tracer/EducationSection";
@@ -14,18 +14,31 @@ import {
   type GraduateTracerFieldErrors,
   validateGraduateTracerStep,
 } from "@/lib/forms/graduate-tracer-validation";
-import type { Survey, SurveyDocument } from "@/types";
+import type {
+  Survey,
+  SurveyDocument,
+  SurveyDocumentType,
+} from "@/types";
 
 interface Props {
   initialData: Survey;
   isNew: boolean;
   onSuccess?: () => void;
   onSave?: (survey: Survey, documents: PendingSurveyDocuments) => Promise<void>;
+  onDraftSave?: (survey: Survey) => Promise<string | undefined>;
+  onInstantDocumentUpload?: (
+    survey: Survey,
+    file: File,
+    documentType: SurveyDocumentType,
+  ) => Promise<SurveyDocument>;
   onDeleteDocument?: (document: SurveyDocument) => Promise<void>;
   readOnly?: boolean;
   allowDocuments?: boolean;
   requireResponses?: boolean;
   submitLabel?: string;
+  initialSavedAt?: string;
+  onValuesChange?: (survey: Survey) => void;
+  onRequestClose?: () => void;
 }
 
 export interface PendingSurveyDocuments {
@@ -40,11 +53,16 @@ export default function GraduateTracerForm({
   isNew,
   onSuccess,
   onSave,
+  onDraftSave,
+  onInstantDocumentUpload,
   onDeleteDocument,
   readOnly = false,
   allowDocuments = true,
   requireResponses = true,
   submitLabel,
+  initialSavedAt,
+  onValuesChange,
+  onRequestClose,
 }: Props) {
   const { control, getValues, register, reset, setValue } = useForm<Survey>({
     defaultValues: initialData,
@@ -53,6 +71,11 @@ export default function GraduateTracerForm({
   const [step, setStep] = useState(1);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [draftSaveState, setDraftSaveState] = useState<
+    "idle" | "saving" | "saved" | "error"
+  >(initialSavedAt ? "saved" : "idle");
+  const [lastSavedAt, setLastSavedAt] = useState(initialSavedAt);
+  const [activeDocumentUploads, setActiveDocumentUploads] = useState(0);
   const [employmentDocuments, setEmploymentDocuments] = useState<File[]>([]);
 
   const [awardsDocuments, setAwardsDocuments] = useState<File[]>([]);
@@ -62,13 +85,118 @@ export default function GraduateTracerForm({
   const [documentToDelete, setDocumentToDelete] =
     useState<SurveyDocument | null>(null);
   const { showToast } = useToast();
+  const watchedValues = useWatch({ control });
+  const lastDraftSignatureRef = useRef(JSON.stringify(initialData));
+  const draftAttemptRef = useRef(0);
+  const uploadingFilesRef = useRef(new WeakSet<File>());
+  const employmentDocumentsRef = useRef(employmentDocuments);
+  const awardsDocumentsRef = useRef(awardsDocuments);
 
   const router = useRouter();
 
   useEffect(() => {
     reset(initialData);
-    setExistingDocuments(initialData.documents ?? []);
+    lastDraftSignatureRef.current = JSON.stringify(initialData);
   }, [initialData, reset]);
+
+  useEffect(() => {
+    employmentDocumentsRef.current = employmentDocuments;
+    awardsDocumentsRef.current = awardsDocuments;
+  }, [awardsDocuments, employmentDocuments]);
+
+  useEffect(() => {
+    onValuesChange?.(getValues());
+  }, [getValues, onValuesChange, watchedValues]);
+
+  useEffect(() => {
+    if (!onDraftSave || readOnly || isSubmitting) return;
+
+    const signature = JSON.stringify(watchedValues);
+    if (signature === lastDraftSignatureRef.current) return;
+
+    const timer = window.setTimeout(() => {
+      const snapshot = getValues();
+      const attempt = ++draftAttemptRef.current;
+      setDraftSaveState("saving");
+
+      void onDraftSave(snapshot)
+        .then((savedAt) => {
+          lastDraftSignatureRef.current = signature;
+          if (attempt === draftAttemptRef.current) {
+            setLastSavedAt(savedAt ?? new Date().toISOString());
+            setDraftSaveState("saved");
+          }
+        })
+        .catch((error) => {
+          console.error("Draft autosave failed:", error);
+          if (attempt === draftAttemptRef.current) {
+            setDraftSaveState("error");
+          }
+        });
+    }, 1200);
+
+    return () => window.clearTimeout(timer);
+  }, [getValues, isSubmitting, onDraftSave, readOnly, watchedValues]);
+
+  useEffect(() => {
+    if (!onInstantDocumentUpload || readOnly) return;
+    const instantUpload = onInstantDocumentUpload;
+
+    function beginUpload(
+      file: File,
+      documentType: SurveyDocumentType,
+      selectedFilesRef: React.RefObject<File[]>,
+      setFiles: React.Dispatch<React.SetStateAction<File[]>>,
+    ) {
+      if (uploadingFilesRef.current.has(file)) return;
+
+      uploadingFilesRef.current.add(file);
+      setActiveDocumentUploads((count) => count + 1);
+
+      void instantUpload(getValues(), file, documentType)
+        .then(async (document) => {
+          if (!selectedFilesRef.current.includes(file)) {
+            if (onDeleteDocument) await onDeleteDocument(document);
+            return;
+          }
+
+          setFiles((current) => current.filter((item) => item !== file));
+          setExistingDocuments((current) => [...current, document]);
+          setValue("documents", [...getValues("documents"), document]);
+        })
+        .catch((error) => {
+          console.error("Instant document upload failed:", error);
+          showToast({
+            message: `Could not upload ${file.name}. It will be retried when you submit.`,
+            type: "error",
+          });
+        })
+        .finally(() => {
+          setActiveDocumentUploads((count) => Math.max(0, count - 1));
+        });
+    }
+
+    employmentDocuments.forEach((file) =>
+      beginUpload(
+        file,
+        "employment",
+        employmentDocumentsRef,
+        setEmploymentDocuments,
+      ),
+    );
+    awardsDocuments.forEach((file) =>
+      beginUpload(file, "awards", awardsDocumentsRef, setAwardsDocuments),
+    );
+  }, [
+    awardsDocuments,
+    employmentDocuments,
+    getValues,
+    onDeleteDocument,
+    onInstantDocumentUpload,
+    readOnly,
+    setValue,
+    showToast,
+  ]);
 
   const sections = [
     "Personal & Contact Info",
@@ -209,7 +337,7 @@ export default function GraduateTracerForm({
       onSuccess?.();
       setShowSaveModal(false);
       router.refresh();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Save failed:", err);
 
       showToast({
@@ -246,6 +374,27 @@ export default function GraduateTracerForm({
             style={{ width: `${(step / sections.length) * 100}%` }}
           />
         </div>
+        {onDraftSave && !readOnly && (
+          <p
+            aria-live="polite"
+            className={`mt-2 text-right text-xs font-medium ${
+              draftSaveState === "error"
+                ? "text-rose-600"
+                : "text-slate-500"
+            }`}
+          >
+            {draftSaveState === "saving"
+              ? "Saving draft..."
+              : draftSaveState === "error"
+                ? "Draft not saved. Changes will retry after your next edit."
+                : lastSavedAt
+                  ? `Draft saved ${new Date(lastSavedAt).toLocaleTimeString("en-PH", {
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}`
+                  : "Draft autosave is on"}
+          </p>
+        )}
       </div>
       {/* Render Steps */}
       <div className="min-h-100 bg-white md:border border-slate-200 rounded-2xl md:p-6 md:shadow-sm">
@@ -300,11 +449,28 @@ export default function GraduateTracerForm({
         )}
       </div>
       {/* Buttons */}
+      {activeDocumentUploads > 0 && (
+        <p className="text-right text-xs font-medium text-sky-600" aria-live="polite">
+          Uploading {activeDocumentUploads} document
+          {activeDocumentUploads === 1 ? "" : "s"}...
+        </p>
+      )}
       <div className="flex flex-col-reverse md:flex-row justify-stretch md:justify-end gap-4">
+        {onRequestClose && !readOnly && (
+          <button
+            type="button"
+            onClick={onRequestClose}
+            disabled={isSubmitting}
+            className="rounded-2xl border border-slate-200 bg-white px-4 py-2 whitespace-nowrap text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Close Form
+          </button>
+        )}
         {step > 1 && (
           <button
             className="rounded-2xl border border-slate-200 bg-white px-4 py-2 whitespace-nowrap text-sm font-semibold text-slate-700 shadow-sm transition-all duration-200 hover:bg-slate-100 disabled:cursor-not-allowed disabled:border-slate-200 disabled:bg-slate-100 disabled:text-slate-500 disabled:shadow-none disabled:hover:bg-slate-100"
             onClick={() => handleStep("backward")}
+            disabled={isSubmitting || activeDocumentUploads > 0}
           >
             Previous Section
           </button>
@@ -315,13 +481,15 @@ export default function GraduateTracerForm({
             <button
               className="rounded-2xl bg-sky-600 px-4 py-2.5 whitespace-nowrap text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-sky-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none disabled:hover:bg-slate-300"
               onClick={handlePreSubmitCheck}
+              disabled={isSubmitting || activeDocumentUploads > 0}
             >
-              {submitLabel ?? (isNew ? "Submit Survey" : "Update Survey")}
+              {submitLabel ?? (isNew ? "Submit Response" : "Update Response")}
             </button>
           ) : (
             <button
               className="rounded-2xl bg-sky-600 px-4 py-2.5 whitespace-nowrap text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-sky-700 hover:shadow-md disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none disabled:hover:bg-slate-300"
               onClick={() => validateStep(step) && handleStep("forward")}
+              disabled={isSubmitting || activeDocumentUploads > 0}
             >
               Next Section
             </button>
@@ -345,7 +513,7 @@ export default function GraduateTracerForm({
           onSave && !requireResponses
             ? "Add manual response?"
             : isNew
-              ? "Submit survey?"
+              ? "Submit response?"
               : "Save changes?"
         }
         description={
@@ -357,7 +525,7 @@ export default function GraduateTracerForm({
         }
         cancelLabel="Review Form"
         confirmLabel={
-          submitLabel ?? (isNew ? "Submit Survey" : "Update Survey")
+          submitLabel ?? (isNew ? "Submit Response" : "Update Response")
         }
         busy={isSubmitting}
       />

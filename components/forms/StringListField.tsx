@@ -16,11 +16,11 @@ const styles = {
   input: (err: boolean, disabled: boolean) => {
     const stateClass = disabled
       ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-500 shadow-none placeholder:text-slate-400"
-      : "focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100 shadow-sm text-slate-900";
+      : err
+        ? "border-rose-400 bg-rose-50/60 text-slate-900 shadow-sm focus:border-rose-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-rose-100"
+        : "border-slate-200 bg-slate-50 text-slate-900 shadow-sm focus:border-sky-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-sky-100";
 
-    return `min-w-0 flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm transition duration-200 placeholder:text-slate-400 ${stateClass} ${
-      err && !disabled ? "border-rose-400 focus:ring-rose-100" : ""
-    }`;
+    return `min-w-0 flex-1 rounded-2xl border px-4 py-3 text-sm transition duration-200 placeholder:text-slate-400 ${stateClass}`;
   },
 
   label:
@@ -59,7 +59,15 @@ export function StringListField({
   };
 
   return (
-    <div className="w-full space-y-3">
+    <div
+      className={`w-full space-y-3 rounded-2xl border p-3 transition duration-200 ${
+        readOnly
+          ? "border-transparent"
+          : hasError
+            ? "border-rose-400 bg-rose-50/60"
+            : "border-transparent"
+      }`}
+    >
       <label className={styles.label}>
         {label}
         {required && " *"}

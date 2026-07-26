@@ -33,15 +33,15 @@ const styles = {
   ) => {
     const stateClass = disabled
       ? "cursor-not-allowed border-slate-200 bg-slate-100 text-slate-500 shadow-none"
-      : isDragActive
+      : err
+        ? "border-rose-400 bg-rose-50/60 text-slate-900 focus-within:ring-4 focus-within:ring-rose-100"
+        : isDragActive
         ? "border-sky-400 bg-sky-50"
         : hasFile
           ? "border-sky-400 bg-sky-50"
           : "border-slate-200 bg-slate-50 hover:border-sky-400 hover:bg-white";
 
-    return `flex min-h-32 w-full cursor-pointer items-center gap-3 rounded-2xl border border-dashed px-5 py-5 text-sm transition duration-200 ${
-      err && !disabled ? "border-rose-400 focus:ring-4 focus:ring-rose-100" : ""
-    } ${stateClass}`;
+    return `flex min-h-32 w-full cursor-pointer items-center gap-3 rounded-2xl border border-dashed px-5 py-5 text-sm transition duration-200 ${stateClass}`;
   },
 
   removeButton:

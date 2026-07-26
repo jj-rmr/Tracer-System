@@ -6,6 +6,7 @@ import {
   FormResponseStatus,
   ManualImportStatus,
   ResponseDeletionStatus,
+  DriveOrganizationStatus,
 } from "@/types";
 
 interface AdminResponseSummaryRow {
@@ -13,6 +14,7 @@ interface AdminResponseSummaryRow {
   study_period_id: string;
   academic_year: string;
   study_title: string;
+  study_status: "open" | "closed";
   source: FormResponseSource;
   status: FormResponseStatus;
   respondent_name: string | null;
@@ -29,6 +31,8 @@ interface AdminResponseSummaryRow {
   created_at: string;
   import_status: ManualImportStatus;
   deletion_status: ResponseDeletionStatus;
+  drive_organization_status: DriveOrganizationStatus;
+  drive_organization_error: string | null;
 }
 
 const SUMMARY_COLUMNS = [
@@ -36,6 +40,7 @@ const SUMMARY_COLUMNS = [
   "study_period_id",
   "academic_year",
   "study_title",
+  "study_status",
   "source",
   "status",
   "respondent_name",
@@ -52,6 +57,8 @@ const SUMMARY_COLUMNS = [
   "created_at",
   "import_status",
   "deletion_status",
+  "drive_organization_status",
+  "drive_organization_error",
 ].join(",");
 
 function mapSummary(row: AdminResponseSummaryRow): AdminResponseSummary {
@@ -60,6 +67,7 @@ function mapSummary(row: AdminResponseSummaryRow): AdminResponseSummary {
     studyPeriodId: row.study_period_id,
     academicYear: row.academic_year,
     studyTitle: row.study_title,
+    studyStatus: row.study_status,
     source: row.source,
     status: row.status,
     respondentName: row.respondent_name,
@@ -76,6 +84,8 @@ function mapSummary(row: AdminResponseSummaryRow): AdminResponseSummary {
     createdAt: row.created_at,
     importStatus: row.import_status,
     deletionStatus: row.deletion_status,
+    driveOrganizationStatus: row.drive_organization_status,
+    driveOrganizationError: row.drive_organization_error,
   };
 }
 

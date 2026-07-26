@@ -1,0 +1,131 @@
+"use client";
+
+import { useRef, useState } from "react";
+
+import GraduateTracerForm, {
+  type PendingSurveyDocuments,
+} from "@/components/forms/GraduateTracerForm";
+import { surveyToAnswers } from "@/lib/forms/graduate-tracer-adapter";
+import type { Survey, SurveyDocument, SurveyDocumentType } from "@/types";
+
+interface ManualResponseEditorProps {
+  responseId: string;
+  initialData: Survey;
+  initialRespondentEmail: string;
+  onComplete: () => void;
+}
+
+export default function ManualResponseEditor({
+  responseId,
+  initialData,
+  initialRespondentEmail,
+  onComplete,
+}: ManualResponseEditorProps) {
+  const [respondentEmail, setRespondentEmail] = useState(
+    initialRespondentEmail,
+  );
+  const uploadKeysRef = useRef(new WeakMap<File, string>());
+
+  function getUploadKey(file: File) {
+    const existing = uploadKeysRef.current.get(file);
+    if (existing) return existing;
+    const key = crypto.randomUUID();
+    uploadKeysRef.current.set(file, key);
+    return key;
+  }
+
+  async function uploadDocument(
+    _response: Survey,
+    file: File,
+    documentType: SurveyDocumentType,
+  ) {
+    const formData = new FormData();
+    formData.set("file", file);
+    formData.set("documentType", documentType);
+    formData.set("uploadKey", getUploadKey(file));
+    const response = await fetch(`/api/form-responses/${responseId}/documents`, {
+      method: "POST",
+      body: formData,
+    });
+    const result = await response.json();
+    if (!response.ok || !result.document) {
+      throw new Error(result.message ?? `Failed to upload ${file.name}.`);
+    }
+    return result.document as SurveyDocument;
+  }
+
+  async function deleteDocument(document: SurveyDocument) {
+    const response = await fetch(
+      `/api/form-responses/${responseId}/documents/${document.id}`,
+      { method: "DELETE" },
+    );
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.message ?? "Failed to delete the document.");
+    }
+  }
+
+  async function saveResponse(
+    survey: Survey,
+    pendingDocuments: PendingSurveyDocuments,
+  ) {
+    for (const [documentType, files] of [
+      ["employment", pendingDocuments.employment],
+      ["awards", pendingDocuments.awards],
+    ] as const) {
+      for (const file of files) {
+        await uploadDocument(survey, file, documentType);
+      }
+    }
+
+    const respondentName = [
+      survey.firstName,
+      survey.middleName,
+      survey.lastName,
+      survey.extensionName,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .trim();
+    const response = await fetch(`/api/admin/responses/${responseId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        respondentName,
+        respondentEmail,
+        answers: surveyToAnswers(survey),
+      }),
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.message ?? "Failed to edit the manual response.");
+    }
+  }
+
+  return (
+    <div className="space-y-6">
+      <label className="block space-y-2 text-sm font-medium text-slate-700">
+        <span className="block text-xs font-semibold uppercase tracking-wider text-slate-600">
+          Respondent email
+        </span>
+        <input
+          type="email"
+          value={respondentEmail}
+          onChange={(event) => setRespondentEmail(event.target.value)}
+          placeholder="Optional"
+          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm shadow-sm focus:border-sky-400 focus:outline-none focus:ring-4 focus:ring-sky-100"
+        />
+      </label>
+      <GraduateTracerForm
+        initialData={initialData}
+        isNew={false}
+        requireResponses={false}
+        submitLabel="Save Changes"
+        onInstantDocumentUpload={uploadDocument}
+        onDeleteDocument={deleteDocument}
+        onSave={saveResponse}
+        onSuccess={onComplete}
+      />
+    </div>
+  );
+}

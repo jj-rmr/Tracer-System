@@ -1,6 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/auth";
+import { initializeStudyDriveHierarchy } from "@/lib/google-drive/initialize-hierarchy";
+import { syncGoogleDriveIndex } from "@/lib/google-drive/sync-index";
 import {
   createStudyPeriod,
   listPublishedFormVersions,
@@ -8,6 +10,8 @@ import {
 } from "@/lib/repositories/study-admin.repository";
 
 const ACADEMIC_YEAR_PATTERN = /^(\d{4})-(\d{4})$/;
+
+export const maxDuration = 300;
 
 function isValidAcademicYear(value: string) {
   const match = ACADEMIC_YEAR_PATTERN.exec(value);
@@ -51,23 +55,16 @@ export async function POST(request: NextRequest) {
     const academicYear =
       typeof body.academicYear === "string" ? body.academicYear.trim() : "";
     const title = typeof body.title === "string" ? body.title.trim() : "";
-    const opensAt = typeof body.opensAt === "string" ? body.opensAt : "";
-    const closesAt = typeof body.closesAt === "string" ? body.closesAt : "";
-    const openingTime = new Date(opensAt).getTime();
-    const closingTime = new Date(closesAt).getTime();
 
     if (
       !formVersionId ||
       !isValidAcademicYear(academicYear) ||
-      !title ||
-      !Number.isFinite(openingTime) ||
-      !Number.isFinite(closingTime) ||
-      closingTime <= openingTime
+      !title
     ) {
       return NextResponse.json(
         {
           success: false,
-          message: "Enter a valid form, academic year, title, and schedule.",
+          message: "Enter a valid form, academic year, and title.",
         },
         { status: 400 },
       );
@@ -77,8 +74,18 @@ export async function POST(request: NextRequest) {
       formVersionId,
       academicYear,
       title,
-      opensAt: new Date(openingTime).toISOString(),
-      closesAt: new Date(closingTime).toISOString(),
+    });
+
+    after(async () => {
+      try {
+        await initializeStudyDriveHierarchy({
+          studyId: study.id,
+          academicYear,
+        });
+        await syncGoogleDriveIndex();
+      } catch (error) {
+        console.error("Failed to prepare folders for the new study:", error);
+      }
     });
 
     return NextResponse.json(

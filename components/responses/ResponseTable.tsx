@@ -3,7 +3,8 @@
 import { useEffect, useState } from "react";
 import { AdminResponseFilters, AdminResponseSummary, Survey } from "@/types";
 import GraduateTracerForm from "@/components/forms/GraduateTracerForm";
-import { LuEye, LuTrash2 } from "react-icons/lu";
+import ManualResponseEditor from "@/components/admin/responses/ManualResponseEditor";
+import { LuEye, LuPencil, LuRefreshCw, LuTrash2 } from "react-icons/lu";
 import { useToast } from "@/components/ui/Toast";
 import Modal from "@/components/ui/Modal";
 import ConfirmationDialog from "@/components/ui/ConfirmationDialog";
@@ -38,10 +39,19 @@ export default function ResponseTable({
   const [selectedSurveyId, setSelectedSurveyId] = useState<string | null>(null);
   const [loadingSurvey, setLoadingSurvey] = useState(false);
   const [surveyData, setSurveyData] = useState<Survey | null>(null);
+  const [responseMetadata, setResponseMetadata] = useState<{
+    source: "alumni" | "admin_import";
+    respondentEmail: string;
+    studyStatus: "open" | "closed";
+  } | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [surveyToDelete, setSurveyToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [organizingResponseId, setOrganizingResponseId] = useState<
+    string | null
+  >(null);
 
   const { showToast } = useToast();
   const router = useRouter();
@@ -63,21 +73,23 @@ export default function ResponseTable({
           const data = await res.json();
 
           if (!res.ok) {
-            throw new Error(data.message ?? "Failed to load survey.");
+            throw new Error(data.message ?? "Failed to load response.");
           }
 
           setSurveyData(data.response);
+          setResponseMetadata(data.metadata);
         } catch (error: unknown) {
           console.error(error);
 
           showToast({
             message:
-              error instanceof Error ? error.message : "Failed to load survey.",
+              error instanceof Error ? error.message : "Failed to load response.",
             type: "error",
           });
 
           setSelectedSurveyId(null);
           setSurveyData(null);
+          setResponseMetadata(null);
         } finally {
           setLoadingSurvey(false);
         }
@@ -125,7 +137,7 @@ export default function ResponseTable({
         const data: ServerDataResponse = await res.json();
 
         if (!res.ok) {
-          throw new Error(data.message ?? "Failed to load surveys.");
+          throw new Error(data.message ?? "Failed to load responses.");
         }
 
         setResponses(data.responses);
@@ -148,7 +160,7 @@ export default function ResponseTable({
     return () => {
       controller.abort();
     };
-  }, [currentPage, filters]);
+  }, [currentPage, filters, reloadKey]);
 
   const confirmDelete = async (id: string) => {
     setIsDeleting(true);
@@ -162,7 +174,7 @@ export default function ResponseTable({
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.message ?? "Failed to delete survey.");
+        throw new Error(data.message ?? "Failed to delete response.");
       }
 
       setResponses((previous) =>
@@ -174,7 +186,7 @@ export default function ResponseTable({
       setShowDeleteModal(false);
 
       showToast({
-        message: "Survey deleted successfully.",
+        message: "Response deleted successfully.",
         type: "success",
       });
 
@@ -182,11 +194,50 @@ export default function ResponseTable({
     } catch (error: unknown) {
       showToast({
         message:
-          error instanceof Error ? error.message : "Failed to delete survey.",
+          error instanceof Error ? error.message : "Failed to delete response.",
         type: "error",
       });
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const retryDriveOrganization = async (id: string) => {
+    setOrganizingResponseId(id);
+
+    try {
+      const response = await fetch(`/api/admin/responses/${id}/organize`, {
+        method: "POST",
+        credentials: "include",
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message ?? "Failed to organize Drive folder.");
+      }
+
+      setResponses((current) =>
+        current.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                driveOrganizationStatus: "organized",
+                driveOrganizationError: null,
+              }
+            : item,
+        ),
+      );
+      showToast({ message: "Response folder organized.", type: "success" });
+    } catch (error) {
+      showToast({
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to organize Drive folder.",
+        type: "error",
+      });
+    } finally {
+      setOrganizingResponseId(null);
     }
   };
 
@@ -215,21 +266,20 @@ export default function ResponseTable({
         {Object.values(filters).some(Boolean) ? (
           <>
             <h3 className="text-base font-semibold text-slate-600">
-              No matching surveys found
+              No matching responses found
             </h3>
             <p className="mt-2 text-sm text-slate-400">
               Try adjusting your search terms or clear the search to view all
-              survey records.
+              response records.
             </p>
           </>
         ) : (
           <>
             <h3 className="text-base font-semibold text-slate-600">
-              No survey records yet
+              No response records yet
             </h3>
             <p className="mt-2 text-sm text-slate-400">
-              Survey submissions will appear here once alumni complete the
-              tracer survey.
+              Responses will appear here once alumni complete the tracer form.
             </p>
           </>
         )}
@@ -257,8 +307,8 @@ export default function ResponseTable({
 
   return (
     <div className="w-full bg-white rounded-3xl border border-sky-100 shadow-[0_12px_30px_-5px_rgba(0,0,0,0.04)] shadow-sky-100/80 overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
+      <div className="w-full overflow-x-auto overscroll-x-contain scrollbar-thin scrollbar-thumb-sky-200">
+        <table className="w-full min-w-280 table-auto text-left border-collapse">
           <thead>
             <tr className="bg-slate-50/70 border-b border-slate-100">
               <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -275,6 +325,9 @@ export default function ResponseTable({
               </th>
               <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-400">
                 Created
+              </th>
+              <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-400">
+                Drive
               </th>
               <th className="p-4 text-xs font-bold uppercase tracking-wider text-slate-400">
                 Actions
@@ -312,28 +365,69 @@ export default function ResponseTable({
                 </td>
 
                 <td className="p-4 text-sm">
+                  <span
+                    title={response.driveOrganizationError ?? undefined}
+                    className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${
+                      response.driveOrganizationStatus === "organized"
+                        ? "bg-emerald-100 text-emerald-700"
+                        : response.driveOrganizationStatus === "failed"
+                          ? "bg-rose-100 text-rose-700"
+                          : "bg-amber-100 text-amber-700"
+                    }`}
+                  >
+                    {response.driveOrganizationStatus}
+                  </span>
+                </td>
+
+                <td className="p-4 text-sm">
                   <div className="flex justify-center gap-2">
+                    {response.driveOrganizationStatus !== "organized" && (
+                      <button
+                        type="button"
+                        disabled={organizingResponseId !== null}
+                        onClick={() => void retryDriveOrganization(response.id)}
+                        title="Retry Drive organization"
+                        className="inline-flex items-center justify-center rounded-xl bg-amber-100 p-2.5 font-semibold text-amber-700 transition-colors hover:bg-amber-200 disabled:opacity-50"
+                      >
+                        <LuRefreshCw
+                          size={16}
+                          className={
+                            organizingResponseId === response.id
+                              ? "animate-spin"
+                              : undefined
+                          }
+                        />
+                      </button>
+                    )}
                     <button
                       type="button"
                       onClick={() => setSelectedSurveyId(response.id)}
                       className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-100 px-4 py-2 font-semibold text-sky-600 transition-colors hover:bg-sky-200"
                     >
-                      <LuEye size={16} />
-                      View
+                      {response.source === "admin_import" ? (
+                        <LuPencil size={16} />
+                      ) : (
+                        <LuEye size={16} />
+                      )}
+                      {response.source === "admin_import"
+                        ? "Edit"
+                        : "View"}
                     </button>
 
-                    <button
-                      type="button"
-                      disabled={isDeleting}
-                      onClick={() => {
-                        setSurveyToDelete(response.id);
-                        setShowDeleteModal(true);
-                      }}
-                      className="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-100 px-4 py-2 font-semibold text-rose-500 transition-colors hover:bg-rose-200"
-                    >
-                      <LuTrash2 size={16} />
-                      Delete
-                    </button>
+                    {response.studyStatus === "open" && (
+                      <button
+                        type="button"
+                        disabled={isDeleting}
+                        onClick={() => {
+                          setSurveyToDelete(response.id);
+                          setShowDeleteModal(true);
+                        }}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-rose-100 px-4 py-2 font-semibold text-rose-500 transition-colors hover:bg-rose-200"
+                      >
+                        <LuTrash2 size={16} />
+                        Delete
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -346,21 +440,40 @@ export default function ResponseTable({
         onClose={() => {
           setSelectedSurveyId(null);
           setSurveyData(null);
+          setResponseMetadata(null);
         }}
-        title="View Tracer Response"
+        title={
+          responseMetadata?.source === "admin_import"
+            ? "Edit Manual Response"
+            : "View Tracer Response"
+        }
         width="xl"
       >
         {loadingSurvey ? (
           <LoadingState className="min-h-72" message="Loading response..." />
         ) : (
           <div className="mx-auto w-full max-w-5xl">
-            {surveyData && (
+            {surveyData &&
+            responseMetadata?.source === "admin_import" &&
+            selectedSurveyId ? (
+              <ManualResponseEditor
+                responseId={selectedSurveyId}
+                initialData={surveyData}
+                initialRespondentEmail={responseMetadata.respondentEmail}
+                onComplete={() => {
+                  setSelectedSurveyId(null);
+                  setSurveyData(null);
+                  setResponseMetadata(null);
+                  setReloadKey((current) => current + 1);
+                }}
+              />
+            ) : surveyData ? (
               <GraduateTracerForm
                 initialData={surveyData}
                 isNew={false}
                 readOnly
               />
-            )}
+            ) : null}
           </div>
         )}
       </Modal>

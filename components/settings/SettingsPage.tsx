@@ -21,16 +21,16 @@ const alumniInformation: InfoAccordionItem[] = [
       "Use your official @parsu.edu.ph Google account. The system does not maintain a separate password for your Tracer System access.",
   },
   {
-    id: "survey",
-    title: "Keeping your tracer survey current",
+    id: "response",
+    title: "Keeping your tracer response current",
     content:
-      "Return to the Survey page whenever your contact, education, or employment information changes so the university has an up-to-date alumni record.",
+      "Return to the Responses page whenever your contact, education, or employment information changes so the university has an up-to-date alumni record.",
   },
   {
     id: "data-use",
     title: "How submitted information is used",
     content:
-      "Tracer survey information supports alumni tracking, institutional planning, program evaluation, and authorized university reporting.",
+      "Tracer response information supports alumni tracking, institutional planning, program evaluation, and authorized university reporting.",
   },
 ];
 
@@ -49,9 +49,9 @@ const adminInformation: InfoAccordionItem[] = [
   },
   {
     id: "reporting",
-    title: "Survey review and exports",
+    title: "Response review and exports",
     content:
-      "Use survey and account exports only for authorized university operations, institutional reporting, and alumni tracer activities.",
+      "Use response and account exports only for authorized university operations, institutional reporting, and alumni tracer activities.",
   },
 ];
 
@@ -126,8 +126,10 @@ export default function SettingsPage({ name, email, role }: SettingsPageProps) {
             <h2 className="font-semibold text-slate-900">Help and support</h2>
             <p className="mt-1 text-sm leading-6 text-slate-600">
               For access problems, incorrect account information, or technical
-              issues, contact the ParSU Placement Office or your designated
-              Tracer System administrator.
+              issues, contact the ParSU Placement Unit Office or your designated
+              Tracer System administrator. This system is still under its
+              development phase, so if you encounter any issues, please report
+              them to the ParSU Placement Unit Office.
             </p>
           </div>
         </div>

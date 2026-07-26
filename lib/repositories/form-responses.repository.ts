@@ -3,7 +3,9 @@ import {
   FormResponse,
   FormResponseSource,
   FormResponseStatus,
+  DriveOrganizationStatus,
   ResponseDeletionStatus,
+  SurveyDocument,
 } from "@/types";
 
 interface FormResponseRow {
@@ -20,6 +22,9 @@ interface FormResponseRow {
   created_at: string;
   updated_at: string;
   deletion_status: ResponseDeletionStatus;
+  drive_organization_status: DriveOrganizationStatus;
+  drive_organization_error: string | null;
+  drive_organized_at: string | null;
 }
 
 function mapFormResponse(row: FormResponseRow): FormResponse {
@@ -37,6 +42,9 @@ function mapFormResponse(row: FormResponseRow): FormResponse {
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     deletionStatus: row.deletion_status,
+    driveOrganizationStatus: row.drive_organization_status,
+    driveOrganizationError: row.drive_organization_error,
+    driveOrganizedAt: row.drive_organized_at,
   };
 }
 
@@ -143,6 +151,7 @@ export async function claimFormResponseDeletion(responseId: string) {
     .update({ deletion_status: "deleting" })
     .eq("id", responseId)
     .in("deletion_status", ["active", "delete_failed"])
+    .neq("drive_organization_status", "organizing")
     .select()
     .maybeSingle();
 
@@ -181,6 +190,7 @@ export async function createFormResponseDocument({
   googleDriveFolderId,
   webViewLink,
   uploadKey,
+  uploadStatus = "ready",
 }: {
   responseId: string;
   documentType: "employment" | "awards";
@@ -191,6 +201,7 @@ export async function createFormResponseDocument({
   googleDriveFolderId: string;
   webViewLink?: string;
   uploadKey?: string;
+  uploadStatus?: "staged" | "ready";
 }) {
   const { data, error } = await supabase
     .from("form_response_documents")
@@ -203,6 +214,7 @@ export async function createFormResponseDocument({
       google_drive_file_id: googleDriveFileId,
       google_drive_folder_id: googleDriveFolderId,
       upload_key: uploadKey ?? null,
+      upload_status: uploadStatus,
       metadata: { source: "google-drive", webViewLink },
     })
     .select()
@@ -222,10 +234,41 @@ export async function getFormResponseDocumentByUploadKey(
     .select("*")
     .eq("response_id", responseId)
     .eq("upload_key", uploadKey)
+    .eq("upload_status", "ready")
     .maybeSingle();
 
   if (error) throw error;
-  return data;
+  return data ? mapFormResponseDocument(data) : null;
+}
+
+export async function getFormResponseForDeletion(
+  responseId: string,
+): Promise<FormResponse | null> {
+  const { data, error } = await supabase
+    .from("form_responses")
+    .select("*")
+    .eq("id", responseId)
+    .in("deletion_status", ["active", "deleting", "delete_failed"])
+    .maybeSingle();
+
+  if (error) throw error;
+  return data ? mapFormResponse(data as FormResponseRow) : null;
+}
+
+export async function getFormResponseForUserDeletion(
+  studyPeriodId: string,
+  userId: string,
+): Promise<FormResponse | null> {
+  const { data, error } = await supabase
+    .from("form_responses")
+    .select("*")
+    .eq("study_period_id", studyPeriodId)
+    .eq("user_id", userId)
+    .in("deletion_status", ["active", "deleting", "delete_failed"])
+    .maybeSingle();
+
+  if (error) throw error;
+  return data ? mapFormResponse(data as FormResponseRow) : null;
 }
 
 export async function getFormResponseDocuments(
@@ -235,22 +278,38 @@ export async function getFormResponseDocuments(
     .from("form_response_documents")
     .select("*")
     .eq("response_id", responseId)
+    .eq("upload_status", "ready")
     .order("uploaded_at", { ascending: false });
 
   if (error) throw error;
 
-  return data.map((row) => ({
-    id: row.id,
-    filename: row.filename,
-    mimeType: row.mime_type,
-    size: Number(row.size),
-    googleDriveFileId: row.google_drive_file_id,
-    googleDriveFolderId: row.google_drive_folder_id,
-    documentType: row.document_type,
-    uploadKey: row.upload_key ?? undefined,
-    uploadedAt: row.uploaded_at,
-    metadata: row.metadata ?? {},
-  }));
+  return data.map((row) => mapFormResponseDocument(row));
+}
+
+export async function getAllFormResponseDocuments(
+  responseId: string,
+): Promise<SurveyDocument[]> {
+  const { data, error } = await supabase
+    .from("form_response_documents")
+    .select("*")
+    .eq("response_id", responseId)
+    .order("uploaded_at", { ascending: false });
+
+  if (error) throw error;
+  return data.map((row) => mapFormResponseDocument(row));
+}
+
+export async function markFormResponseDocumentReady(documentId: string) {
+  const { data, error } = await supabase
+    .from("form_response_documents")
+    .update({ upload_status: "ready" })
+    .eq("id", documentId)
+    .eq("upload_status", "staged")
+    .select()
+    .single();
+
+  if (error) throw error;
+  return mapFormResponseDocument(data);
 }
 
 export async function getFormResponseDocument(documentId: string) {
@@ -281,11 +340,13 @@ export async function saveFormResponse({
   userId,
   status,
   answers,
+  resetDriveOrganization = false,
 }: {
   studyPeriodId: string;
   userId: string;
   status: FormResponseStatus;
   answers: Record<string, unknown>;
+  resetDriveOrganization?: boolean;
 }): Promise<FormResponse> {
   const { data, error } = await supabase
     .from("form_responses")
@@ -296,6 +357,12 @@ export async function saveFormResponse({
         status,
         answers,
         submitted_at: status === "submitted" ? new Date().toISOString() : null,
+        ...(resetDriveOrganization
+          ? {
+              drive_organization_status: "pending",
+              drive_organization_error: null,
+            }
+          : {}),
       },
       {
         onConflict: "study_period_id,user_id",
@@ -309,6 +376,92 @@ export async function saveFormResponse({
   return mapFormResponse(data as FormResponseRow);
 }
 
+function mapFormResponseDocument(row: Record<string, unknown>): SurveyDocument {
+  return {
+    id: String(row.id),
+    filename: String(row.filename),
+    mimeType: String(row.mime_type),
+    size: Number(row.size),
+    googleDriveFileId: String(row.google_drive_file_id),
+    googleDriveFolderId: String(row.google_drive_folder_id),
+    documentType: row.document_type as SurveyDocument["documentType"],
+    uploadKey:
+      typeof row.upload_key === "string" ? row.upload_key : undefined,
+    uploadedAt: String(row.uploaded_at),
+    metadata: (row.metadata as Record<string, unknown> | null) ?? {},
+  };
+}
+
+export async function getFormResponseDocumentByDriveFileId(fileId: string) {
+  const { data, error } = await supabase
+    .from("form_response_documents")
+    .select("*")
+    .eq("google_drive_file_id", fileId)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data ? mapFormResponseDocument(data) : null;
+}
+
+export async function listStagedFormResponseDocumentsOlderThan(
+  olderThan: string,
+) {
+  const { data, error } = await supabase
+    .from("form_response_documents")
+    .select("id,google_drive_file_id")
+    .eq("upload_status", "staged")
+    .lt("uploaded_at", olderThan);
+
+  if (error) throw error;
+  return data as { id: string; google_drive_file_id: string }[];
+}
+
+export async function markResponseDriveOrganizationStarted(responseId: string) {
+  const { data, error } = await supabase
+    .from("form_responses")
+    .update({
+      drive_organization_status: "organizing",
+      drive_organization_error: null,
+    })
+    .eq("id", responseId)
+    .eq("deletion_status", "active")
+    .select("id")
+    .maybeSingle();
+
+  if (error) throw error;
+  return Boolean(data);
+}
+
+export async function markResponseDriveOrganized(responseId: string) {
+  const { error } = await supabase
+    .from("form_responses")
+    .update({
+      drive_organization_status: "organized",
+      drive_organization_error: null,
+      drive_organized_at: new Date().toISOString(),
+    })
+    .eq("id", responseId)
+    .eq("deletion_status", "active");
+
+  if (error) throw error;
+}
+
+export async function markResponseDriveOrganizationFailed(
+  responseId: string,
+  message: string,
+) {
+  const { error } = await supabase
+    .from("form_responses")
+    .update({
+      drive_organization_status: "failed",
+      drive_organization_error: message.slice(0, 1000),
+    })
+    .eq("id", responseId)
+    .eq("deletion_status", "active");
+
+  if (error) throw error;
+}
+
 export async function createManualFormResponse({
   studyPeriodId,
   enteredByUserId,
@@ -316,6 +469,7 @@ export async function createManualFormResponse({
   respondentEmail,
   answers,
   importToken,
+  status = "submitted",
 }: {
   studyPeriodId: string;
   enteredByUserId: string;
@@ -323,7 +477,8 @@ export async function createManualFormResponse({
   respondentEmail?: string;
   answers: Record<string, unknown>;
   importToken: string;
-}): Promise<FormResponse> {
+  status?: FormResponseStatus;
+}): Promise<{ response: FormResponse; importToken: string }> {
   const values = {
     study_period_id: studyPeriodId,
     user_id: null,
@@ -331,11 +486,13 @@ export async function createManualFormResponse({
     respondent_name: respondentName?.trim() || null,
     respondent_email: respondentEmail?.trim().toLowerCase() || null,
     entered_by_user_id: enteredByUserId,
-    status: "submitted" as const,
+    status,
     answers,
-    submitted_at: new Date().toISOString(),
+    submitted_at: status === "submitted" ? new Date().toISOString() : null,
     import_status: "processing" as const,
     import_token: importToken,
+    drive_organization_status: "pending" as const,
+    drive_organization_error: null,
   };
   const existing = await getManualFormResponseByImportToken(importToken);
 
@@ -348,7 +505,31 @@ export async function createManualFormResponse({
       .single();
 
     if (error) throw error;
-    return mapFormResponse(data as FormResponseRow);
+    return {
+      response: mapFormResponse(data as FormResponseRow),
+      importToken,
+    };
+  }
+
+  const resumableDraft = await getManualDraftForAdminStudy(
+    enteredByUserId,
+    studyPeriodId,
+  );
+
+  if (resumableDraft) {
+    const { data, error } = await supabase
+      .from("form_responses")
+      .update({ ...values, import_token: resumableDraft.importToken })
+      .eq("id", resumableDraft.response.id)
+      .eq("deletion_status", "active")
+      .select()
+      .single();
+
+    if (error) throw error;
+    return {
+      response: mapFormResponse(data as FormResponseRow),
+      importToken: resumableDraft.importToken,
+    };
   }
 
   const { data, error } = await supabase
@@ -362,12 +543,112 @@ export async function createManualFormResponse({
       importToken,
     );
 
-    if (concurrentResponse) return concurrentResponse;
+    if (concurrentResponse) {
+      return { response: concurrentResponse, importToken };
+    }
+
+    const existingDraft = await getManualDraftForAdminStudy(
+      enteredByUserId,
+      studyPeriodId,
+    );
+
+    if (existingDraft) {
+      const { data: updatedDraft, error: updateError } = await supabase
+        .from("form_responses")
+        .update({ ...values, import_token: existingDraft.importToken })
+        .eq("id", existingDraft.response.id)
+        .eq("deletion_status", "active")
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+      return {
+        response: mapFormResponse(updatedDraft as FormResponseRow),
+        importToken: existingDraft.importToken,
+      };
+    }
   }
 
   if (error) throw error;
 
-  return mapFormResponse(data as FormResponseRow);
+  return {
+    response: mapFormResponse(data as FormResponseRow),
+    importToken,
+  };
+}
+
+async function getManualDraftForAdminStudy(
+  enteredByUserId: string,
+  studyPeriodId: string,
+) {
+  const { data, error } = await supabase
+    .from("form_responses")
+    .select("*")
+    .eq("source", "admin_import")
+    .eq("entered_by_user_id", enteredByUserId)
+    .eq("study_period_id", studyPeriodId)
+    .eq("status", "draft")
+    .eq("import_status", "processing")
+    .eq("deletion_status", "active")
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+
+  const row = data as FormResponseRow & { import_token: string };
+  return { response: mapFormResponse(row), importToken: row.import_token };
+}
+
+export async function updateManualFormResponse({
+  responseId,
+  respondentName,
+  respondentEmail,
+  answers,
+}: {
+  responseId: string;
+  respondentName?: string;
+  respondentEmail?: string;
+  answers: Record<string, unknown>;
+}) {
+  const { data, error } = await supabase
+    .from("form_responses")
+    .update({
+      respondent_name: respondentName?.trim() || null,
+      respondent_email: respondentEmail?.trim().toLowerCase() || null,
+      answers,
+      drive_organization_status: "pending",
+      drive_organization_error: null,
+    })
+    .eq("id", responseId)
+    .eq("source", "admin_import")
+    .eq("deletion_status", "active")
+    .select()
+    .maybeSingle();
+
+  if (error) throw error;
+  return data ? mapFormResponse(data as FormResponseRow) : null;
+}
+
+export async function listManualDraftsForAdmin(enteredByUserId: string) {
+  const { data, error } = await supabase
+    .from("form_responses")
+    .select("*")
+    .eq("source", "admin_import")
+    .eq("entered_by_user_id", enteredByUserId)
+    .eq("status", "draft")
+    .eq("import_status", "processing")
+    .eq("deletion_status", "active")
+    .order("updated_at", { ascending: false });
+
+  if (error) throw error;
+  return (data as Array<FormResponseRow & { import_token: string }>).map(
+    (row) => ({
+      response: mapFormResponse(row),
+      importToken: row.import_token,
+    }),
+  );
 }
 
 async function getManualFormResponseByImportToken(importToken: string) {

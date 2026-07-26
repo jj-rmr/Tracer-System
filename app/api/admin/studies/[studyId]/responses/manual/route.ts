@@ -1,6 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
+import { after, NextRequest, NextResponse } from "next/server";
 
 import { requireAdmin } from "@/lib/auth";
+import { organizeResponseDriveFolder } from "@/lib/google-drive/organize-response";
 import { createManualFormResponse } from "@/lib/repositories/form-responses.repository";
 import { getStudyContext } from "@/lib/repositories/forms.repository";
 
@@ -9,6 +10,7 @@ interface ManualResponseBody {
   respondentEmail?: unknown;
   answers?: unknown;
   importToken?: unknown;
+  mode?: unknown;
 }
 
 const UUID_PATTERN =
@@ -34,11 +36,11 @@ export async function POST(
       );
     }
 
-    if (context.study.status === "archived") {
+    if (context.study.status !== "open") {
       return NextResponse.json(
         {
           success: false,
-          message: "Archived study periods cannot receive new responses.",
+          message: "Open the study before adding manual responses.",
         },
         { status: 423 },
       );
@@ -55,6 +57,7 @@ export async function POST(
         : undefined;
     const importToken =
       typeof body.importToken === "string" ? body.importToken : "";
+    const mode = body.mode === "draft" ? "draft" : "submitted";
 
     if (!UUID_PATTERN.test(importToken)) {
       return NextResponse.json(
@@ -91,19 +94,40 @@ export async function POST(
       );
     }
 
-    const response = await createManualFormResponse({
+    const saved = await createManualFormResponse({
       studyPeriodId: studyId,
       enteredByUserId: admin.$id,
       respondentName: respondentName || undefined,
       respondentEmail,
       answers: body.answers,
       importToken,
+      status: mode,
     });
+
+    if (mode === "submitted") {
+      after(async () => {
+        try {
+          await organizeResponseDriveFolder(saved.response);
+        } catch (error) {
+          console.error("Failed to organize the manual response:", error);
+        }
+      });
+    }
+
+    if (respondentName.length > 300 || (respondentEmail?.length ?? 0) > 254) {
+      return NextResponse.json(
+        { success: false, message: "Manual response identity is too long." },
+        { status: 400 },
+      );
+    }
 
     return NextResponse.json(
       {
         success: true,
-        data: response,
+        data: {
+          ...saved.response,
+          importToken: saved.importToken,
+        },
       },
       { status: 201 },
     );

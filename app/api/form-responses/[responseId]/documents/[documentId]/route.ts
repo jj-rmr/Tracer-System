@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { requireUser } from "@/lib/auth";
 import { isAdmin } from "@/lib/auth/roles";
+import { canChangeResponseDocuments } from "@/lib/forms/response-document-lifecycle";
 import { deleteDriveFile } from "@/lib/google-drive/files";
 import {
   deleteFormResponseDocument,
   getFormResponseById,
   getFormResponseDocument,
 } from "@/lib/repositories/form-responses.repository";
+import { getStudyContext } from "@/lib/repositories/forms.repository";
 
 export async function DELETE(
   _request: NextRequest,
@@ -34,6 +36,24 @@ export async function DELETE(
       return NextResponse.json(
         { success: false, message: "Document not found." },
         { status: 404 },
+      );
+    }
+
+    const studyContext = await getStudyContext(response.studyPeriodId);
+
+    if (
+      !studyContext ||
+      !canChangeResponseDocuments({
+        source: response.source,
+        studyStatus: studyContext.study.status,
+      })
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "This study is closed and its documents are read-only.",
+        },
+        { status: 423 },
       );
     }
 

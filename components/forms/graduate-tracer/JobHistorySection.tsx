@@ -181,12 +181,21 @@ export function JobHistorySection({
             <label className={styles.label}>
               Reasons for staying in your first job *
             </label>
-            <div className="grid grid-cols-2 gap-2">
+            <div
+              className={`${styles.choiceGroup(
+                !!errors.stayingReasons,
+                readOnly,
+              )} grid-cols-1 sm:grid-cols-2`}
+            >
               {reasonsList.map((r) => (
-                <label key={r} className="flex items-center space-x-2 text-sm">
+                <label
+                  key={r}
+                  className={styles.choice(!!errors.stayingReasons, readOnly)}
+                >
                   <input
                     disabled={readOnly}
                     type="checkbox"
+                    className={styles.checkbox(!!errors.stayingReasons)}
                     checked={form.stayingReasons.includes(r as any)}
                     onChange={() => toggleList("stayingReasons", r)}
                   />
@@ -196,16 +205,22 @@ export function JobHistorySection({
             </div>
             <ErrorMessage message={errors.stayingReasons} />
             {form.stayingReasons.includes("Others") && (
-              <input
-                disabled={readOnly}
-                type="text"
-                className={styles.input(!!errors.stayingReasonOther, readOnly)}
-                placeholder="Specify other reasons"
-                value={form.stayingReasonOther}
-                onChange={(e) =>
-                  updateField("stayingReasonOther", e.target.value)
-                }
-              />
+              <div>
+                <input
+                  disabled={readOnly}
+                  type="text"
+                  className={styles.input(
+                    !!errors.stayingReasonOther,
+                    readOnly,
+                  )}
+                  placeholder="Specify other reasons"
+                  value={form.stayingReasonOther}
+                  onChange={(e) =>
+                    updateField("stayingReasonOther", e.target.value)
+                  }
+                />
+                <ErrorMessage message={errors.stayingReasonOther} />
+              </div>
             )}
           </div>
           {conditions.showAcceptingReasons && (
@@ -213,7 +228,12 @@ export function JobHistorySection({
               <label className={styles.label}>
                 Reasons for accepting first job *
               </label>
-              <div className="grid grid-cols-2 gap-2">
+              <div
+                className={`${styles.choiceGroup(
+                  !!errors.acceptingReasons,
+                  readOnly,
+                )} grid-cols-1 sm:grid-cols-2`}
+              >
                 {reasonsList
                   .filter(
                     (r) =>
@@ -226,11 +246,17 @@ export function JobHistorySection({
                   .map((r) => (
                     <label
                       key={r}
-                      className="flex items-center space-x-2 text-sm"
+                      className={styles.choice(
+                        !!errors.acceptingReasons,
+                        readOnly,
+                      )}
                     >
                       <input
                         disabled={readOnly}
                         type="checkbox"
+                        className={styles.checkbox(
+                          !!errors.acceptingReasons,
+                        )}
                         checked={form.acceptingReasons.includes(r as any)}
                         onChange={() => toggleList("acceptingReasons", r)}
                       />
@@ -240,19 +266,22 @@ export function JobHistorySection({
               </div>
               <ErrorMessage message={errors.acceptingReasons} />
               {form.acceptingReasons.includes("Others") && (
-                <input
-                  disabled={readOnly}
-                  type="text"
-                  className={styles.input(
-                    !!errors.acceptingReasonOther,
-                    readOnly,
-                  )}
-                  placeholder="Specify other"
-                  value={form.acceptingReasonOther}
-                  onChange={(e) =>
-                    updateField("acceptingReasonOther", e.target.value)
-                  }
-                />
+                <div>
+                  <input
+                    disabled={readOnly}
+                    type="text"
+                    className={styles.input(
+                      !!errors.acceptingReasonOther,
+                      readOnly,
+                    )}
+                    placeholder="Specify other"
+                    value={form.acceptingReasonOther}
+                    onChange={(e) =>
+                      updateField("acceptingReasonOther", e.target.value)
+                    }
+                  />
+                  <ErrorMessage message={errors.acceptingReasonOther} />
+                </div>
               )}
             </div>
           )}
@@ -265,7 +294,12 @@ export function JobHistorySection({
             <label className={styles.label}>
               Reasons for changing your job *
             </label>
-            <div className="grid grid-cols-2 gap-2">
+            <div
+              className={`${styles.choiceGroup(
+                !!errors.changingReasons,
+                readOnly,
+              )} grid-cols-1 sm:grid-cols-2`}
+            >
               {reasonsList
                 .filter(
                   (r) =>
@@ -278,11 +312,15 @@ export function JobHistorySection({
                 .map((r) => (
                   <label
                     key={r}
-                    className="flex items-center space-x-2 text-sm"
+                    className={styles.choice(
+                      !!errors.changingReasons,
+                      readOnly,
+                    )}
                   >
                     <input
                       disabled={readOnly}
                       type="checkbox"
+                      className={styles.checkbox(!!errors.changingReasons)}
                       checked={form.changingReasons.includes(r as any)}
                       onChange={() => toggleList("changingReasons", r)}
                     />
@@ -292,16 +330,22 @@ export function JobHistorySection({
             </div>
             <ErrorMessage message={errors.changingReasons} />
             {form.changingReasons.includes("Others") && (
-              <input
-                disabled={readOnly}
-                type="text"
-                className={styles.input(!!errors.changingReasonOther, readOnly)}
-                placeholder="Specify other"
-                value={form.changingReasonOther}
-                onChange={(e) =>
-                  updateField("changingReasonOther", e.target.value)
-                }
-              />
+              <div>
+                <input
+                  disabled={readOnly}
+                  type="text"
+                  className={styles.input(
+                    !!errors.changingReasonOther,
+                    readOnly,
+                  )}
+                  placeholder="Specify other"
+                  value={form.changingReasonOther}
+                  onChange={(e) =>
+                    updateField("changingReasonOther", e.target.value)
+                  }
+                />
+                <ErrorMessage message={errors.changingReasonOther} />
+              </div>
             )}
           </div>
         </div>
@@ -494,17 +538,30 @@ export function JobHistorySection({
           required
           hasError={!!errors.curriculumRelevant}
         />
+        <ErrorMessage message={errors.curriculumRelevant} />
 
         <div>
           <label className={styles.label}>
             Useful Competencies Learned in College *
           </label>
-          <div className="grid grid-cols-2 gap-2">
+          <div
+            className={`${styles.choiceGroup(
+              !!errors.usefulCompetencies,
+              readOnly,
+            )} grid-cols-1 sm:grid-cols-2`}
+          >
             {compList.map((c) => (
-              <label key={c} className="flex items-center space-x-2 text-sm">
+              <label
+                key={c}
+                className={styles.choice(
+                  !!errors.usefulCompetencies,
+                  readOnly,
+                )}
+              >
                 <input
                   disabled={readOnly}
                   type="checkbox"
+                  className={styles.checkbox(!!errors.usefulCompetencies)}
                   checked={form.usefulCompetencies.includes(c as any)}
                   onChange={() => toggleList("usefulCompetencies", c)}
                 />
@@ -514,16 +571,22 @@ export function JobHistorySection({
           </div>
           <ErrorMessage message={errors.usefulCompetencies} />
           {form.usefulCompetencies.includes("Others") && (
-            <input
-              disabled={readOnly}
-              type="text"
-              className={`${styles.input(!!errors.usefulCompetencyOther, readOnly)} mt-2`}
-              placeholder="Specify other competencies"
-              value={form.usefulCompetencyOther}
-              onChange={(e) =>
-                updateField("usefulCompetencyOther", e.target.value)
-              }
-            />
+            <div className="mt-2">
+              <input
+                disabled={readOnly}
+                type="text"
+                className={styles.input(
+                  !!errors.usefulCompetencyOther,
+                  readOnly,
+                )}
+                placeholder="Specify other competencies"
+                value={form.usefulCompetencyOther}
+                onChange={(e) =>
+                  updateField("usefulCompetencyOther", e.target.value)
+                }
+              />
+              <ErrorMessage message={errors.usefulCompetencyOther} />
+            </div>
           )}
         </div>
       </div>

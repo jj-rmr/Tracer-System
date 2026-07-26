@@ -45,6 +45,49 @@ export async function getResponseDocumentFolder({
   documents: SurveyDocument[];
   documentType: "employment" | "awards";
 }) {
+  const responseFolder = await getResponseFolder({ response, documents });
+  const configuredRootId = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID!;
+  const hierarchyKey = `drive-root:${configuredRootId}`;
+  const existingTypeFolderId = documents.find(
+    (document) => document.documentType === documentType,
+  )?.googleDriveFolderId;
+
+  return getOrCreateManagedFolder({
+    folderKey: `${hierarchyKey}:response:${response.id}:documents:${documentType}`,
+    name: documentType === "employment" ? "Employment Documents" : "Awards",
+    parentId: responseFolder.id,
+    existingFolderId: existingTypeFolderId,
+  });
+}
+
+export async function getUploadStagingFolder() {
+  const configuredRootId = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID;
+
+  if (!configuredRootId) {
+    throw new Error("Missing required environment variable: GOOGLE_DRIVE_ROOT_FOLDER_ID");
+  }
+
+  const hierarchyKey = `drive-root:${configuredRootId}`;
+  const tracerRoot = await getOrCreateManagedFolder({
+    folderKey: hierarchyKey,
+    name: "Tracer Study Responses",
+    parentId: configuredRootId,
+  });
+
+  return getOrCreateManagedFolder({
+    folderKey: `${hierarchyKey}:upload-staging`,
+    name: ".Pending Uploads",
+    parentId: tracerRoot.id,
+  });
+}
+
+export async function getResponseFolder({
+  response,
+  documents = [],
+}: {
+  response: FormResponse;
+  documents?: SurveyDocument[];
+}) {
   const configuredRootId = process.env.GOOGLE_DRIVE_ROOT_FOLDER_ID;
 
   if (!configuredRootId) {
@@ -98,14 +141,6 @@ export async function getResponseDocumentFolder({
     parentId: programFolder.id,
     existingFolderId: existingResponseFolderId,
   });
-  const existingTypeFolderId = documents.find(
-    (document) => document.documentType === documentType,
-  )?.googleDriveFolderId;
 
-  return getOrCreateManagedFolder({
-    folderKey: `${hierarchyKey}:response:${response.id}:documents:${documentType}`,
-    name: documentType === "employment" ? "Employment Documents" : "Awards",
-    parentId: responseFolder.id,
-    existingFolderId: existingTypeFolderId,
-  });
+  return responseFolder;
 }

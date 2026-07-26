@@ -4,11 +4,11 @@ import {
   deleteRegisteredDriveFolders,
   listRegisteredResponseFolders,
 } from "@/lib/repositories/google-drive-folders.repository";
-import { getFormResponseDocuments } from "@/lib/repositories/form-responses.repository";
+import { getAllFormResponseDocuments } from "@/lib/repositories/form-responses.repository";
 
 export async function deleteResponseDriveData(responseId: string) {
   const [documents, registeredFolders] = await Promise.all([
-    getFormResponseDocuments(responseId),
+    getAllFormResponseDocuments(responseId),
     listRegisteredResponseFolders(responseId),
   ]);
 
@@ -24,12 +24,22 @@ export async function deleteResponseDriveData(responseId: string) {
   const responseFolderId =
     registeredResponseFolder?.googleDriveFolderId ?? inferredResponseFolderId;
 
-  for (const document of documents) {
-    await deleteDriveFile(document.googleDriveFileId);
-  }
+  const cleanupResults = await Promise.allSettled([
+    ...(responseFolderId ? [deleteDriveFile(responseFolderId)] : []),
+    ...documents.map((document) =>
+      deleteDriveFile(document.googleDriveFileId),
+    ),
+  ]);
 
-  if (responseFolderId) {
-    await deleteDriveFile(responseFolderId);
+  const failures = cleanupResults.filter(
+    (result): result is PromiseRejectedResult => result.status === "rejected",
+  );
+
+  if (failures.length > 0) {
+    throw new AggregateError(
+      failures.map((failure) => failure.reason),
+      "One or more response Drive resources could not be deleted.",
+    );
   }
 
   await deleteRegisteredDriveFolders(
