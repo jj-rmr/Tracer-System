@@ -24,6 +24,10 @@ export async function GET(
       "Content-Disposition": `inline; filename="${safeFilename(content.item.name ?? "file")}"`,
       "Cache-Control": "private, no-store",
       "X-Content-Type-Options": "nosniff",
+      "Content-Security-Policy":
+        "default-src 'none'; frame-ancestors 'self'; object-src 'none'; base-uri 'none'",
+      "X-Frame-Options": "SAMEORIGIN",
+      "Cross-Origin-Resource-Policy": "same-origin",
     });
 
     if (content.contentLength) {

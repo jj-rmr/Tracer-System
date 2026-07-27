@@ -9,6 +9,7 @@ create table if not exists public.direct_drive_upload_sessions (
   size bigint not null check (size > 0 and size <= 10485760),
   drive_file_id text not null unique,
   upload_url text not null,
+  browser_origin text,
   staging_folder_id text not null,
   status text not null default 'initiated'
     check (status in ('initiated', 'finalizing', 'finalized', 'failed', 'expired')),

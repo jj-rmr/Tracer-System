@@ -329,7 +329,7 @@ export default function DashboardNavigation({
         }`}
       />
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 rounded-t-4xl border border-b-0 border-border bg-background p-2 pb-safe text-foreground shadow-xl  md:hidden">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 rounded-t-4xl border border-b-0 border-border bg-background p-2 [padding-bottom:calc(0.5rem+env(safe-area-inset-bottom))] text-foreground shadow-xl md:hidden">
         <div className="flex justify-around [&>*:first-child]:rounded-tl-3xl [&>*:last-child]:rounded-tr-3xl">
           {mobilePrimaryItems.map((item) => {
             const Icon = item.icon;

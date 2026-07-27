@@ -12,12 +12,14 @@ export async function createDriveResumableUpload({
   mimeType,
   size,
   folderId,
+  browserOrigin,
 }: {
   sessionId: string;
   filename: string;
   mimeType: string;
   size: number;
   folderId: string;
+  browserOrigin: string;
 }) {
   const generated = await drive.files.generateIds({ count: 1, space: "drive" });
   const fileId = generated.data.ids?.[0];
@@ -35,6 +37,7 @@ export async function createDriveResumableUpload({
         "Content-Type": "application/json; charset=UTF-8",
         "X-Upload-Content-Type": mimeType,
         "X-Upload-Content-Length": String(size),
+        Origin: browserOrigin,
       },
       body: JSON.stringify({
         id: fileId,

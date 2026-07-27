@@ -164,7 +164,6 @@ export async function POST(
       fromFolderId: claimed.stagingFolderId,
       toFolderId: typeFolder.id,
     };
-    const document = await markFormResponseDocumentReady(staged.id);
     await upsertDriveIndexItems([
       {
         id: claimed.driveFileId,
@@ -179,6 +178,7 @@ export async function POST(
         syncedAt: new Date().toISOString(),
       },
     ]);
+    const document = await markFormResponseDocumentReady(staged.id);
     await markDirectDriveUploadFinalized(sessionId, document.id);
     claimedSessionId = null;
     return NextResponse.json({ success: true, document }, { status: 201 });

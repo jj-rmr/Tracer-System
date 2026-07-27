@@ -60,7 +60,7 @@ export function validateUploadMetadata(
   size: number,
   scope: "document" | "admin",
 ) {
-  if (size === 0)
+  if (!Number.isSafeInteger(size) || size <= 0)
     throw new UploadValidationError("The selected file is empty.");
   if (size > MAX_UPLOAD_BYTES)
     throw new UploadValidationError("File exceeds the 10 MB limit.");

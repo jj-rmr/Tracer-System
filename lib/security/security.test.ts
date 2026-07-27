@@ -3,7 +3,7 @@ import test from "node:test";
 
 import { spreadsheetSafeRecord, spreadsheetSafeValue } from "./csv.ts";
 import { InMemoryRateLimiter } from "./rate-limit.ts";
-import { validateUpload } from "./uploads.ts";
+import { validateUpload, validateUploadMetadata } from "./uploads.ts";
 
 test("neutralizes spreadsheet formula prefixes", () => {
   assert.equal(
@@ -38,6 +38,15 @@ test("rejects disguised and unsupported uploads", async () => {
   });
   await assert.rejects(validateUpload(disguised, "document"), /contents/);
   await assert.rejects(validateUpload(executable, "admin"), /not allowed/);
+});
+
+test("rejects malformed upload sizes before creating an external session", () => {
+  for (const size of [Number.NaN, Number.POSITIVE_INFINITY, -1, 1.5]) {
+    assert.throws(
+      () => validateUploadMetadata("document.pdf", "application/pdf", size, "document"),
+      /empty/,
+    );
+  }
 });
 
 test("limits requests until their window expires", () => {

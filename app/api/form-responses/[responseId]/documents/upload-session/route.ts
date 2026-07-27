@@ -8,6 +8,7 @@ import { deleteDriveFile } from "@/lib/google-drive/files";
 import { getUploadStagingFolder } from "@/lib/google-drive/response-folders";
 import {
   createDirectDriveUploadSession,
+  deleteDirectDriveUploadSession,
   getDirectDriveUploadSessionByUploadKey,
   listExpiredDirectDriveUploadSessions,
   markDirectDriveUploadExpired,
@@ -33,6 +34,13 @@ export async function POST(
   try {
     const { user } = await requireUser();
     const { responseId } = await params;
+    const browserOrigin = request.headers.get("origin");
+    if (!browserOrigin || browserOrigin !== request.nextUrl.origin) {
+      return NextResponse.json(
+        { success: false, message: "The upload request origin is invalid." },
+        { status: 403 },
+      );
+    }
     const response = await getFormResponseById(responseId);
     if (!response || (!isAdmin(user) && response.userId !== user.$id)) {
       return NextResponse.json(
@@ -63,8 +71,9 @@ export async function POST(
     const mimeType = typeof body.mimeType === "string" ? body.mimeType : "";
     const size = typeof body.size === "number" ? body.size : NaN;
     const documentType = body.documentType;
-    const uploadKey =
-      typeof body.uploadKey === "string" ? body.uploadKey : crypto.randomUUID();
+    const suppliedUploadKey =
+      typeof body.uploadKey === "string" ? body.uploadKey : undefined;
+    const uploadKey = suppliedUploadKey ?? crypto.randomUUID();
     if (documentType !== "employment" && documentType !== "awards") {
       return NextResponse.json(
         { success: false, message: "Invalid document type." },
@@ -74,6 +83,15 @@ export async function POST(
     if (!UUID_PATTERN.test(uploadKey)) {
       return NextResponse.json(
         { success: false, message: "Invalid document upload key." },
+        { status: 400 },
+      );
+    }
+    if (response.source === "admin_import" && !suppliedUploadKey) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Manual import documents require an upload key.",
+        },
         { status: 400 },
       );
     }
@@ -94,8 +112,8 @@ export async function POST(
       uploadKey,
     );
     if (
-      existing &&
-      existing.status === "initiated" &&
+      existing?.status === "initiated" &&
+      existing.browserOrigin === browserOrigin &&
       new Date(existing.expiresAt) > new Date()
     ) {
       return NextResponse.json(
@@ -110,7 +128,14 @@ export async function POST(
         { headers: { "Cache-Control": "no-store" } },
       );
     }
-    if (existing) {
+    if (
+      existing &&
+      (existing.browserOrigin === null ||
+        ["failed", "expired"].includes(existing.status))
+    ) {
+      await deleteDriveFile(existing.driveFileId).catch(() => undefined);
+      await deleteDirectDriveUploadSession(existing.id);
+    } else if (existing) {
       return NextResponse.json(
         {
           success: false,
@@ -129,6 +154,7 @@ export async function POST(
       mimeType,
       size,
       folderId: stagingFolder.id,
+      browserOrigin,
     });
     await createDirectDriveUploadSession({
       id: sessionId,
@@ -141,6 +167,7 @@ export async function POST(
       size,
       driveFileId: googleSession.fileId,
       uploadUrl: googleSession.uploadUrl,
+      browserOrigin,
       stagingFolderId: stagingFolder.id,
       expiresAt: googleSession.expiresAt,
     });

@@ -13,6 +13,7 @@ export interface DirectDriveUploadSession {
   size: number;
   driveFileId: string;
   uploadUrl: string;
+  browserOrigin: string | null;
   stagingFolderId: string;
   status: "initiated" | "finalizing" | "finalized" | "failed" | "expired";
   documentId: string | null;
@@ -31,6 +32,8 @@ function mapSession(row: Record<string, unknown>): DirectDriveUploadSession {
     size: Number(row.size),
     driveFileId: String(row.drive_file_id),
     uploadUrl: String(row.upload_url),
+    browserOrigin:
+      typeof row.browser_origin === "string" ? row.browser_origin : null,
     stagingFolderId: String(row.staging_folder_id),
     status: row.status as DirectDriveUploadSession["status"],
     documentId: typeof row.document_id === "string" ? row.document_id : null,
@@ -54,6 +57,7 @@ export async function createDirectDriveUploadSession(
       size: session.size,
       drive_file_id: session.driveFileId,
       upload_url: session.uploadUrl,
+      browser_origin: session.browserOrigin,
       staging_folder_id: session.stagingFolderId,
       expires_at: session.expiresAt,
     })
@@ -86,6 +90,15 @@ export async function getDirectDriveUploadSessionByUploadKey(
     .maybeSingle();
   if (error) throw error;
   return data ? mapSession(data) : null;
+}
+
+export async function deleteDirectDriveUploadSession(id: string) {
+  const { error } = await supabase
+    .from("direct_drive_upload_sessions")
+    .delete()
+    .eq("id", id)
+    .in("status", ["initiated", "failed", "expired"]);
+  if (error) throw error;
 }
 
 export async function claimDirectDriveUploadFinalization(id: string) {
