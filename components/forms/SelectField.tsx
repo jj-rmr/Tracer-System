@@ -28,6 +28,16 @@ interface SelectFieldProps {
   required?: boolean;
   hasError?: boolean;
   errorMessage?: string;
+  inputMode?:
+    | "none"
+    | "text"
+    | "tel"
+    | "url"
+    | "email"
+    | "numeric"
+    | "decimal"
+    | "search";
+  numericOnly?: boolean;
 }
 
 export function SelectField({
@@ -43,6 +53,8 @@ export function SelectField({
   required = false,
   hasError = false,
   errorMessage,
+  inputMode,
+  numericOnly = false,
 }: SelectFieldProps) {
   const selectedOption =
     options.find((option) => option.value === value) ?? null;
@@ -91,6 +103,21 @@ export function SelectField({
           aria-required={required}
           disabled={disabled}
           placeholder={placeholder}
+          inputMode={inputMode}
+          pattern={numericOnly ? "[0-9]*" : undefined}
+          onBeforeInput={(event) => {
+            if (numericOnly && event.data && /\D/.test(event.data)) {
+              event.preventDefault();
+            }
+          }}
+          onPaste={(event) => {
+            if (
+              numericOnly &&
+              !/^\d*$/.test(event.clipboardData.getData("text"))
+            ) {
+              event.preventDefault();
+            }
+          }}
         />
         <ComboboxContent aria-label={label}>
           <ComboboxEmpty>No matching options</ComboboxEmpty>

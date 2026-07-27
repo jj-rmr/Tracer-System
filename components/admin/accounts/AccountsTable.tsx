@@ -670,22 +670,21 @@ export default function AccountsTable({
           </div>
         </div>
       </Modal>
-      <div className="flex flex-col gap-3 border-t border-border bg-muted/40 p-4 text-sm sm:flex-row sm:items-center sm:justify-between sm:px-6">
+      <div className="flex flex-wrap gap-3 border-t border-border bg-muted/40 p-4 text-sm sm:px-6">
         {totalRows > 1 ? (
-          <span className="rounded-lg bg-muted/60 px-4 py-2 font-semibold text-muted-foreground">
-            Showing <span className="">{accounts.length}</span> of{" "}
-            <span className="">
-              <span className="">{totalRows}</span> Entries
-            </span>
+          <span className="w-full rounded-lg bg-muted/60 px-4 py-2 font-semibold whitespace-nowrap text-muted-foreground sm:w-fit">
+            Showing <span>{accounts.length}</span> of{" "}
+            <span>{totalRows} Entries</span>
           </span>
         ) : (
-          <span className="rounded-lg bg-muted/60 px-4 py-2 font-semibold text-muted-foreground">
+          <span className="w-full rounded-lg bg-muted/60 px-4 py-2 font-semibold whitespace-nowrap text-muted-foreground sm:w-fit">
             Showing 1 Entry
           </span>
         )}
 
-        <div className="flex w-full gap-2 sm:w-auto">
+        <div className="flex w-full gap-2 sm:ml-auto sm:w-fit">
           <Button
+            className="flex-1 sm:flex-none"
             onClick={() => onPageChange(currentPage - 1)}
             disabled={currentPage <= 1}
             variant="outline"
@@ -695,6 +694,7 @@ export default function AccountsTable({
           </Button>
 
           <Button
+            className="flex-1 sm:flex-none"
             onClick={() => onPageChange(currentPage + 1)}
             disabled={currentPage >= totalPages}
             variant="default"

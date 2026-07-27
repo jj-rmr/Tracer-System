@@ -354,7 +354,7 @@ export default function GraduateTracerForm({
 
   return (
     <div className="space-y-4">
-      <div className="bg-muted md:border border-border rounded-2xl md:p-4">
+      <div className="md:bg-muted md:border border-border rounded-2xl md:p-4">
         <div className="flex justify-between text-sm font-medium text-foreground">
           <span>
             Step {step} of {sections.length}

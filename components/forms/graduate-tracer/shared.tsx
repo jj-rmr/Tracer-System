@@ -66,12 +66,6 @@ export const fieldStyles = {
           ? "text-destructive hover:bg-destructive/15"
           : "text-foreground hover:bg-card"
     }`,
-  checkbox: (err: boolean) =>
-    `h-4 w-4 shrink-0 rounded border accent-primary focus:outline-none focus:ring-4 ${
-      err
-        ? "border-destructive focus:ring-destructive/20"
-        : "border-input focus:ring-ring/30"
-    }`,
   label:
     "mb-2 block text-xs font-semibold uppercase tracking-wider text-muted-foreground",
 };

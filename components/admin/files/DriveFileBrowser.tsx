@@ -3,6 +3,7 @@
 import { Input } from "@/components/ui/input";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -708,17 +709,15 @@ export default function DriveFileBrowser() {
           <div>
             {canUpload && (
               <label className="flex items-center gap-2 border-b border-border bg-muted px-5 py-3 text-sm font-medium text-muted-foreground md:hidden">
-                <Input
-                  type="checkbox"
+                <Checkbox
                   checked={allVisibleItemsSelected}
-                  onChange={(event) =>
+                  onCheckedChange={(checked) =>
                     setSelectedItemIds(
-                      event.target.checked
+                      checked
                         ? new Set(items.map((item) => item.id))
                         : new Set(),
                     )
                   }
-                  className="h-4 w-4 rounded border-input accent-primary"
                 />
                 Select all
               </label>
@@ -759,18 +758,16 @@ export default function DriveFileBrowser() {
               }`}
             >
               {canUpload ? (
-                <Input
-                  type="checkbox"
+                <Checkbox
                   aria-label="Select all files and folders"
                   checked={allVisibleItemsSelected}
-                  onChange={(event) =>
+                  onCheckedChange={(checked) =>
                     setSelectedItemIds(
-                      event.target.checked
+                      checked
                         ? new Set(items.map((item) => item.id))
                         : new Set(),
                     )
                   }
-                  className="h-4 w-4 rounded border-input accent-primary"
                 />
               ) : (
                 <span />
@@ -814,20 +811,19 @@ export default function DriveFileBrowser() {
                   } ${activeMenuId === item.id ? "z-40" : "z-0"}`}
                 >
                   {canUpload ? (
-                    <Input
-                      type="checkbox"
+                    <Checkbox
                       aria-label={`Select ${item.name}`}
                       checked={selectedItemIds.has(item.id)}
                       onClick={(event) => event.stopPropagation()}
-                      onChange={(event) => {
+                      onCheckedChange={(checked) => {
                         setSelectedItemIds((current) => {
                           const next = new Set(current);
-                          if (event.target.checked) next.add(item.id);
+                          if (checked) next.add(item.id);
                           else next.delete(item.id);
                           return next;
                         });
                       }}
-                      className="relative z-10 h-4 w-4 rounded border-input accent-primary"
+                      className="relative z-10"
                     />
                   ) : (
                     <span />

@@ -268,12 +268,12 @@ export default function DashboardNavigation({
                 onClick={(event) => markNavigationPending(event, item.href)}
                 title={isOpen ? undefined : item.label}
                 aria-label={item.label}
-                className={buttonVariants({
+                className={`${buttonVariants({
                   variant: isActiveLink(item.href)
                     ? "navigation-active"
                     : "navigation",
                   size: "sidebar",
-                })}
+                })} relative`}
               >
                 <Icon size={19} className="shrink-0" />
 
@@ -289,7 +289,7 @@ export default function DashboardNavigation({
                 {isNavigationPending && pendingHref === item.href && (
                   <span
                     aria-label={`Opening ${item.label}`}
-                    className="absolute right-3 h-2 w-2 animate-pulse rounded-full bg-accent"
+                    className="absolute right-3 h-1.5 w-1.5 animate-pulse rounded-full bg-primary"
                   />
                 )}
               </Link>
@@ -330,7 +330,7 @@ export default function DashboardNavigation({
       />
 
       <nav className="fixed bottom-0 left-0 right-0 z-50 rounded-t-4xl border border-b-0 border-border bg-background p-2 pb-safe text-foreground shadow-xl  md:hidden">
-        <div className="flex justify-around">
+        <div className="flex justify-around [&>*:first-child]:rounded-tl-3xl [&>*:last-child]:rounded-tr-3xl">
           {mobilePrimaryItems.map((item) => {
             const Icon = item.icon;
             const active = isActiveLink(item.href);
@@ -351,7 +351,7 @@ export default function DashboardNavigation({
 
                 <div
                   className={`absolute top-1.5 -z-10 h-7.5 w-full max-w-16 rounded-full ${
-                    active ? "bg-accent/15" : ""
+                    active ? "bg-accent/25 dark:bg-accent/15" : ""
                   }`}
                 />
                 {isNavigationPending && pendingHref === item.href && (
@@ -365,18 +365,20 @@ export default function DashboardNavigation({
           })}
           <Button
             type="button"
-            variant={isMoreActive ? "secondary" : "ghost"}
+            variant="ghost"
             size="mobile-nav"
             aria-haspopup="dialog"
             aria-expanded={showMoreMenu}
             onClick={() => setShowMoreMenu(true)}
-            className="relative"
+            className={`relative ${
+              isMoreActive ? "text-accent hover:text-accent" : "text-foreground"
+            }`}
           >
-            <LuEllipsis size={24} />
+            <LuEllipsis aria-hidden="true" className="size-6" />
             <span className="mt-1 text-[10px]">More</span>
             <span
               className={`absolute top-1.5 -z-10 h-7.5 w-full max-w-16 rounded-full ${
-                isMoreActive ? "bg-accent/15" : ""
+                isMoreActive ? "bg-accent/25 dark:bg-accent/15" : ""
               }`}
             />
           </Button>

@@ -192,34 +192,38 @@ export default function ManualResponseModal({
           Keep editing, save the latest values as a draft, or permanently
           discard this manual response and its uploaded documents.
         </p>
-        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button
-            type="button"
-            variant="destructive"
-            size="icon"
-            disabled={closeAction !== null}
-            onClick={() => void discardAndClose()}
-            aria-label="Discard manual response"
-            title="Discard manual response"
-          >
-            {closeAction === "discarding" ? (
-              <LuLoaderCircle
-                aria-hidden="true"
-                size={18}
-                className="animate-spin"
-              />
-            ) : (
-              <LuTrash2 aria-hidden="true" size={18} />
-            )}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            disabled={closeAction !== null}
-            onClick={() => setShowCloseOptions(false)}
-          >
-            Keep Editing
-          </Button>
+        <div className="mt-6 flex flex-col-reverse md:flex-row gap-3 justify-stretch md:justify-end">
+          <div className="flex flex-row gap-3">
+            <Button
+              type="button"
+              variant="destructive"
+              size="icon"
+              disabled={closeAction !== null}
+              onClick={() => void discardAndClose()}
+              aria-label="Discard manual response"
+              title="Discard manual response"
+            >
+              {closeAction === "discarding" ? (
+                <LuLoaderCircle
+                  aria-hidden="true"
+                  size={18}
+                  className="animate-spin"
+                />
+              ) : (
+                <LuTrash2 aria-hidden="true" size={18} />
+              )}
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              size="fill"
+              disabled={closeAction !== null}
+              onClick={() => setShowCloseOptions(false)}
+            >
+              Keep Editing
+            </Button>
+          </div>
 
           <Button
             type="button"

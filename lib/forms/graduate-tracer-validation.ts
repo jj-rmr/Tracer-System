@@ -21,7 +21,7 @@ function getZodFieldErrors(error: ZodError): GraduateTracerFieldErrors {
 export function getGraduateTracerConditionalSections(
   form: GraduateTracerAnswers,
 ) {
-  const hasJobHistory = form.employmentStatus !== "Never Employed";
+  const hasJobHistory = form.employmentStatus === "Yes";
   const hasFirstJob = hasJobHistory && form.isFirstJob === true;
 
   return {
@@ -32,8 +32,12 @@ export function getGraduateTracerConditionalSections(
       form.employmentStatus === "Never Employed",
     showFirstJobRelated: hasFirstJob,
     showStayingReasons: hasFirstJob,
-    showAcceptingReasons: hasFirstJob && form.isFirstJobRelated === false,
-    showChangingReasons: hasJobHistory && form.isFirstJob === false,
+    showAcceptingReasons: hasFirstJob && form.isFirstJobRelated === true,
+    showUsefulCompetencies: hasJobHistory && form.curriculumRelevant === true,
+    showChangingReasons:
+      hasJobHistory &&
+      (form.isFirstJob === false ||
+        (hasFirstJob && form.isFirstJobRelated === false)),
   };
 }
 

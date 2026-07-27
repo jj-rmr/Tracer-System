@@ -1,3 +1,6 @@
+import { useWatch } from "react-hook-form";
+
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 
 import { SelectField } from "@/components/forms/SelectField";
@@ -103,7 +106,7 @@ export function JobHistorySection({
           First Job & Curriculum Feedback
         </h3>
         <p className="rounded-2xl border border-border bg-muted p-4 text-sm text-foreground">
-          This section does not apply because you selected Never Employed.
+          This section applies only to respondents who are presently employed.
         </p>
       </div>
     );
@@ -119,7 +122,7 @@ export function JobHistorySection({
         <SelectField
           disabled={readOnly}
           id="isFirstJob"
-          label="Is this your FIRST JOB after college? *"
+          label="21. Is your present job your first job after college? *"
           value={
             form.isFirstJob === true
               ? "true"
@@ -132,8 +135,10 @@ export function JobHistorySection({
             updateField("isFirstJob", isFirstJob);
 
             if (isFirstJob) {
-              updateField("changingReasons", []);
-              updateField("changingReasonOther", "");
+              if (form.isFirstJobRelated !== false) {
+                updateField("changingReasons", []);
+                updateField("changingReasonOther", "");
+              }
             } else {
               updateField("isFirstJobRelated", null);
               updateField("stayingReasons", []);
@@ -152,7 +157,7 @@ export function JobHistorySection({
           <SelectField
             disabled={readOnly}
             id="isFirstJobRelated"
-            label="Is your FIRST JOB related to your college course? *"
+            label="23. Is your first job related to the course or program you completed in college? *"
             value={
               form.isFirstJobRelated === true
                 ? "true"
@@ -164,9 +169,12 @@ export function JobHistorySection({
               const isRelated = val === "true";
               updateField("isFirstJobRelated", isRelated);
 
-              if (isRelated) {
+              if (!isRelated) {
                 updateField("acceptingReasons", []);
                 updateField("acceptingReasonOther", "");
+              } else {
+                updateField("changingReasons", []);
+                updateField("changingReasonOther", "");
               }
             }}
             options={FORM_OPTIONS.yesNo}
@@ -181,7 +189,8 @@ export function JobHistorySection({
         <>
           <div className="space-y-2 border-t border-border pt-4">
             <label className={styles.label}>
-              Reasons for staying in your first job *
+              22. What are your reasons for staying in your present job? Select
+              all that apply. *
             </label>
             <div
               className={`${styles.choiceGroup(
@@ -194,14 +203,13 @@ export function JobHistorySection({
                   key={r}
                   className={styles.choice(!!errors.stayingReasons, readOnly)}
                 >
-                  <Input
+                  <Checkbox
                     disabled={readOnly}
-                    type="checkbox"
-                    className={styles.checkbox(!!errors.stayingReasons)}
+                    aria-invalid={!!errors.stayingReasons}
                     checked={form.stayingReasons.includes(
                       r as Survey["stayingReasons"][number],
                     )}
-                    onChange={() => toggleList("stayingReasons", r)}
+                    onCheckedChange={() => toggleList("stayingReasons", r)}
                   />
                   <span>{r}</span>
                 </label>
@@ -230,7 +238,8 @@ export function JobHistorySection({
           {conditions.showAcceptingReasons && (
             <div>
               <label className={styles.label}>
-                Reasons for accepting first job *
+                24. What were your reasons for accepting your first job? Select
+                all that apply. *
               </label>
               <div
                 className={`${styles.choiceGroup(
@@ -255,14 +264,15 @@ export function JobHistorySection({
                         readOnly,
                       )}
                     >
-                      <Input
+                      <Checkbox
                         disabled={readOnly}
-                        type="checkbox"
-                        className={styles.checkbox(!!errors.acceptingReasons)}
+                        aria-invalid={!!errors.acceptingReasons}
                         checked={form.acceptingReasons.includes(
                           r as Survey["acceptingReasons"][number],
                         )}
-                        onChange={() => toggleList("acceptingReasons", r)}
+                        onCheckedChange={() =>
+                          toggleList("acceptingReasons", r)
+                        }
                       />
                       <span>{r}</span>
                     </label>
@@ -296,7 +306,8 @@ export function JobHistorySection({
         <div className="space-y-4 border-t border-border pt-4">
           <div>
             <label className={styles.label}>
-              Reasons for changing your job *
+              25. What were your reasons for changing from your first job?
+              Select all that apply. *
             </label>
             <div
               className={`${styles.choiceGroup(
@@ -321,14 +332,13 @@ export function JobHistorySection({
                       readOnly,
                     )}
                   >
-                    <Input
+                    <Checkbox
                       disabled={readOnly}
-                      type="checkbox"
-                      className={styles.checkbox(!!errors.changingReasons)}
+                      aria-invalid={!!errors.changingReasons}
                       checked={form.changingReasons.includes(
                         r as Survey["changingReasons"][number],
                       )}
-                      onChange={() => toggleList("changingReasons", r)}
+                      onCheckedChange={() => toggleList("changingReasons", r)}
                     />
                     <span>{r}</span>
                   </label>
@@ -360,7 +370,9 @@ export function JobHistorySection({
       {/* Standard Fields block */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-border pt-4">
         <div>
-          <label className={styles.label}>First Job Title *</label>
+          <label className={styles.label}>
+            29. What was the job title of your first job after college? *
+          </label>
           <Input
             disabled={readOnly}
             type="text"
@@ -374,7 +386,7 @@ export function JobHistorySection({
           <SelectField
             disabled={readOnly}
             id="firstJobSearchDuration"
-            label="First Job Search Duration *"
+            label="28. How long did it take you to land your first job after college? *"
             value={form.firstJobSearchDuration}
             onChange={(val) =>
               updateField(
@@ -414,7 +426,7 @@ export function JobHistorySection({
           <SelectField
             disabled={readOnly}
             id="firstJobDuration"
-            label="First Job Duration *"
+            label="26. How long did you stay in your first job? *"
             value={form.firstJobDuration}
             onChange={(val) =>
               updateField("firstJobDuration", val as Survey["firstJobDuration"])
@@ -448,7 +460,7 @@ export function JobHistorySection({
           <SelectField
             disabled={readOnly}
             id="firstJobSource"
-            label="First Job Source *"
+            label="27. How did you find your first job after college? *"
             value={form.firstJobSource}
             onChange={(val) =>
               updateField("firstJobSource", val as Survey["firstJobSource"])
@@ -485,7 +497,7 @@ export function JobHistorySection({
           <SelectField
             disabled={readOnly}
             id="firstJobLevel"
-            label="First Job Level *"
+            label="30. What was your position level in your first job? *"
             value={form.firstJobLevel}
             onChange={(val) =>
               updateField("firstJobLevel", val as Survey["firstJobLevel"])
@@ -504,7 +516,7 @@ export function JobHistorySection({
           <SelectField
             disabled={readOnly}
             id="currentJobLevel"
-            label="Current Job Level *"
+            label="31. What is your position level in your current or present job? *"
             value={form.currentJobLevel}
             onChange={(val) =>
               updateField("currentJobLevel", val as Survey["currentJobLevel"])
@@ -523,7 +535,7 @@ export function JobHistorySection({
           <SelectField
             disabled={readOnly}
             id="initialMonthlyIncome"
-            label="Initial Monthly Income *"
+            label="32. What was your initial monthly earning in your first job after college? *"
             value={form.initialMonthlyIncome}
             onChange={(val) =>
               updateField(
@@ -546,7 +558,7 @@ export function JobHistorySection({
         <SelectField
           disabled={readOnly}
           id="curriculumRelevant"
-          label="Was the curriculum relevant to your employment? *"
+          label="33. Was the curriculum you completed in college relevant to your first job? *"
           value={
             form.curriculumRelevant === true
               ? "true"
@@ -554,7 +566,14 @@ export function JobHistorySection({
                 ? "false"
                 : ""
           }
-          onChange={(val) => updateField("curriculumRelevant", val === "true")}
+          onChange={(val) => {
+            const isRelevant = val === "true";
+            updateField("curriculumRelevant", isRelevant);
+            if (!isRelevant) {
+              updateField("usefulCompetencies", []);
+              updateField("usefulCompetencyOther", "");
+            }
+          }}
           options={FORM_OPTIONS.yesNo}
           placeholder="Select"
           required
@@ -562,56 +581,60 @@ export function JobHistorySection({
         />
         <ErrorMessage message={errors.curriculumRelevant} />
 
-        <div>
-          <label className={styles.label}>
-            Useful Competencies Learned in College *
-          </label>
-          <div
-            className={`${styles.choiceGroup(
-              !!errors.usefulCompetencies,
-              readOnly,
-            )} grid-cols-1 sm:grid-cols-2`}
-          >
-            {compList.map((c) => (
-              <label
-                key={c}
-                className={styles.choice(!!errors.usefulCompetencies, readOnly)}
-              >
+        {conditions.showUsefulCompetencies && (
+          <div>
+            <label className={styles.label}>
+              34. Which competencies learned in college did you find most useful
+              in your first job? Select all that apply. *
+            </label>
+            <div
+              className={`${styles.choiceGroup(
+                !!errors.usefulCompetencies,
+                readOnly,
+              )} grid-cols-1 sm:grid-cols-2`}
+            >
+              {compList.map((c) => (
+                <label
+                  key={c}
+                  className={styles.choice(
+                    !!errors.usefulCompetencies,
+                    readOnly,
+                  )}
+                >
+                  <Checkbox
+                    disabled={readOnly}
+                    aria-invalid={!!errors.usefulCompetencies}
+                    checked={form.usefulCompetencies.includes(
+                      c as Survey["usefulCompetencies"][number],
+                    )}
+                    onCheckedChange={() => toggleList("usefulCompetencies", c)}
+                  />
+                  <span>{c}</span>
+                </label>
+              ))}
+            </div>
+            <ErrorMessage message={errors.usefulCompetencies} />
+            {form.usefulCompetencies.includes("Others") && (
+              <div className="mt-2">
                 <Input
                   disabled={readOnly}
-                  type="checkbox"
-                  className={styles.checkbox(!!errors.usefulCompetencies)}
-                  checked={form.usefulCompetencies.includes(
-                    c as Survey["usefulCompetencies"][number],
+                  type="text"
+                  className={styles.input(
+                    !!errors.usefulCompetencyOther,
+                    readOnly,
                   )}
-                  onChange={() => toggleList("usefulCompetencies", c)}
+                  placeholder="Specify other competencies"
+                  value={form.usefulCompetencyOther}
+                  onChange={(e) =>
+                    updateField("usefulCompetencyOther", e.target.value)
+                  }
                 />
-                <span>{c}</span>
-              </label>
-            ))}
+                <ErrorMessage message={errors.usefulCompetencyOther} />
+              </div>
+            )}
           </div>
-          <ErrorMessage message={errors.usefulCompetencies} />
-          {form.usefulCompetencies.includes("Others") && (
-            <div className="mt-2">
-              <Input
-                disabled={readOnly}
-                type="text"
-                className={styles.input(
-                  !!errors.usefulCompetencyOther,
-                  readOnly,
-                )}
-                placeholder="Specify other competencies"
-                value={form.usefulCompetencyOther}
-                onChange={(e) =>
-                  updateField("usefulCompetencyOther", e.target.value)
-                }
-              />
-              <ErrorMessage message={errors.usefulCompetencyOther} />
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );
 }
-import { useWatch } from "react-hook-form";

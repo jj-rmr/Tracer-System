@@ -51,6 +51,7 @@ function subscribe(onStoreChange: () => void) {
   window.addEventListener(THEME_EVENT, handleChange);
   window.addEventListener("storage", handleChange);
   colorScheme.addEventListener("change", handleChange);
+  applyTheme(getTheme());
 
   return () => {
     window.removeEventListener(THEME_EVENT, handleChange);
@@ -113,6 +114,11 @@ export default function ThemeToggle({
       title={label}
       aria-label={label}
       whileTap={{ scale: 0.98 }}
+      className={
+        placement === "floating"
+          ? "size-11 gap-0 px-0 sm:w-auto sm:gap-3 sm:px-4"
+          : undefined
+      }
     >
       <span
         className={`relative grid shrink-0 place-items-center ${
@@ -145,7 +151,9 @@ export default function ThemeToggle({
                   ? "ml-3 max-w-40 translate-x-0 opacity-100"
                   : "ml-0 max-w-0 -translate-x-1 opacity-0"
               }`
-            : "text-sm font-medium"
+            : placement === "floating"
+              ? "hidden text-sm font-medium sm:block"
+              : "text-sm font-medium"
         }
       >
         <AnimatePresence mode="wait" initial={false}>

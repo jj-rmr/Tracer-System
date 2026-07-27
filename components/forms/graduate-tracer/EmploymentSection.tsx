@@ -1,3 +1,6 @@
+import { useWatch } from "react-hook-form";
+
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 
 import { FileUploadField } from "@/components/forms/FileUploadField";
@@ -122,7 +125,7 @@ export function EmploymentSection({
       <SelectField
         disabled={readOnly}
         id="employmentStatus"
-        label="Employment Status *"
+        label="12. Are you presently employed? *"
         value={form.employmentStatus}
         onChange={(val) => {
           const employmentStatus = val as Survey["employmentStatus"];
@@ -140,7 +143,7 @@ export function EmploymentSection({
             updateField("placeOfWork", "");
           }
 
-          if (employmentStatus === "Never Employed") {
+          if (employmentStatus !== "Yes") {
             updateField("isFirstJob", null);
             updateField("isFirstJobRelated", null);
             updateField("stayingReasons", []);
@@ -177,7 +180,7 @@ export function EmploymentSection({
             <SelectField
               disabled={readOnly}
               id="currentEmploymentStatus"
-              label="Current Employment Status *"
+              label="14. What is your present employment status? *"
               value={form.currentEmploymentStatus}
               onChange={(val) =>
                 updateField(
@@ -199,7 +202,9 @@ export function EmploymentSection({
               hasError={!!errors.currentEmploymentStatus}
             />
             <div>
-              <label className={styles.label}>Present Occupation *</label>
+              <label className={styles.label}>
+                15. What is your present occupation or job title? *
+              </label>
               <Input
                 disabled={readOnly}
                 type="text"
@@ -215,7 +220,10 @@ export function EmploymentSection({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className={styles.label}>Company Name *</label>
+              <label className={styles.label}>
+                16a. What is the name of the company or organization where you
+                currently work? *
+              </label>
               <Input
                 disabled={readOnly}
                 type="text"
@@ -226,7 +234,10 @@ export function EmploymentSection({
               <ErrorMessage message={errors.companyName} />
             </div>
             <div>
-              <label className={styles.label}>Company Address *</label>
+              <label className={styles.label}>
+                16b. What is the complete address of your company or
+                organization? *
+              </label>
               <Input
                 disabled={readOnly}
                 type="text"
@@ -242,7 +253,7 @@ export function EmploymentSection({
             <SelectField
               disabled={readOnly}
               id="businessIndustry"
-              label="Business Industry *"
+              label="17. What is the major line of business of the company or organization where you are presently employed? Select one only. *"
               value={form.businessIndustry}
               onChange={(val) =>
                 updateField(
@@ -280,7 +291,7 @@ export function EmploymentSection({
             <SelectField
               disabled={readOnly}
               id="placeOfWork"
-              label="Place of Work *"
+              label="18. Is your present place of work located locally or abroad? *"
               value={form.placeOfWork}
               onChange={(val) =>
                 updateField("placeOfWork", val as Survey["placeOfWork"])
@@ -296,7 +307,7 @@ export function EmploymentSection({
               <FileUploadField
                 id="employmentDocuments"
                 name="employmentDocuments"
-                label="Employment Documents"
+                label="19. To verify your employment status, upload supporting documentation such as your company ID or employment contract."
                 files={employmentDocuments}
                 onChange={setEmploymentDocuments}
                 existingDocuments={existingDocuments.filter(
@@ -313,7 +324,7 @@ export function EmploymentSection({
               <FileUploadField
                 id="awardsDocuments"
                 name="awardsDocuments"
-                label="Awards Documents"
+                label="20. Upload copies of any awards, recognition, or feedback you have received from employers."
                 files={awardsDocuments}
                 onChange={setAwardsDocuments}
                 existingDocuments={existingDocuments.filter(
@@ -335,8 +346,8 @@ export function EmploymentSection({
         {conditions.showUnemploymentReasons && (
           <div className="space-y-2 border-t border-border pt-4">
             <label className={styles.label}>
-              Please state the reason(s) why you are not yet employed. You may
-              check more than one answer. *
+              13. Why are you not presently employed? Select all reasons that
+              apply. *
             </label>
 
             <div
@@ -353,12 +364,11 @@ export function EmploymentSection({
                     readOnly,
                   )}
                 >
-                  <Input
+                  <Checkbox
                     disabled={readOnly}
-                    type="checkbox"
-                    className={styles.checkbox(!!errors.unemploymentReasons)}
+                    aria-invalid={!!errors.unemploymentReasons}
                     checked={form.unemploymentReasons.includes(reason.value)}
-                    onChange={() =>
+                    onCheckedChange={() =>
                       updateField(
                         "unemploymentReasons",
                         form.unemploymentReasons.includes(reason.value)
@@ -400,5 +410,3 @@ export function EmploymentSection({
     </div>
   );
 }
-
-import { useWatch } from "react-hook-form";

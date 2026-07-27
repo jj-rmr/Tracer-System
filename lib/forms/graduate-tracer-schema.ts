@@ -27,7 +27,7 @@ export const graduateTracerEducationSchema = z
     yearGraduated: z
       .number({ error: "Please enter your year of graduation." })
       .int("Please enter a valid graduation year.")
-      .min(1900, "Please enter a valid graduation year.")
+      .min(2000, "Graduation year must be 2000 or later.")
       .max(new Date().getFullYear(), "Please enter a valid graduation year."),
     advancedStudyDegree: z.unknown().optional(),
     advancedStudyOther: z.unknown().optional(),
@@ -200,7 +200,7 @@ export const graduateTracerEmploymentSchema = conditionalFields.superRefine(
 
 export const graduateTracerJobHistorySchema = conditionalFields.superRefine(
   (answers, context) => {
-    if (answers.employmentStatus === "Never Employed") return;
+    if (answers.employmentStatus !== "Yes") return;
 
     if (answers.isFirstJob !== true && answers.isFirstJob !== false) {
       context.addIssue({
@@ -234,7 +234,7 @@ export const graduateTracerJobHistorySchema = conditionalFields.superRefine(
           message:
             "Please indicate whether your first job was related to your degree program.",
         });
-      } else if (answers.isFirstJobRelated === false) {
+      } else if (answers.isFirstJobRelated === true) {
         addRequiredList(
           context,
           answers,
@@ -247,6 +247,21 @@ export const graduateTracerJobHistorySchema = conditionalFields.superRefine(
             answers,
             "acceptingReasonOther",
             "Please specify your other reason for accepting your first job.",
+          );
+        }
+      } else {
+        addRequiredList(
+          context,
+          answers,
+          "changingReasons",
+          "Please select at least one reason for changing jobs.",
+        );
+        if (includes(answers.changingReasons, "Others")) {
+          addRequiredText(
+            context,
+            answers,
+            "changingReasonOther",
+            "Please specify your other reason for changing jobs.",
           );
         }
       }
@@ -341,18 +356,20 @@ export const graduateTracerJobHistorySchema = conditionalFields.superRefine(
           "Please indicate whether your curriculum was relevant to your employment.",
       });
     }
-    addRequiredList(
-      context,
-      answers,
-      "usefulCompetencies",
-      "Please select at least one competency that has been useful in your career.",
-    );
-    if (includes(answers.usefulCompetencies, "Others"))
-      addRequiredText(
+    if (answers.curriculumRelevant === true) {
+      addRequiredList(
         context,
         answers,
-        "usefulCompetencyOther",
-        "Please specify the other competency you found useful.",
+        "usefulCompetencies",
+        "Please select at least one competency that was useful in your first job.",
       );
+      if (includes(answers.usefulCompetencies, "Others"))
+        addRequiredText(
+          context,
+          answers,
+          "usefulCompetencyOther",
+          "Please specify the other competency you found useful.",
+        );
+    }
   },
 );

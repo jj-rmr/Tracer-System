@@ -32,7 +32,7 @@ function validAnswers() {
     isFirstJob: true,
     isFirstJobRelated: true,
     stayingReasons: ["Related to Course"],
-    acceptingReasons: [],
+    acceptingReasons: ["Salary and Benefits"],
     changingReasons: [],
     firstJobTitle: "Developer",
     firstJobDuration: "1-2 years",
@@ -50,10 +50,9 @@ test("accepts a complete employed and related first-job response", () => {
   assert.equal(validateGraduateTracerSurvey(validAnswers()).valid, true);
 });
 
-test("requires accepting reasons only for an unrelated first job", () => {
+test("requires accepting reasons only for a related first job", () => {
   const answers = {
     ...validAnswers(),
-    isFirstJobRelated: false,
     acceptingReasons: [],
   };
 
@@ -100,6 +99,57 @@ test("skips job-history requirements for a never-employed respondent", () => {
 
   assert.deepEqual(validateGraduateTracerStep(answers, 4), {});
   assert.equal(validateGraduateTracerSurvey(answers).valid, true);
+});
+
+test("skips job-history requirements for a presently unemployed respondent", () => {
+  const answers = {
+    ...validAnswers(),
+    employmentStatus: "No",
+    unemploymentReasons: ["No Job Opportunity"],
+    isFirstJob: null,
+    firstJobTitle: "",
+  };
+
+  assert.deepEqual(validateGraduateTracerStep(answers, 4), {});
+  assert.equal(validateGraduateTracerSurvey(answers).valid, true);
+});
+
+test("routes an unrelated first job to changing reasons", () => {
+  const answers = {
+    ...validAnswers(),
+    isFirstJobRelated: false,
+    acceptingReasons: [],
+    changingReasons: [],
+  };
+
+  const result = validateGraduateTracerStep(answers, 4);
+
+  assert.equal(result.acceptingReasons, undefined);
+  assert.equal(typeof result.changingReasons, "string");
+});
+
+test("requires useful competencies only when the curriculum was relevant", () => {
+  const irrelevant = {
+    ...validAnswers(),
+    curriculumRelevant: false,
+    usefulCompetencies: [],
+  };
+
+  assert.equal(
+    validateGraduateTracerStep(irrelevant, 4).usefulCompetencies,
+    undefined,
+  );
+
+  const relevant = {
+    ...validAnswers(),
+    curriculumRelevant: true,
+    usefulCompetencies: [],
+  };
+
+  assert.equal(
+    typeof validateGraduateTracerStep(relevant, 4).usefulCompetencies,
+    "string",
+  );
 });
 
 test("does not validate hidden unemployment reasons before status selection", () => {

@@ -11,6 +11,15 @@ import {
   type RhfSectionProps,
 } from "./shared";
 
+const CURRENT_YEAR = new Date().getFullYear();
+const GRADUATION_YEAR_OPTIONS = Array.from(
+  { length: CURRENT_YEAR - 2000 + 1 },
+  (_, index) => {
+    const year = CURRENT_YEAR - index;
+    return { value: String(year), label: String(year) };
+  },
+);
+
 export function EducationSection({
   control,
   errors,
@@ -59,15 +68,28 @@ export function EducationSection({
         </div>
 
         <div>
-          <label className={styles.label}>Year Graduated *</label>
-          <Input
-            {...register("yearGraduated", {
-              valueAsNumber: true,
-              onChange: () => clearFieldError("yearGraduated"),
-            })}
-            disabled={readOnly}
-            type="number"
-            className={styles.input(!!errors.yearGraduated, readOnly)}
+          <Controller
+            name="yearGraduated"
+            control={control}
+            render={({ field }) => (
+              <SelectField
+                id="yearGraduated"
+                label="Year Graduated *"
+                value={String(field.value)}
+                onChange={(value) => {
+                  if (!value) return;
+                  field.onChange(Number(value));
+                  clearFieldError("yearGraduated");
+                }}
+                options={GRADUATION_YEAR_OPTIONS}
+                disabled={readOnly}
+                required
+                hasError={!!errors.yearGraduated}
+                placeholder="Select graduation year"
+                inputMode="numeric"
+                numericOnly
+              />
+            )}
           />
           <ErrorMessage message={errors.yearGraduated} />
         </div>
