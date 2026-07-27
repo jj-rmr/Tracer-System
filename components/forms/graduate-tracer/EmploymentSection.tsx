@@ -37,6 +37,8 @@ export function EmploymentSection({
   setEmploymentDocuments,
   awardsDocuments,
   setAwardsDocuments,
+  uploadingFiles,
+  uploadProgress,
   existingDocuments,
   onRequestDeleteDocument,
   onFileError,
@@ -47,6 +49,8 @@ export function EmploymentSection({
 
   awardsDocuments: File[];
   setAwardsDocuments: (files: File[]) => void;
+  uploadingFiles: File[];
+  uploadProgress: ReadonlyMap<File, number>;
 
   onFileError: (message: string) => void;
   showDocumentFields: boolean;
@@ -319,6 +323,8 @@ export function EmploymentSection({
                 disabled={readOnly}
                 maxFiles={5}
                 onError={onFileError}
+                uploadingFiles={uploadingFiles}
+                uploadProgress={uploadProgress}
               />
 
               <FileUploadField
@@ -336,6 +342,8 @@ export function EmploymentSection({
                 disabled={readOnly}
                 maxFiles={5}
                 onError={onFileError}
+                uploadingFiles={uploadingFiles}
+                uploadProgress={uploadProgress}
               />
             </>
           )}

@@ -46,7 +46,6 @@
   --sidebar-accent-foreground: var(--color-sky-950);
   --sidebar-border: var(--color-slate-200);
   --sidebar-ring: var(--color-sky-400);
-  scrollbar-width: thin;
   scrollbar-color: var(--color-border) transparent;
 }
 
@@ -119,7 +118,7 @@ h3 {
 
 html,
 body {
-  height: 100%;
+  min-height: 100%;
 }
 
 button {
@@ -237,6 +236,7 @@ label :is(input, textarea, select, button, [role="combobox"]) {
   * {
     @apply border-border outline-ring/50;
   }
+  html,
   body {
     @apply bg-background text-foreground;
   }

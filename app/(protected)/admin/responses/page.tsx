@@ -92,12 +92,8 @@ export default function ResponsesPage() {
         if (!response.ok) throw new Error(result.message);
         setStudies(result.data.studies);
       })
-      .catch((error: unknown) => {
+      .catch(() => {
         if (!controller.signal.aborted) {
-          console.error(
-            "Failed to load response filter options:",
-            error instanceof Error ? error.message : "Unknown error",
-          );
           showToast({
             message: "Failed to check available tracer studies.",
             type: "error",
@@ -120,12 +116,7 @@ export default function ResponsesPage() {
       const result = await response.json();
       if (!response.ok) throw new Error(result.message);
       setHasManualDraft(Boolean(result.data));
-    } catch (error) {
-      console.error(
-        "Failed to check the manual response draft:",
-        error instanceof Error ? error.message : "Unknown error",
-      );
-    }
+    } catch {}
   }, []);
 
   useEffect(() => {

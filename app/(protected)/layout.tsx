@@ -16,10 +16,10 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="flex h-svh w-full min-w-0 overflow-hidden">
+    <div className="flex min-h-svh w-full min-w-0">
       <RoleChangeNotice />
       <DashboardNavigation role={role} />
-      <main className="min-w-0 flex-1 overflow-y-auto scrollbar-gutter-stable px-4 sm:px-6">
+      <main className="min-w-0 flex-1 px-4 sm:px-6">
         <div className="mx-auto min-h-full w-full max-w-6xl py-6 pb-26 sm:py-8 md:pb-8">
           {children}
         </div>

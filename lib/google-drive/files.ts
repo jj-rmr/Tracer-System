@@ -7,6 +7,7 @@ import {
 } from "@/lib/repositories/google-drive-items.repository";
 import { DRIVE_FOLDER_MIME_TYPE, getDriveRootId } from "./browser";
 import { validateUpload } from "@/lib/security/uploads";
+import { EXTERNAL_TIMEOUTS } from "@/lib/server/timeouts";
 
 export interface UploadedDriveFile {
   filename: string;
@@ -19,7 +20,7 @@ export interface UploadedDriveFile {
   webViewLink?: string;
 }
 
-function sanitizeFilename(name: string) {
+export function sanitizeFilename(name: string) {
   return name.replace(/[\/\\]/g, "-");
 }
 
@@ -32,19 +33,24 @@ export async function uploadFileToDrive(
 
   const buffer = Buffer.from(await file.arrayBuffer());
 
-  const response = await drive.files.create({
-    requestBody: {
-      name: sanitizeFilename(file.name),
-      parents: [folderId],
-    },
+  const response = await drive.files.create(
+    {
+      requestBody: {
+        name: sanitizeFilename(file.name),
+        parents: [folderId],
+      },
 
-    media: {
-      mimeType: file.type,
-      body: Readable.from(buffer),
-    },
+      media: {
+        mimeType: file.type,
+        body: Readable.from(buffer),
+      },
 
-    fields: "id,name,mimeType,size,modifiedTime,webViewLink",
-  });
+      fields: "id,name,mimeType,size,modifiedTime,webViewLink",
+    },
+    {
+      timeout: EXTERNAL_TIMEOUTS.driveTransfer,
+    },
+  );
 
   if (!response.data.id) {
     throw new Error("Google Drive upload returned no file ID.");

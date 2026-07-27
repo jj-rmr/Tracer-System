@@ -25,9 +25,7 @@ export default function AccountsPage() {
 
         const { data } = await res.json();
         setCurrentUserId(data.id);
-      } catch (error) {
-        console.error("Failed to load current user:", error);
-      }
+      } catch {}
     }
 
     loadCurrentUser();

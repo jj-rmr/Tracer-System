@@ -1,7 +1,5 @@
-//app/layout.tsx
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Script from "next/script";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/Toast";
 
@@ -18,6 +16,17 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Placement Tracer System (Demo)",
   description: "Tracer System by the ParSU Placement Unit (Demo)",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#f8fafc",
 };
 
 const themeScript = `
@@ -26,8 +35,14 @@ const themeScript = `
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const followsSystem = savedTheme !== "light" && savedTheme !== "dark";
     const isDark = savedTheme === "dark" || (followsSystem && prefersDark);
-    document.documentElement.classList.toggle("dark", isDark);
-    document.documentElement.style.colorScheme = isDark ? "dark" : "light";
+    const root = document.documentElement;
+    root.classList.toggle("dark", isDark);
+    root.style.colorScheme = isDark ? "dark" : "light";
+    root.style.backgroundColor = isDark ? "#020617" : "#f8fafc";
+    document.querySelector('meta[name="theme-color"]')?.setAttribute(
+      "content",
+      isDark ? "#020617" : "#f8fafc"
+    );
   } catch {}
 `;
 
@@ -42,12 +57,13 @@ export default async function RootLayout({
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="relative h-full w-full flex items-center justify-center">
-        <Script
+      <head>
+        <script
           id="theme-bootstrap"
-          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{ __html: themeScript }}
         />
+      </head>
+      <body className="relative min-h-full w-full">
         <ToastProvider>{children}</ToastProvider>
       </body>
     </html>

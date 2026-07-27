@@ -110,9 +110,7 @@ export default function SettingsPage({ name, email, role }: SettingsPageProps) {
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">
                   For access problems, incorrect account information, or
                   technical issues, contact the ParSU Placement Unit Office or
-                  your designated Tracer System administrator. The system is
-                  still in development, so please report any issue you
-                  encounter.
+                  your designated Tracer System administrator.
                 </p>
               </div>
             </div>

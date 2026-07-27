@@ -19,7 +19,7 @@ interface ToastProps {
 const toastStyles: Record<NonNullable<ToastProps["type"]>, string> = {
   success: "bg-success text-success-foreground",
   warning: "bg-warning text-warning-foreground",
-  error: "bg-destructive text-destructive-foreground",
+  error: "border border-border bg-card text-foreground",
   info: "bg-muted-foreground text-background",
 };
 
@@ -103,6 +103,28 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const handleClose = useCallback(() => {
     setToast(null);
   }, []);
+
+  useEffect(() => {
+    const wentOffline = () =>
+      showToast({
+        message:
+          "Network connection lost. Your unsaved work will be kept on this device.",
+        type: "warning",
+        duration: 6000,
+      });
+    const cameOnline = () =>
+      showToast({
+        message: "You’re back online. You can refresh or try again now.",
+        type: "success",
+      });
+
+    window.addEventListener("offline", wentOffline);
+    window.addEventListener("online", cameOnline);
+    return () => {
+      window.removeEventListener("offline", wentOffline);
+      window.removeEventListener("online", cameOnline);
+    };
+  }, [showToast]);
 
   return (
     <ToastContext.Provider value={{ showToast }}>

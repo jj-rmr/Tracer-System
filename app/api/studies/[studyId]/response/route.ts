@@ -12,6 +12,7 @@ import {
   getFormResponseForUserDeletion,
   markFormResponseDeletionFailed,
   saveFormResponse,
+  StaleFormResponseError,
 } from "@/lib/repositories/form-responses.repository";
 import { getStudyContext } from "@/lib/repositories/forms.repository";
 import { FormResponseStatus, ROLES } from "@/types";
@@ -19,6 +20,7 @@ import { FormResponseStatus, ROLES } from "@/types";
 interface SaveResponseBody {
   answers?: unknown;
   status?: unknown;
+  expectedUpdatedAt?: unknown;
 }
 
 function isAnswersObject(value: unknown): value is Record<string, unknown> {
@@ -116,6 +118,16 @@ export async function PUT(
       );
     }
 
+    if (
+      body.expectedUpdatedAt !== undefined &&
+      typeof body.expectedUpdatedAt !== "string"
+    ) {
+      return NextResponse.json(
+        { success: false, message: "The response version is invalid." },
+        { status: 400 },
+      );
+    }
+
     const allowedKeys = context.definition.sections.flatMap(
       (section) => section.fieldKeys,
     );
@@ -160,6 +172,7 @@ export async function PUT(
       status: body.status,
       answers: body.answers,
       resetDriveOrganization: shouldOrganize,
+      expectedUpdatedAt: body.expectedUpdatedAt,
     });
 
     if (shouldOrganize) {
@@ -177,6 +190,17 @@ export async function PUT(
       data: response,
     });
   } catch (error) {
+    if (error instanceof StaleFormResponseError) {
+      return NextResponse.json(
+        {
+          success: false,
+          code: "STALE_RESPONSE",
+          message:
+            "This response was updated in another tab. Refresh it before saving again.",
+        },
+        { status: 409 },
+      );
+    }
     console.error("Failed to save study response:", error);
 
     return NextResponse.json(

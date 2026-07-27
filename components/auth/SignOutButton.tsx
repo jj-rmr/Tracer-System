@@ -19,8 +19,7 @@ export function SignOutButton() {
 
       router.replace("/signin");
       router.refresh();
-    } catch (error) {
-      console.error("Failed to sign out:", error);
+    } catch {
     } finally {
       setIsPending(false);
     }

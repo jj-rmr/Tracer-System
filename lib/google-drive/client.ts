@@ -4,14 +4,17 @@ import {
   createGoogleDriveAuthorizationClient,
   getGoogleDriveRefreshToken,
 } from "@/lib/google/oauth";
+import { EXTERNAL_TIMEOUTS } from "@/lib/server/timeouts";
 
-const oauth2Client = createGoogleDriveAuthorizationClient();
+google.options({ timeout: EXTERNAL_TIMEOUTS.driveMetadata });
 
-oauth2Client.setCredentials({
+export const googleDriveOAuthClient = createGoogleDriveAuthorizationClient();
+
+googleDriveOAuthClient.setCredentials({
   refresh_token: getGoogleDriveRefreshToken(),
 });
 
 export const drive = google.drive({
   version: "v3",
-  auth: oauth2Client,
+  auth: googleDriveOAuthClient,
 });

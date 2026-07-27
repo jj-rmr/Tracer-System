@@ -1,5 +1,3 @@
-// lib/auth/roles.ts
-
 import { Models } from "node-appwrite";
 import { Role, ROLES } from "@/types";
 

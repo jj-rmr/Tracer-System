@@ -8,6 +8,7 @@ import GraduateTracerForm, {
   type PendingSurveyDocuments,
 } from "@/components/forms/GraduateTracerForm";
 import { surveyToAnswers } from "@/lib/forms/graduate-tracer-adapter";
+import { uploadFormResponseDocument } from "@/lib/api/form-response-documents";
 import type { Survey, SurveyDocument, SurveyDocumentType } from "@/types";
 
 interface ManualResponseEditorProps {
@@ -40,23 +41,12 @@ export default function ManualResponseEditor({
     _response: Survey,
     file: File,
     documentType: SurveyDocumentType,
+    onProgress: (percentage: number) => void = () => undefined,
   ) {
-    const formData = new FormData();
-    formData.set("file", file);
-    formData.set("documentType", documentType);
-    formData.set("uploadKey", getUploadKey(file));
-    const response = await fetch(
-      `/api/form-responses/${responseId}/documents`,
-      {
-        method: "POST",
-        body: formData,
-      },
-    );
-    const result = await response.json();
-    if (!response.ok || !result.document) {
-      throw new Error(result.message ?? `Failed to upload ${file.name}.`);
-    }
-    return result.document as SurveyDocument;
+    return uploadFormResponseDocument(responseId, file, documentType, {
+      onProgress,
+      uploadKey: getUploadKey(file),
+    });
   }
 
   async function deleteDocument(document: SurveyDocument) {

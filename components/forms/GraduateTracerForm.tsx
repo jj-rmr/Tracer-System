@@ -17,6 +17,7 @@ import {
   validateGraduateTracerStep,
 } from "@/lib/forms/graduate-tracer-validation";
 import type { Survey, SurveyDocument, SurveyDocumentType } from "@/types";
+import { useNavigationWarning } from "@/lib/hooks/use-navigation-warning";
 
 interface Props {
   initialData: Survey;
@@ -28,6 +29,7 @@ interface Props {
     survey: Survey,
     file: File,
     documentType: SurveyDocumentType,
+    onProgress: (percentage: number) => void,
   ) => Promise<SurveyDocument>;
   onDeleteDocument?: (document: SurveyDocument) => Promise<void>;
   readOnly?: boolean;
@@ -37,6 +39,7 @@ interface Props {
   initialSavedAt?: string;
   onValuesChange?: (survey: Survey) => void;
   onRequestClose?: () => void;
+  recoveryKey?: string;
 }
 
 export interface PendingSurveyDocuments {
@@ -61,10 +64,9 @@ export default function GraduateTracerForm({
   initialSavedAt,
   onValuesChange,
   onRequestClose,
+  recoveryKey,
 }: Props) {
-  // Treat server data as mount-time defaults. Resetting when an autosave response
-  // updates the parent would replace edits made while that request was in flight.
-  const { control, getValues, register, setValue } = useForm<Survey>({
+  const { control, getValues, register, reset, setValue } = useForm<Survey>({
     defaultValues: initialData,
   });
   const [errors, setErrors] = useState<FormErrors>({});
@@ -76,6 +78,10 @@ export default function GraduateTracerForm({
   >(initialSavedAt ? "saved" : "idle");
   const [lastSavedAt, setLastSavedAt] = useState(initialSavedAt);
   const [activeDocumentUploads, setActiveDocumentUploads] = useState(0);
+  const [uploadingFiles, setUploadingFiles] = useState<File[]>([]);
+  const [uploadProgress, setUploadProgress] = useState<Map<File, number>>(
+    new Map(),
+  );
   const [employmentDocuments, setEmploymentDocuments] = useState<File[]>([]);
 
   const [awardsDocuments, setAwardsDocuments] = useState<File[]>([]);
@@ -100,6 +106,46 @@ export default function GraduateTracerForm({
   }, [awardsDocuments, employmentDocuments]);
 
   useEffect(() => {
+    if (!recoveryKey || readOnly) return;
+
+    try {
+      const saved = window.sessionStorage.getItem(recoveryKey);
+      if (!saved) return;
+      const recovery = JSON.parse(saved) as { savedAt: string; survey: Survey };
+      if (
+        !recovery.survey ||
+        (initialSavedAt && recovery.savedAt <= initialSavedAt)
+      ) {
+        window.sessionStorage.removeItem(recoveryKey);
+        return;
+      }
+
+      reset(recovery.survey);
+      lastDraftSignatureRef.current = JSON.stringify(recovery.survey);
+      showToast({
+        message: "We restored unsaved answers from this browser.",
+        type: "info",
+      });
+    } catch {
+      window.sessionStorage.removeItem(recoveryKey);
+    }
+  }, [initialSavedAt, readOnly, recoveryKey, reset, showToast]);
+
+  useEffect(() => {
+    if (!recoveryKey || readOnly) return;
+
+    try {
+      window.sessionStorage.setItem(
+        recoveryKey,
+        JSON.stringify({
+          savedAt: new Date().toISOString(),
+          survey: getValues(),
+        }),
+      );
+    } catch {}
+  }, [getValues, readOnly, recoveryKey, watchedValues]);
+
+  useEffect(() => {
     onValuesChange?.(getValues());
   }, [getValues, onValuesChange, watchedValues]);
 
@@ -120,10 +166,10 @@ export default function GraduateTracerForm({
           if (attempt === draftAttemptRef.current) {
             setLastSavedAt(savedAt ?? new Date().toISOString());
             setDraftSaveState("saved");
+            if (recoveryKey) window.sessionStorage.removeItem(recoveryKey);
           }
         })
-        .catch((error) => {
-          console.error("Draft autosave failed:", error);
+        .catch(() => {
           if (attempt === draftAttemptRef.current) {
             setDraftSaveState("error");
           }
@@ -131,7 +177,23 @@ export default function GraduateTracerForm({
     }, 1200);
 
     return () => window.clearTimeout(timer);
-  }, [getValues, isSubmitting, onDraftSave, readOnly, watchedValues]);
+  }, [
+    getValues,
+    isSubmitting,
+    onDraftSave,
+    readOnly,
+    recoveryKey,
+    watchedValues,
+  ]);
+
+  const hasPendingFiles =
+    activeDocumentUploads > 0 ||
+    employmentDocuments.length > 0 ||
+    awardsDocuments.length > 0;
+  const shouldWarnBeforeNavigation =
+    !readOnly && (isSubmitting || hasPendingFiles);
+
+  useNavigationWarning(shouldWarnBeforeNavigation);
 
   useEffect(() => {
     if (!onInstantDocumentUpload || readOnly) return;
@@ -147,8 +209,12 @@ export default function GraduateTracerForm({
 
       uploadingFilesRef.current.add(file);
       setActiveDocumentUploads((count) => count + 1);
+      setUploadingFiles((current) => [...current, file]);
+      setUploadProgress((current) => new Map(current).set(file, 0));
 
-      void instantUpload(getValues(), file, documentType)
+      void instantUpload(getValues(), file, documentType, (percentage) => {
+        setUploadProgress((current) => new Map(current).set(file, percentage));
+      })
         .then(async (document) => {
           if (!selectedFilesRef.current.includes(file)) {
             if (onDeleteDocument) await onDeleteDocument(document);
@@ -159,8 +225,7 @@ export default function GraduateTracerForm({
           setExistingDocuments((current) => [...current, document]);
           setValue("documents", [...getValues("documents"), document]);
         })
-        .catch((error) => {
-          console.error("Instant document upload failed:", error);
+        .catch(() => {
           showToast({
             message: `Could not upload ${file.name}. It will be retried when you submit.`,
             type: "error",
@@ -168,6 +233,14 @@ export default function GraduateTracerForm({
         })
         .finally(() => {
           setActiveDocumentUploads((count) => Math.max(0, count - 1));
+          setUploadingFiles((current) =>
+            current.filter((item) => item !== file),
+          );
+          setUploadProgress((current) => {
+            const next = new Map(current);
+            next.delete(file);
+            return next;
+          });
         });
     }
 
@@ -287,9 +360,7 @@ export default function GraduateTracerForm({
       });
 
       setDocumentToDelete(null);
-    } catch (error) {
-      console.error("Failed to delete document:", error);
-
+    } catch {
       showToast({
         message: "Failed to delete document.",
         type: "error",
@@ -322,6 +393,8 @@ export default function GraduateTracerForm({
         awards: awardsDocuments,
       });
 
+      if (recoveryKey) window.sessionStorage.removeItem(recoveryKey);
+
       showToast({
         message: requireResponses
           ? "Response saved successfully."
@@ -332,9 +405,7 @@ export default function GraduateTracerForm({
       onSuccess?.();
       setShowSaveModal(false);
       router.refresh();
-    } catch (err: unknown) {
-      console.error("Save failed:", err);
-
+    } catch {
       showToast({
         message: isNew
           ? "An error occurred while creating a form"
@@ -354,7 +425,7 @@ export default function GraduateTracerForm({
 
   return (
     <div className="space-y-4">
-      <div className="md:bg-muted md:border border-border rounded-2xl md:p-4">
+      <div className="rounded-2xl md:p-4">
         <div className="flex justify-between text-sm font-medium text-foreground">
           <span>
             Step {step} of {sections.length}
@@ -372,16 +443,12 @@ export default function GraduateTracerForm({
         {onDraftSave && !readOnly && (
           <p
             aria-live="polite"
-            className={`mt-2 text-right text-xs font-medium ${
-              draftSaveState === "error"
-                ? "text-destructive"
-                : "text-muted-foreground"
-            }`}
+            className="mt-2 text-right text-xs font-medium text-muted-foreground"
           >
             {draftSaveState === "saving"
               ? "Saving draft..."
               : draftSaveState === "error"
-                ? "Draft not saved. Changes will retry after your next edit."
+                ? "Draft isn’t synced yet. Your answers are safe in this browser."
                 : lastSavedAt
                   ? `Draft saved ${new Date(lastSavedAt).toLocaleTimeString(
                       "en-PH",
@@ -425,6 +492,8 @@ export default function GraduateTracerForm({
             setEmploymentDocuments={setEmploymentDocuments}
             awardsDocuments={awardsDocuments}
             setAwardsDocuments={setAwardsDocuments}
+            uploadingFiles={uploadingFiles}
+            uploadProgress={uploadProgress}
             existingDocuments={existingDocuments}
             showDocumentFields={allowDocuments}
             onRequestDeleteDocument={requestDeleteDocument}
@@ -456,7 +525,17 @@ export default function GraduateTracerForm({
           {activeDocumentUploads === 1 ? "" : "s"}...
         </p>
       )}
-      <div className="flex flex-col-reverse md:flex-row justify-stretch md:justify-end gap-4">
+      {activeDocumentUploads === 0 &&
+        employmentDocuments.length + awardsDocuments.length > 0 && (
+          <p
+            className="text-right text-xs font-medium text-muted-foreground"
+            aria-live="polite"
+          >
+            Selected documents are waiting to upload. Leaving now will discard
+            them.
+          </p>
+        )}
+      <div className="flex flex-col-reverse md:flex-row justify-stretch md:justify-end gap-2 md:gap-4">
         {onRequestClose && !readOnly && (
           <Button
             type="button"

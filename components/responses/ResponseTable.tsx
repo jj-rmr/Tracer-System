@@ -11,6 +11,8 @@ import { useToast } from "@/components/ui/Toast";
 import Modal from "@/components/ui/Modal";
 import ConfirmationDialog from "@/components/ui/ConfirmationDialog";
 import LoadingState from "@/components/ui/LoadingState";
+import ErrorState from "@/components/ui/ErrorState";
+import { friendlyRequestMessage } from "@/lib/api/client-errors";
 import { TableActionMenu } from "@/components/ui/table-action-menu";
 import {
   Table,
@@ -90,8 +92,6 @@ export default function ResponseTable({
           setSurveyData(data.response);
           setResponseMetadata(data.metadata);
         } catch (error: unknown) {
-          console.error(error);
-
           showToast({
             message:
               error instanceof Error
@@ -159,7 +159,10 @@ export default function ResponseTable({
         if (controller.signal.aborted) return;
 
         setError(
-          error instanceof Error ? error.message : "Failed to load responses.",
+          friendlyRequestMessage(
+            error,
+            "An error occurred on our end and we couldn’t retrieve the responses.",
+          ),
         );
       } finally {
         if (!controller.signal.aborted) {
@@ -260,12 +263,11 @@ export default function ResponseTable({
 
   if (error) {
     return (
-      <div
-        className="p-4 w-full text-sm text-destructive rounded-2xl bg-destructive/10 border border-destructive/20 shadow-sm"
-        role="alert"
-      >
-        <span className="font-semibold">Error:</span> {error}
-      </div>
+      <ErrorState
+        message={error}
+        retryLabel="Refresh responses"
+        onRetry={() => setReloadKey((current) => current + 1)}
+      />
     );
   }
 

@@ -10,10 +10,11 @@ import {
   getResponseExportRows,
 } from "@/lib/exports/responses";
 import { createStyledWorkbook } from "@/lib/exports/excel";
+import { recordSecurityAuditEvent } from "@/lib/repositories/audit.repository";
 
 export async function GET(request: NextRequest) {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin();
 
     const { filters } = parseAdminResponseQuery(request.nextUrl.searchParams);
     const format = request.nextUrl.searchParams.get("format") ?? "csv";
@@ -23,12 +24,17 @@ export async function GET(request: NextRequest) {
     const now = new Date();
     const pad = (value: number) => value.toString().padStart(2, "0");
     const timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+    const rows = await getResponseExportRows(filters);
+
+    await recordSecurityAuditEvent({
+      actorUserId: admin.$id,
+      action: "responses.exported",
+      targetType: "response_collection",
+      metadata: { format, rowCount: rows.length },
+    });
 
     if (format === "xlsx") {
-      const workbook = await createStyledWorkbook(
-        "Tracer Responses",
-        await getResponseExportRows(filters),
-      );
+      const workbook = await createStyledWorkbook("Tracer Responses", rows);
       return new NextResponse(new Uint8Array(workbook), {
         headers: {
           "Content-Type":

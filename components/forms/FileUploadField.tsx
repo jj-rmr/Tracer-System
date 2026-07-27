@@ -23,6 +23,8 @@ interface FileUploadFieldProps {
   hasError?: boolean;
   maxFiles?: number;
   onError?: (message: string) => void;
+  uploadingFiles?: File[];
+  uploadProgress?: ReadonlyMap<File, number>;
 }
 
 const styles = {
@@ -109,6 +111,8 @@ export function FileUploadField({
   hasError = false,
   maxFiles = 5,
   onError,
+  uploadingFiles = [],
+  uploadProgress = new Map(),
 }: FileUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isDragActive, setIsDragActive] = useState(false);
@@ -349,6 +353,8 @@ export function FileUploadField({
         <div className="mt-3 space-y-2">
           {files.map((file, index) => {
             const FileIcon = getFileIcon(file.type, file.name);
+            const isUploading = uploadingFiles.includes(file);
+            const percentage = uploadProgress.get(file) ?? 0;
 
             return (
               <div
@@ -361,15 +367,35 @@ export function FileUploadField({
                     className="shrink-0 text-muted-foreground"
                   />
 
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-foreground">
                       {file.name}
                     </p>
 
                     <p className="text-xs text-muted-foreground">
                       {getFileType(file.type, file.name)} •{" "}
-                      {formatFileSize(file.size)} • Ready to upload
+                      {formatFileSize(file.size)} •{" "}
+                      {isUploading
+                        ? percentage < 100
+                          ? `Uploading ${percentage}%`
+                          : "Upload complete. Verifying..."
+                        : "Ready to upload"}
                     </p>
+                    {isUploading && (
+                      <div
+                        role="progressbar"
+                        aria-label={`Uploading ${file.name}`}
+                        aria-valuemin={0}
+                        aria-valuemax={100}
+                        aria-valuenow={percentage}
+                        className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-secondary"
+                      >
+                        <div
+                          className="h-full rounded-full bg-primary transition-[width] duration-150 ease-out"
+                          style={{ width: `${percentage}%` }}
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
 

@@ -5,6 +5,11 @@ import { createAdminClient } from "@/lib/appwrite/admin";
 import { AUTH_COOKIE, COOKIE_OPTIONS, getRole } from "@/lib/auth";
 import { createGoogleSignInClient } from "@/lib/google/oauth";
 import { ROLES } from "@/types";
+import {
+  EXTERNAL_TIMEOUTS,
+  fetchWithTimeout,
+  withExternalTimeout,
+} from "@/lib/server/timeouts";
 
 const STATE_COOKIE = "google_oauth_state";
 
@@ -35,19 +40,23 @@ export async function GET(request: NextRequest) {
 
   try {
     const googleClient = createGoogleSignInClient();
-    const { tokens } = await googleClient.getToken(code);
+    const { tokens } = await withExternalTimeout(
+      googleClient.getToken(code),
+      EXTERNAL_TIMEOUTS.authentication,
+    );
 
     if (!tokens.access_token) {
       throw new Error("Google token exchange did not return an access token");
     }
 
-    const userResponse = await fetch(
+    const userResponse = await fetchWithTimeout(
       "https://www.googleapis.com/oauth2/v3/userinfo",
       {
         headers: {
           Authorization: `Bearer ${tokens.access_token}`,
         },
       },
+      EXTERNAL_TIMEOUTS.authentication,
     );
 
     const googleUser = await userResponse.json();

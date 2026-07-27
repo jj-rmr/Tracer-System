@@ -40,6 +40,25 @@ const focusableSelector = [
   "[tabindex]:not([tabindex='-1'])",
 ].join(",");
 
+let bodyScrollLockCount = 0;
+let bodyOverflowBeforeLock = "";
+
+function lockBodyScroll() {
+  if (bodyScrollLockCount === 0) {
+    bodyOverflowBeforeLock = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+  }
+  bodyScrollLockCount += 1;
+}
+
+function unlockBodyScroll() {
+  bodyScrollLockCount = Math.max(0, bodyScrollLockCount - 1);
+  if (bodyScrollLockCount !== 0) return;
+
+  document.body.style.overflow = bodyOverflowBeforeLock;
+  bodyOverflowBeforeLock = "";
+}
+
 export default function Modal({
   open,
   onClose,
@@ -71,8 +90,7 @@ export default function Modal({
     if (!open) return;
 
     const previouslyFocused = document.activeElement as HTMLElement | null;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    lockBodyScroll();
 
     const focusFrame = window.requestAnimationFrame(() => {
       const firstFocusable =
@@ -123,7 +141,7 @@ export default function Modal({
 
     return () => {
       window.cancelAnimationFrame(focusFrame);
-      document.body.style.overflow = previousOverflow;
+      unlockBodyScroll();
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("stepchanged", handleScrollToTop);
       previouslyFocused?.focus();

@@ -370,28 +370,50 @@ export async function saveFormResponse({
   status,
   answers,
   resetDriveOrganization = false,
+  expectedUpdatedAt,
 }: {
   studyPeriodId: string;
   userId: string;
   status: FormResponseStatus;
   answers: Record<string, unknown>;
   resetDriveOrganization?: boolean;
+  expectedUpdatedAt?: string;
 }): Promise<FormResponse> {
+  const values = {
+    status,
+    answers,
+    submitted_at: status === "submitted" ? new Date().toISOString() : null,
+    ...(resetDriveOrganization
+      ? {
+          drive_organization_status: "pending" as const,
+          drive_organization_error: null,
+        }
+      : {}),
+  };
+
+  if (expectedUpdatedAt) {
+    const { data, error } = await supabase
+      .from("form_responses")
+      .update(values)
+      .eq("study_period_id", studyPeriodId)
+      .eq("user_id", userId)
+      .eq("updated_at", expectedUpdatedAt)
+      .eq("deletion_status", "active")
+      .select()
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) throw new StaleFormResponseError();
+    return mapFormResponse(data as FormResponseRow);
+  }
+
   const { data, error } = await supabase
     .from("form_responses")
     .upsert(
       {
         study_period_id: studyPeriodId,
         user_id: userId,
-        status,
-        answers,
-        submitted_at: status === "submitted" ? new Date().toISOString() : null,
-        ...(resetDriveOrganization
-          ? {
-              drive_organization_status: "pending",
-              drive_organization_error: null,
-            }
-          : {}),
+        ...values,
       },
       {
         onConflict: "study_period_id,user_id",
@@ -403,6 +425,13 @@ export async function saveFormResponse({
   if (error) throw error;
 
   return mapFormResponse(data as FormResponseRow);
+}
+
+export class StaleFormResponseError extends Error {
+  constructor() {
+    super("The response was updated elsewhere.");
+    this.name = "StaleFormResponseError";
+  }
 }
 
 function mapFormResponseDocument(row: Record<string, unknown>): SurveyDocument {

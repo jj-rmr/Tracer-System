@@ -9,6 +9,8 @@ import { LuEye, LuShieldCheck, LuTrash2 } from "react-icons/lu";
 import { Role } from "@/types";
 import { useToast } from "@/components/ui/Toast";
 import LoadingState from "@/components/ui/LoadingState";
+import ErrorState from "@/components/ui/ErrorState";
+import { friendlyRequestMessage } from "@/lib/api/client-errors";
 import {
   Table,
   TableBody,
@@ -54,6 +56,7 @@ export default function AccountsTable({
   const [totalRows, setTotalRows] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
   const [accountToDelete, setAccountToDelete] = useState<Account | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [deleting, setDeleting] = useState(false);
@@ -115,9 +118,11 @@ export default function AccountsTable({
         setAccounts(filtered.slice(start, end));
       } catch (err: unknown) {
         if (!cancelled) {
-          console.error(err);
           setError(
-            err instanceof Error ? err.message : "Failed to load accounts.",
+            friendlyRequestMessage(
+              err,
+              "An error occurred on our end and we couldn’t retrieve the accounts.",
+            ),
           );
         }
       } finally {
@@ -132,7 +137,7 @@ export default function AccountsTable({
     return () => {
       cancelled = true;
     };
-  }, [currentPage, roleFilter, searchQuery]);
+  }, [currentPage, reloadKey, roleFilter, searchQuery]);
 
   const requiredRoleConfirmation =
     roleChange?.role === "admin" ? "PROMOTE TO ADMIN" : "DEMOTE TO ALUMNI";
@@ -242,12 +247,11 @@ export default function AccountsTable({
 
   if (error) {
     return (
-      <div
-        className="p-4 w-full text-sm text-destructive rounded-2xl bg-destructive/10 border border-destructive/20 shadow-sm"
-        role="alert"
-      >
-        <span className="font-semibold">Error:</span> {error}
-      </div>
+      <ErrorState
+        message={error}
+        retryLabel="Refresh accounts"
+        onRetry={() => setReloadKey((current) => current + 1)}
+      />
     );
   }
 

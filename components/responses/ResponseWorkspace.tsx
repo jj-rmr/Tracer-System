@@ -53,6 +53,7 @@ export default function ResponseWorkspace({
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
   const documentOperationsRef = useRef(new Set<Promise<unknown>>());
   const responseIdRef = useRef(responseId);
+  const updatedAtRef = useRef(updatedAt);
   const { showToast } = useToast();
   const router = useRouter();
 
@@ -86,6 +87,7 @@ export default function ResponseWorkspace({
         body: JSON.stringify({
           status,
           answers,
+          expectedUpdatedAt: updatedAtRef.current,
         }),
       });
       const result = await saveResponse.json();
@@ -95,6 +97,7 @@ export default function ResponseWorkspace({
       }
 
       responseIdRef.current = result.data.id;
+      updatedAtRef.current = result.data.updatedAt;
       return result.data as { id: string; updatedAt?: string };
     });
 
@@ -146,11 +149,12 @@ export default function ResponseWorkspace({
     nextSurvey: Survey,
     file: File,
     documentType: SurveyDocumentType,
+    onProgress: (percentage: number) => void,
   ) {
     const id =
       responseIdRef.current ?? (await enqueueStudySave(nextSurvey, "draft")).id;
     const document = await trackDocumentOperation(
-      uploadFormResponseDocument(id, file, documentType),
+      uploadFormResponseDocument(id, file, documentType, { onProgress }),
     );
     setCurrentSurvey((current) => ({
       ...current,
@@ -337,6 +341,7 @@ export default function ResponseWorkspace({
             onDeleteDocument={(document) => deleteStudyDocument(document.id)}
             onValuesChange={rememberLatestSurvey}
             onRequestClose={requestDraftClose}
+            recoveryKey={studyId ? `tracer-response:${studyId}` : undefined}
           />
         </FormModal>
         {draftCloseDialog}
@@ -457,6 +462,7 @@ export default function ResponseWorkspace({
             onRequestClose={
               responseStatus === "draft" ? requestDraftClose : undefined
             }
+            recoveryKey={studyId ? `tracer-response:${studyId}` : undefined}
           />
         </FormModal>
       )}

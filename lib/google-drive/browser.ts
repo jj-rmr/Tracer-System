@@ -8,6 +8,7 @@ import {
 } from "@/lib/repositories/google-drive-items.repository";
 
 import { drive } from "./client";
+import { EXTERNAL_TIMEOUTS } from "@/lib/server/timeouts";
 
 export const DRIVE_FOLDER_MIME_TYPE = "application/vnd.google-apps.folder";
 
@@ -96,12 +97,16 @@ export async function getDriveFileContent(fileId: string, range?: string) {
   const response = exportMimeType
     ? await drive.files.export(
         { fileId, mimeType: exportMimeType },
-        { responseType: "stream" },
+        {
+          responseType: "stream",
+          timeout: EXTERNAL_TIMEOUTS.driveTransfer,
+        },
       )
     : await drive.files.get(
         { fileId, alt: "media" },
         {
           responseType: "stream",
+          timeout: EXTERNAL_TIMEOUTS.driveTransfer,
           headers: range ? { Range: range } : undefined,
         },
       );

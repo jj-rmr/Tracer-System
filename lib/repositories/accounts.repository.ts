@@ -2,6 +2,7 @@ import { Models, Users } from "node-appwrite";
 
 import { createAdminClient } from "@/lib/appwrite/admin";
 import { ROLES } from "@/types";
+import { EXTERNAL_TIMEOUTS, withExternalTimeout } from "@/lib/server/timeouts";
 
 function getUsersService() {
   const client = createAdminClient();
@@ -29,7 +30,10 @@ export function formatAccount(user: Models.User<Models.Preferences>) {
 export async function getAccount(id: string) {
   const users = getUsersService();
 
-  const user = await users.get(id);
+  const user = await withExternalTimeout(
+    users.get(id),
+    EXTERNAL_TIMEOUTS.authentication,
+  );
 
   return formatAccount(user);
 }
@@ -37,7 +41,10 @@ export async function getAccount(id: string) {
 export async function getAllAccounts() {
   const users = getUsersService();
 
-  const response = await users.list();
+  const response = await withExternalTimeout(
+    users.list(),
+    EXTERNAL_TIMEOUTS.authentication,
+  );
 
   return response.users.map(formatAccount);
 }
@@ -45,12 +52,15 @@ export async function getAllAccounts() {
 export async function updateAccountName(id: string, name: string) {
   const users = getUsersService();
 
-  return await users.updateName(id, name);
+  return await withExternalTimeout(users.updateName(id, name));
 }
 
 export async function updateAccountRole(id: string, role: "admin" | "alumni") {
   const users = getUsersService();
-  const account = await users.get(id);
+  const account = await withExternalTimeout(
+    users.get(id),
+    EXTERNAL_TIMEOUTS.authentication,
+  );
   const labels = account.labels.filter(
     (label) => label !== ROLES.ADMIN && label !== ROLES.ALUMNI,
   );
@@ -61,11 +71,13 @@ export async function updateAccountRole(id: string, role: "admin" | "alumni") {
       : "You have been demoted to alumni.";
   const nextPrefs = { ...account.prefs, roleChangeNotice };
 
-  await users.updatePrefs(id, nextPrefs);
+  await withExternalTimeout(users.updatePrefs(id, nextPrefs));
   try {
-    return await users.updateLabels(id, [...labels, role]);
+    return await withExternalTimeout(users.updateLabels(id, [...labels, role]));
   } catch (error) {
-    await users.updatePrefs(id, account.prefs).catch(() => undefined);
+    await withExternalTimeout(users.updatePrefs(id, account.prefs)).catch(
+      () => undefined,
+    );
     throw error;
   }
 }
@@ -73,5 +85,10 @@ export async function updateAccountRole(id: string, role: "admin" | "alumni") {
 export async function deleteAccount(id: string) {
   const users = getUsersService();
 
-  return await users.delete(id);
+  return await withExternalTimeout(users.delete(id));
+}
+
+export async function setAccountEnabled(id: string, enabled: boolean) {
+  const users = getUsersService();
+  return await withExternalTimeout(users.updateStatus(id, enabled));
 }

@@ -11,6 +11,7 @@ import GraduateTracerForm, {
 } from "@/components/forms/GraduateTracerForm";
 import { surveyToAnswers } from "@/lib/forms/graduate-tracer-adapter";
 import { defaultSurvey } from "@/lib/surveys/defaults";
+import { uploadFormResponseDocument } from "@/lib/api/form-response-documents";
 import {
   StudyPeriod,
   Survey,
@@ -122,24 +123,13 @@ const ManualResponseEntry = forwardRef<
     response: Survey,
     file: File,
     documentType: SurveyDocumentType,
+    onProgress: (percentage: number) => void = () => undefined,
   ) {
     const saved = await persistManualResponse(response, "draft");
-    const formData = new FormData();
-    formData.set("file", file);
-    formData.set("documentType", documentType);
-    formData.set("uploadKey", getUploadKey(file));
-
-    const uploadResponse = await fetch(
-      `/api/form-responses/${saved.id}/documents`,
-      { method: "POST", body: formData },
-    );
-    const result = await uploadResponse.json();
-
-    if (!uploadResponse.ok) {
-      throw new Error(result.message ?? `Failed to upload ${file.name}.`);
-    }
-
-    return result.document as SurveyDocument;
+    return uploadFormResponseDocument(saved.id, file, documentType, {
+      onProgress,
+      uploadKey: getUploadKey(file),
+    });
   }
 
   async function deleteManualDocument(document: SurveyDocument) {

@@ -28,9 +28,7 @@ export default function RoleChangeNotice() {
             duration: 7000,
           });
         }
-      } catch {
-        // A transient notice failure must not interrupt the dashboard.
-      }
+      } catch {}
     }
 
     void consumeNotice();

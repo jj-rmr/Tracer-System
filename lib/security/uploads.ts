@@ -48,21 +48,35 @@ function signatureMatches(ext: string, bytes: Uint8Array) {
 }
 
 export async function validateUpload(file: File, scope: "document" | "admin") {
-  if (file.size === 0)
+  validateUploadMetadata(file.name, file.type, file.size, scope);
+
+  const bytes = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+  validateUploadSignature(file.name, bytes);
+}
+
+export function validateUploadMetadata(
+  filename: string,
+  mimeType: string,
+  size: number,
+  scope: "document" | "admin",
+) {
+  if (size === 0)
     throw new UploadValidationError("The selected file is empty.");
-  if (file.size > MAX_UPLOAD_BYTES)
+  if (size > MAX_UPLOAD_BYTES)
     throw new UploadValidationError("File exceeds the 10 MB limit.");
 
-  const ext = extension(file.name);
+  const ext = extension(filename);
   const allowed = scope === "document" ? DOCUMENT_TYPES : ADMIN_TYPES;
   const mimeTypes = allowed.get(ext);
-  if (!mimeTypes || !mimeTypes.includes(file.type)) {
+  if (!mimeTypes || !mimeTypes.includes(mimeType)) {
     throw new UploadValidationError(
       `The .${ext || "unknown"} file type is not allowed.`,
     );
   }
+}
 
-  const bytes = new Uint8Array(await file.slice(0, 16).arrayBuffer());
+export function validateUploadSignature(filename: string, bytes: Uint8Array) {
+  const ext = extension(filename);
   if (!signatureMatches(ext, bytes)) {
     throw new UploadValidationError(
       "The file contents do not match its declared file type.",

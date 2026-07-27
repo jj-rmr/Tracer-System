@@ -1,5 +1,3 @@
-// app/api/surveys/export/route.ts
-
 import {
   exportAccountsCsv,
   getAccountExportRows,
@@ -7,9 +5,10 @@ import {
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { createStyledWorkbook } from "@/lib/exports/excel";
+import { recordSecurityAuditEvent } from "@/lib/repositories/audit.repository";
 
 export async function GET(request: NextRequest) {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const format = request.nextUrl.searchParams.get("format") ?? "csv";
   if (format !== "csv" && format !== "xlsx") {
     return NextResponse.json(
@@ -23,12 +22,17 @@ export async function GET(request: NextRequest) {
   const pad = (n: number) => n.toString().padStart(2, "0");
 
   const timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
+  const rows = await getAccountExportRows();
+
+  await recordSecurityAuditEvent({
+    actorUserId: admin.$id,
+    action: "accounts.exported",
+    targetType: "account_collection",
+    metadata: { format, rowCount: rows.length },
+  });
 
   if (format === "xlsx") {
-    const workbook = await createStyledWorkbook(
-      "Accounts",
-      await getAccountExportRows(),
-    );
+    const workbook = await createStyledWorkbook("Accounts", rows);
     return new NextResponse(new Uint8Array(workbook), {
       headers: {
         "Content-Type":

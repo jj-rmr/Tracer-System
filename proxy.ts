@@ -1,16 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isIP } from "node:net";
 
 import { AUTH_COOKIE } from "@/lib/auth";
+import { InMemoryRateLimiter } from "@/lib/security/rate-limit";
 
 const AUTH_ROUTES = ["/signin"];
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
-const rateBuckets = new Map<string, { count: number; resetAt: number }>();
+const rateLimiter = new InMemoryRateLimiter();
 
 function clientAddress(request: NextRequest) {
+  const trustProxyHeaders =
+    process.env.VERCEL === "1" || process.env.TRUST_PROXY_HEADERS === "true";
+
+  if (!trustProxyHeaders) return "untrusted-proxy";
+
+  const candidates = [
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim(),
+    request.headers.get("x-real-ip")?.trim(),
+  ];
+
   return (
-    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    request.headers.get("x-real-ip") ||
-    "unknown"
+    candidates.find((candidate) => candidate && isIP(candidate)) ?? "unknown"
   );
 }
 
@@ -21,23 +31,15 @@ function rateLimit(request: NextRequest) {
   const windowMs = authRequest ? 10 * 60_000 : 60_000;
   const maximum = exportRequest ? 10 : authRequest ? 30 : 120;
   const key = `${clientAddress(request)}:${authRequest ? "auth" : exportRequest ? "export" : "mutation"}`;
-  const now = Date.now();
-  const current = rateBuckets.get(key);
-
-  if (!current || current.resetAt <= now) {
-    rateBuckets.set(key, { count: 1, resetAt: now + windowMs });
-    return null;
-  }
-
-  current.count += 1;
-  if (current.count <= maximum) return null;
+  const result = rateLimiter.consume(key, maximum, windowMs);
+  if (!result.limited) return null;
 
   return NextResponse.json(
     { success: false, message: "Too many requests. Please try again later." },
     {
       status: 429,
       headers: {
-        "Retry-After": String(Math.ceil((current.resetAt - now) / 1000)),
+        "Retry-After": String(result.retryAfterSeconds),
       },
     },
   );

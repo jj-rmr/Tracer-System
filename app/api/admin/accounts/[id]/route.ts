@@ -8,8 +8,10 @@ import {
   getAccount,
   updateAccountRole,
   updateAccountName,
+  setAccountEnabled,
 } from "@/lib/repositories/accounts.repository";
 import { deleteAccountDraftResponses } from "@/lib/forms/account-role-change";
+import { recordSecurityAuditEventSafely } from "@/lib/repositories/audit.repository";
 
 async function authorize(): Promise<
   Models.User<Models.Preferences> | NextResponse
@@ -111,8 +113,15 @@ export async function PATCH(
         );
       }
 
-      const deletedDrafts = await deleteAccountDraftResponses(id);
       await updateAccountRole(id, targetRole);
+      const deletedDrafts = await deleteAccountDraftResponses(id);
+      await recordSecurityAuditEventSafely({
+        actorUserId: auth.$id,
+        action: "account.role_changed",
+        targetType: "account",
+        targetId: id,
+        metadata: { role: targetRole, deletedDrafts },
+      });
       return NextResponse.json({
         success: true,
         message:
@@ -204,8 +213,22 @@ export async function DELETE(
       );
     }
 
-    const deletedDrafts = await deleteAccountDraftResponses(id);
-    await deleteAccount(id);
+    await setAccountEnabled(id, false);
+    let deletedDrafts = 0;
+    try {
+      deletedDrafts = await deleteAccountDraftResponses(id);
+      await deleteAccount(id);
+    } catch (error) {
+      await setAccountEnabled(id, true).catch(() => undefined);
+      throw error;
+    }
+    await recordSecurityAuditEventSafely({
+      actorUserId: user.$id,
+      action: "account.deleted",
+      targetType: "account",
+      targetId: id,
+      metadata: { deletedDrafts },
+    });
 
     return NextResponse.json({
       success: true,
