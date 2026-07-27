@@ -1,9 +1,6 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-
 import { useEffect, useRef, useState } from "react";
-import { LuLoaderCircle, LuTrash2 } from "react-icons/lu";
 
 import ManualResponseEntry, {
   type ManualResponseDraft,
@@ -11,7 +8,6 @@ import ManualResponseEntry, {
 } from "@/components/admin/responses/ManualResponseEntry";
 import FormModal from "@/components/ui/FormModal";
 import LoadingState from "@/components/ui/LoadingState";
-import Modal from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { PublishedFormVersion, StudyPeriod, StudyPeriodSummary } from "@/types";
 
@@ -35,10 +31,7 @@ export default function ManualResponseModal({
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [showCloseOptions, setShowCloseOptions] = useState(false);
-  const [closeAction, setCloseAction] = useState<
-    "saving" | "discarding" | null
-  >(null);
+  const [savingDraft, setSavingDraft] = useState(false);
   const entryRef = useRef<ManualResponseEntryHandle>(null);
   const { showToast } = useToast();
 
@@ -107,11 +100,11 @@ export default function ManualResponseModal({
   }, []);
 
   async function saveDraftAndClose() {
-    setCloseAction("saving");
+    if (savingDraft) return;
+    setSavingDraft(true);
     try {
       await entryRef.current?.saveDraft();
       showToast({ message: "Manual response draft saved.", type: "success" });
-      setShowCloseOptions(false);
       onClose();
     } catch (actionError) {
       showToast({
@@ -122,30 +115,7 @@ export default function ManualResponseModal({
         type: "error",
       });
     } finally {
-      setCloseAction(null);
-    }
-  }
-
-  async function discardAndClose() {
-    setCloseAction("discarding");
-    try {
-      await entryRef.current?.discardDraft();
-      showToast({
-        message: "Manual response draft discarded.",
-        type: "success",
-      });
-      setShowCloseOptions(false);
-      onClose();
-    } catch (actionError) {
-      showToast({
-        message:
-          actionError instanceof Error
-            ? actionError.message
-            : "Failed to discard the manual response draft.",
-        type: "error",
-      });
-    } finally {
-      setCloseAction(null);
+      setSavingDraft(false);
     }
   }
 
@@ -154,7 +124,7 @@ export default function ManualResponseModal({
       <FormModal
         open
         onClose={onClose}
-        onCloseRequest={() => setShowCloseOptions(true)}
+        onCloseRequest={() => void saveDraftAndClose()}
         title={initialDraft ? "Edit Draft Response" : "Add Manual Response"}
         description="Transcribe a historical tracer study response."
         width="xl"
@@ -172,69 +142,10 @@ export default function ManualResponseModal({
             studies={studies}
             initialDraft={initialDraft}
             onComplete={onComplete}
-            onRequestClose={() => setShowCloseOptions(true)}
+            onRequestClose={() => void saveDraftAndClose()}
           />
         )}
       </FormModal>
-
-      <Modal
-        open={showCloseOptions}
-        onClose={
-          closeAction ? () => undefined : () => setShowCloseOptions(false)
-        }
-        title="Close manual response?"
-        width="md"
-        layer="nested"
-        bodyClassName="p-6"
-        showCloseButton={false}
-      >
-        <p className="text-sm leading-6 text-muted-foreground">
-          Keep editing, save the latest values as a draft, or permanently
-          discard this manual response and its uploaded documents.
-        </p>
-        <div className="mt-6 flex flex-col-reverse md:flex-row gap-3 justify-stretch md:justify-end">
-          <div className="flex flex-row gap-3">
-            <Button
-              type="button"
-              variant="destructive"
-              size="icon"
-              disabled={closeAction !== null}
-              onClick={() => void discardAndClose()}
-              aria-label="Discard manual response"
-              title="Discard manual response"
-            >
-              {closeAction === "discarding" ? (
-                <LuLoaderCircle
-                  aria-hidden="true"
-                  size={18}
-                  className="animate-spin"
-                />
-              ) : (
-                <LuTrash2 aria-hidden="true" size={18} />
-              )}
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              size="fill"
-              disabled={closeAction !== null}
-              onClick={() => setShowCloseOptions(false)}
-            >
-              Keep Editing
-            </Button>
-          </div>
-
-          <Button
-            type="button"
-            variant="elevated"
-            disabled={closeAction !== null}
-            onClick={() => void saveDraftAndClose()}
-          >
-            {closeAction === "saving" ? "Saving..." : "Save as Draft"}
-          </Button>
-        </div>
-      </Modal>
     </>
   );
 }

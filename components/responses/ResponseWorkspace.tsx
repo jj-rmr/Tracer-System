@@ -10,7 +10,7 @@ import {
   SurveyDocument,
   SurveyDocumentType,
 } from "@/types";
-import { LuLoaderCircle, LuPlus, LuTrash2 } from "react-icons/lu";
+import { LuPlus, LuTrash2 } from "react-icons/lu";
 import { useRouter } from "next/navigation";
 import FormModal from "@/components/ui/FormModal";
 import Modal from "@/components/ui/Modal";
@@ -43,7 +43,6 @@ export default function ResponseWorkspace({
   responseStatus = "draft",
 }: Props) {
   const [open, setOpen] = useState(false);
-  const [showDraftCloseModal, setShowDraftCloseModal] = useState(false);
   const [showDeleteResponseModal, setShowDeleteResponseModal] = useState(false);
   const [draftCloseAction, setDraftCloseAction] = useState<
     "saving" | "discarding" | null
@@ -175,7 +174,7 @@ export default function ResponseWorkspace({
   }
 
   function requestDraftClose() {
-    setShowDraftCloseModal(true);
+    if (draftCloseAction === null) void saveDraftAndClose();
   }
 
   async function saveDraftAndClose() {
@@ -183,7 +182,6 @@ export default function ResponseWorkspace({
     try {
       await saveStudyDraft(latestSurveyRef.current);
       await Promise.allSettled([...documentOperationsRef.current]);
-      setShowDraftCloseModal(false);
       setOpen(false);
       showToast({ message: "Draft saved.", type: "success" });
       router.refresh();
@@ -200,7 +198,6 @@ export default function ResponseWorkspace({
 
   async function discardDraft() {
     if (!studyId) {
-      setShowDraftCloseModal(false);
       setOpen(false);
       return;
     }
@@ -228,7 +225,6 @@ export default function ResponseWorkspace({
       latestSurveyRef.current = structuredClone(clearedSurvey);
       saveQueueRef.current = Promise.resolve();
       documentOperationsRef.current.clear();
-      setShowDraftCloseModal(false);
       setOpen(false);
       setShowDeleteResponseModal(false);
       showToast({
@@ -247,58 +243,6 @@ export default function ResponseWorkspace({
       setDraftCloseAction(null);
     }
   }
-
-  const draftCloseDialog = (
-    <Modal
-      open={showDraftCloseModal}
-      onClose={
-        draftCloseAction ? () => undefined : () => setShowDraftCloseModal(false)
-      }
-      title="Close tracer form?"
-      width="md"
-      layer="nested"
-      bodyClassName="p-6"
-      showCloseButton={false}
-    >
-      <p className="text-sm leading-6 text-muted-foreground">
-        Save your latest answers as a draft, continue editing, or permanently
-        discard this form and its uploaded documents.
-      </p>
-      <div className="mt-6 flex flex-row flex-wrap-reverse gap-3">
-        <Button
-          type="button"
-          variant="destructive"
-          size="icon"
-          disabled={draftCloseAction !== null}
-          onClick={() => void discardDraft()}
-        >
-          {draftCloseAction === "discarding" ? (
-            <LuLoaderCircle size={18} className="animate-spin" />
-          ) : (
-            <LuTrash2 size={18} />
-          )}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          disabled={draftCloseAction !== null}
-          onClick={() => setShowDraftCloseModal(false)}
-          className="flex-1"
-        >
-          Keep Editing
-        </Button>
-        <Button
-          type="button"
-          variant="elevated"
-          disabled={draftCloseAction !== null}
-          onClick={() => void saveDraftAndClose()}
-          className="flex-1"
-        >
-          {draftCloseAction === "saving" ? "Saving..." : "Save as Draft"}
-        </Button>
-      </div>
-    </Modal>
-  );
 
   if (isNew) {
     return (
@@ -344,7 +288,6 @@ export default function ResponseWorkspace({
             recoveryKey={studyId ? `tracer-response:${studyId}` : undefined}
           />
         </FormModal>
-        {draftCloseDialog}
       </div>
     );
   }
@@ -466,7 +409,6 @@ export default function ResponseWorkspace({
           />
         </FormModal>
       )}
-      {draftCloseDialog}
       <ConfirmationDialog
         open={showDeleteResponseModal}
         onClose={() => setShowDeleteResponseModal(false)}
