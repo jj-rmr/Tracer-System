@@ -64,7 +64,7 @@ export function Toast({
           animate={getAnimatePosition()}
           exit={getExitPosition()}
           transition={{ duration: 0.3, ease: "backInOut" }}
-          className={`fixed top-4 left-1/2 z-9999 w-fit max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-2xl px-4 py-3 text-center text-sm font-semibold shadow-lg lg:max-w-sm ${toastStyles[type]}`}
+          className={`fixed top-4 left-1/2 z-9999 w-fit max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-2xl px-4 py-3 text-center text-pretty text-sm font-semibold shadow-lg lg:max-w-md ${toastStyles[type]}`}
         >
           {message}
         </motion.div>
@@ -114,7 +114,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       });
     const cameOnline = () =>
       showToast({
-        message: "You’re back online. You can refresh or try again now.",
+        message: "You're back online. You can refresh or try again now.",
         type: "success",
       });
 

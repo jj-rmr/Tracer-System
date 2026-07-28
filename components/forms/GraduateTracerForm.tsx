@@ -38,6 +38,7 @@ interface Props {
   submitLabel?: string;
   initialSavedAt?: string;
   onValuesChange?: (survey: Survey) => void;
+  onDirtyChange?: (isDirty: boolean) => void;
   onRequestClose?: () => void;
   recoveryKey?: string;
 }
@@ -63,6 +64,7 @@ export default function GraduateTracerForm({
   submitLabel,
   initialSavedAt,
   onValuesChange,
+  onDirtyChange,
   onRequestClose,
   recoveryKey,
 }: Props) {
@@ -121,7 +123,6 @@ export default function GraduateTracerForm({
       }
 
       reset(recovery.survey);
-      lastDraftSignatureRef.current = JSON.stringify(recovery.survey);
       showToast({
         message: "We restored unsaved answers from this browser.",
         type: "info",
@@ -135,11 +136,17 @@ export default function GraduateTracerForm({
     if (!recoveryKey || readOnly) return;
 
     try {
+      const survey = getValues();
+      if (JSON.stringify(survey) === lastDraftSignatureRef.current) {
+        window.sessionStorage.removeItem(recoveryKey);
+        return;
+      }
+
       window.sessionStorage.setItem(
         recoveryKey,
         JSON.stringify({
           savedAt: new Date().toISOString(),
-          survey: getValues(),
+          survey,
         }),
       );
     } catch {}
@@ -148,6 +155,24 @@ export default function GraduateTracerForm({
   useEffect(() => {
     onValuesChange?.(getValues());
   }, [getValues, onValuesChange, watchedValues]);
+
+  useEffect(() => {
+    const hasChangedValues =
+      JSON.stringify(watchedValues) !== lastDraftSignatureRef.current;
+    const hasPendingDocuments =
+      activeDocumentUploads > 0 ||
+      employmentDocuments.length > 0 ||
+      awardsDocuments.length > 0;
+
+    onDirtyChange?.(hasChangedValues || hasPendingDocuments);
+  }, [
+    activeDocumentUploads,
+    awardsDocuments.length,
+    draftSaveState,
+    employmentDocuments.length,
+    onDirtyChange,
+    watchedValues,
+  ]);
 
   useEffect(() => {
     if (!onDraftSave || readOnly || isSubmitting) return;

@@ -92,8 +92,8 @@ export default function SignInPage() {
       <div className="w-full max-w-5xl overflow-hidden rounded-3xl border border-border bg-card shadow-2xl">
         <div className="grid lg:grid-cols-[1.1fr_0.9fr]">
           <section className="relative overflow-hidden bg-primary px-6 py-9 text-primary-foreground sm:px-9 sm:py-12 lg:p-12">
-            <div className="absolute -right-16 -top-16 size-56 rounded-full border border-primary-foreground/15" />
-            <div className="absolute -bottom-24 -left-16 size-72 rounded-full border border-primary-foreground/10" />
+            <div className="absolute -right-16 -top-16 size-48 rounded-full bg-radial from-transparent to-surface/75" />
+            <div className="absolute -bottom-24 -left-16 size-72 rounded-full bg-radial from-transparent to-surface/20" />
 
             <div className="relative">
               <div className="inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider">

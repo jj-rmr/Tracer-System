@@ -651,7 +651,7 @@ export default function DriveFileBrowser() {
                 type="button"
                 disabled={!canUpload}
                 onClick={() => setShowNewFolder(true)}
-                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary/85 disabled:cursor-not-allowed disabled:opacity-45"
+                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-45"
               >
                 <LuPlus size={17} /> New folder
               </Button>
@@ -1009,7 +1009,7 @@ export default function DriveFileBrowser() {
               <Button
                 type="submit"
                 disabled={uploading || uploadFiles.length === 0}
-                className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/85 disabled:cursor-not-allowed disabled:opacity-50"
+                className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {uploading ? "Uploading..." : "Upload files"}
               </Button>
@@ -1054,7 +1054,7 @@ export default function DriveFileBrowser() {
               <Button
                 type="submit"
                 disabled={mutating || !renameValue.trim()}
-                className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/85 disabled:opacity-50"
+                className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
               >
                 {mutating ? "Renaming..." : "Rename"}
               </Button>
@@ -1164,7 +1164,7 @@ export default function DriveFileBrowser() {
               <Button
                 type="submit"
                 disabled={mutating || loadingDestinations || !moveBrowser}
-                className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/85 disabled:opacity-50"
+                className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
               >
                 {mutating ? "Moving..." : "Move here"}
               </Button>
@@ -1213,7 +1213,7 @@ export default function DriveFileBrowser() {
               <Button
                 type="submit"
                 disabled={creatingFolder || !newFolderName.trim()}
-                className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/85 disabled:opacity-50"
+                className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
               >
                 {creatingFolder ? "Creating..." : "Create folder"}
               </Button>
@@ -1240,7 +1240,7 @@ export default function DriveFileBrowser() {
               type="button"
               disabled={preparing}
               onClick={() => void prepareFolders()}
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors duration-200 hover:bg-primary/85 disabled:cursor-wait disabled:opacity-60"
+              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors duration-200 hover:bg-primary-hover disabled:cursor-wait disabled:opacity-60"
             >
               <LuFolderCog
                 className={preparing ? "animate-spin" : ""}
@@ -1355,7 +1355,7 @@ export default function DriveFileBrowser() {
                 href={`/api/admin/files/${encodeURIComponent(preview.id)}/content`}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/85"
+                className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
               >
                 <LuExternalLink size={16} /> Open in new tab
               </a>

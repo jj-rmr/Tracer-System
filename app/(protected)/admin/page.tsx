@@ -89,7 +89,7 @@ export default async function AdminPage() {
           </div>
           <Link
             href="/admin/responses"
-            className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors duration-200 hover:bg-primary/85"
+            className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors duration-200 hover:bg-primary-hover"
           >
             View responses
             <LuArrowRight aria-hidden="true" />

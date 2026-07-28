@@ -19,11 +19,13 @@ interface StudiesPayload {
 interface ManualResponseModalProps {
   onClose: () => void;
   onComplete: () => void;
+  onDraftSaved: (responseId: string) => void;
 }
 
 export default function ManualResponseModal({
   onClose,
   onComplete,
+  onDraftSaved,
 }: ManualResponseModalProps) {
   const [studies, setStudies] = useState<StudyPeriod[]>([]);
   const [initialDraft, setInitialDraft] = useState<ManualResponseDraft | null>(
@@ -32,6 +34,7 @@ export default function ManualResponseModal({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [savingDraft, setSavingDraft] = useState(false);
+  const [formDirty, setFormDirty] = useState(false);
   const entryRef = useRef<ManualResponseEntryHandle>(null);
   const { showToast } = useToast();
 
@@ -101,10 +104,16 @@ export default function ManualResponseModal({
 
   async function saveDraftAndClose() {
     if (savingDraft) return;
+    if (!formDirty) {
+      onClose();
+      return;
+    }
     setSavingDraft(true);
     try {
-      await entryRef.current?.saveDraft();
+      const saved = await entryRef.current?.saveDraft();
+      if (!saved) return;
       showToast({ message: "Manual response draft saved.", type: "success" });
+      onDraftSaved(saved.id);
       onClose();
     } catch (actionError) {
       showToast({
@@ -128,7 +137,7 @@ export default function ManualResponseModal({
         title={initialDraft ? "Edit Draft Response" : "Add Manual Response"}
         description="Transcribe a historical tracer study response."
         width="xl"
-        showCloseButton={false}
+        showCloseButton={!formDirty}
       >
         {loading ? (
           <LoadingState className="min-h-72" message="Loading studies..." />
@@ -142,6 +151,7 @@ export default function ManualResponseModal({
             studies={studies}
             initialDraft={initialDraft}
             onComplete={onComplete}
+            onDirtyChange={setFormDirty}
             onRequestClose={() => void saveDraftAndClose()}
           />
         )}

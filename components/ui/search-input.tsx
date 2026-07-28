@@ -12,7 +12,7 @@ function SearchInput({
     <div className="relative flex-1">
       <LuSearch
         aria-hidden="true"
-        className="pointer-events-none absolute left-2.5 top-1/2 z-10 size-4 -translate-y-1/2 text-muted-foreground"
+        className="pointer-events-none absolute left-3 top-1/2 z-10 size-4 -translate-y-1/2 text-muted-foreground"
       />
       <Input type="search" className={cn("pl-9", className)} {...props} />
     </div>

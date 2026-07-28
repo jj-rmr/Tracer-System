@@ -43,6 +43,7 @@ export default function ResponseWorkspace({
   responseStatus = "draft",
 }: Props) {
   const [open, setOpen] = useState(false);
+  const [formDirty, setFormDirty] = useState(false);
   const [showDeleteResponseModal, setShowDeleteResponseModal] = useState(false);
   const [draftCloseAction, setDraftCloseAction] = useState<
     "saving" | "discarding" | null
@@ -174,7 +175,16 @@ export default function ResponseWorkspace({
   }
 
   function requestDraftClose() {
+    if (!formDirty) {
+      setOpen(false);
+      return;
+    }
     if (draftCloseAction === null) void saveDraftAndClose();
+  }
+
+  function openForm() {
+    setFormDirty(false);
+    setOpen(true);
   }
 
   async function saveDraftAndClose() {
@@ -259,7 +269,7 @@ export default function ResponseWorkspace({
         <Button
           variant="elevated"
           size="lg"
-          onClick={() => setOpen(true)}
+          onClick={openForm}
           className="mt-6"
         >
           <LuPlus size={16} />
@@ -272,7 +282,7 @@ export default function ResponseWorkspace({
           onCloseRequest={requestDraftClose}
           title="New Tracer Response"
           width="xl"
-          showCloseButton={responseStatus !== "draft"}
+          showCloseButton={!formDirty || responseStatus !== "draft"}
           confirmationDescription="Your response answers and selected documents will be discarded."
         >
           <GraduateTracerForm
@@ -284,6 +294,7 @@ export default function ResponseWorkspace({
             onInstantDocumentUpload={studyId ? uploadStudyDocument : undefined}
             onDeleteDocument={(document) => deleteStudyDocument(document.id)}
             onValuesChange={rememberLatestSurvey}
+            onDirtyChange={setFormDirty}
             onRequestClose={requestDraftClose}
             recoveryKey={studyId ? `tracer-response:${studyId}` : undefined}
           />
@@ -335,7 +346,7 @@ export default function ResponseWorkspace({
             <div className="flex w-full items-center gap-2 lg:w-auto">
               <Button
                 variant="elevated"
-                onClick={() => setOpen(true)}
+                onClick={openForm}
                 disabled={open}
                 className="flex-1"
               >
@@ -381,9 +392,10 @@ export default function ResponseWorkspace({
           onCloseRequest={
             responseStatus === "draft" ? requestDraftClose : undefined
           }
+          shouldConfirmClose={formDirty}
           title="Edit Tracer Response"
           width="xl"
-          showCloseButton={responseStatus !== "draft"}
+          showCloseButton={!formDirty || responseStatus !== "draft"}
           confirmationDescription="Any modifications to this response and newly selected documents will be discarded."
         >
           <GraduateTracerForm
@@ -402,6 +414,7 @@ export default function ResponseWorkspace({
                 : undefined
             }
             onValuesChange={rememberLatestSurvey}
+            onDirtyChange={setFormDirty}
             onRequestClose={
               responseStatus === "draft" ? requestDraftClose : undefined
             }

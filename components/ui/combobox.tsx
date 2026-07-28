@@ -117,12 +117,14 @@ function ComboboxItem({
     <ComboboxPrimitive.Item
       data-slot="combobox-item"
       className={cn(
-        "relative flex min-h-10 w-full cursor-default items-center rounded-lg py-2 pr-9 pl-3 text-sm text-foreground outline-none select-none data-highlighted:bg-muted data-disabled:pointer-events-none data-disabled:opacity-50",
+        "group/combobox-item relative flex min-h-10 w-full cursor-default items-center rounded-lg py-2 pr-9 pl-3 text-sm text-foreground outline-none select-none data-highlighted:bg-muted data-disabled:pointer-events-none data-disabled:opacity-50",
         className,
       )}
       {...props}
     >
-      <span className="min-w-0 flex-1">{children}</span>
+      <span className="min-w-0 flex-1 transition-transform duration-200 group-hover/combobox-item:translate-x-0.5 group-aria-selected/combobox-item:text-primary">
+        {children}
+      </span>
       <ComboboxPrimitive.ItemIndicator className="absolute right-3 grid size-4 place-items-center text-primary">
         <Check aria-hidden="true" className="size-4" />
       </ComboboxPrimitive.ItemIndicator>

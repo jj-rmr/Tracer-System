@@ -365,13 +365,13 @@ export default function DashboardNavigation({
           })}
           <Button
             type="button"
-            variant="ghost"
+            variant="plain"
             size="mobile-nav"
             aria-haspopup="dialog"
             aria-expanded={showMoreMenu}
             onClick={() => setShowMoreMenu(true)}
-            className={`relative ${
-              isMoreActive ? "text-accent hover:text-accent" : "text-foreground"
+            className={`relative active:scale-90 ${
+              isMoreActive ? "text-accent" : "text-foreground"
             }`}
           >
             <LuEllipsis aria-hidden="true" className="size-6" />

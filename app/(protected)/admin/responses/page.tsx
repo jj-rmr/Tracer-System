@@ -6,13 +6,20 @@ import { Button } from "@/components/ui/button";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { LuFilterX, LuPencil, LuPlus, LuRefreshCw } from "react-icons/lu";
+import {
+  LuFilterX,
+  LuPencil,
+  LuPlus,
+  LuRefreshCw,
+  LuTrash2,
+} from "react-icons/lu";
 
 import ManualResponseModal from "@/components/admin/responses/ManualResponseModal";
 import ExportButton from "@/components/admin/ExportButton";
 import { SelectField } from "@/components/forms/SelectField";
 import ResponseTable from "@/components/responses/ResponseTable";
 import { useToast } from "@/components/ui/Toast";
+import ConfirmationDialog from "@/components/ui/ConfirmationDialog";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import { PROGRAMS } from "@/lib/programs/catalog";
 import { AdminResponseFilters, StudyPeriodSummary } from "@/types";
@@ -53,7 +60,9 @@ export default function ResponsesPage() {
   const searchValue = searchParams.get("search") ?? "";
   const [studies, setStudies] = useState<StudyPeriodSummary[]>([]);
   const [studiesLoaded, setStudiesLoaded] = useState(false);
-  const [hasManualDraft, setHasManualDraft] = useState(false);
+  const [manualDraftId, setManualDraftId] = useState<string | null>(null);
+  const [showDeleteDraftModal, setShowDeleteDraftModal] = useState(false);
+  const [deletingDraft, setDeletingDraft] = useState(false);
   const [showManualResponse, setShowManualResponse] = useState(false);
   const [tableKey, setTableKey] = useState(0);
   const [refreshOnCooldown, setRefreshOnCooldown] = useState(false);
@@ -115,7 +124,7 @@ export default function ResponsesPage() {
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.message);
-      setHasManualDraft(Boolean(result.data));
+      setManualDraftId(result.data?.responseId ?? null);
     } catch {}
   }, []);
 
@@ -172,6 +181,39 @@ export default function ResponsesPage() {
     }, 2_000);
   }
 
+  async function deleteManualDraft() {
+    if (!manualDraftId || deletingDraft) return;
+
+    setDeletingDraft(true);
+    try {
+      const response = await fetch(`/api/admin/responses/${manualDraftId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(
+          result.message ?? "Failed to delete the draft response.",
+        );
+      }
+
+      setManualDraftId(null);
+      setShowDeleteDraftModal(false);
+      setTableKey((current) => current + 1);
+      showToast({ message: "Draft response deleted.", type: "success" });
+    } catch (error) {
+      showToast({
+        message:
+          error instanceof Error
+            ? error.message
+            : "Failed to delete the draft response.",
+        type: "error",
+      });
+    } finally {
+      setDeletingDraft(false);
+    }
+  }
+
   useEffect(
     () => () => {
       if (refreshCooldownRef.current !== null) {
@@ -202,21 +244,35 @@ export default function ResponsesPage() {
           </p>
         </div>
         <div className="flex flex-col-reverse gap-2 md:flex-row">
-          <Button
-            type="button"
-            variant="outline-elevated"
-            onClick={openManualResponse}
-            disabled={!studiesLoaded}
-          >
-            {hasManualDraft ? <LuPencil size={16} /> : <LuPlus size={16} />}
-            {hasManualDraft ? "Edit Draft Response" : "Add Manual Response"}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline-elevated"
+              onClick={openManualResponse}
+              disabled={!studiesLoaded}
+              className="flex-1 md:flex-none"
+            >
+              {manualDraftId ? <LuPencil size={16} /> : <LuPlus size={16} />}
+              {manualDraftId ? "Edit Draft Response" : "Add Manual Response"}
+            </Button>
+            {manualDraftId && (
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => setShowDeleteDraftModal(true)}
+                aria-label="Delete draft response"
+                title="Delete draft response"
+              >
+                <LuTrash2 size={16} />
+              </Button>
+            )}
+          </div>
           <ExportButton baseUrl={responseExportUrl()} />
         </div>
       </header>
 
       <section className="rounded-3xl border border-border bg-card p-5 shadow-sm">
-        <div className="grid gap-4 md:grid-cols-1 xl:grid-cols-3">
+        <div className="grid gap-2 md:gap-4 md:grid-cols-1 xl:grid-cols-3">
           <ResponseSearchField
             key={searchValue}
             initialValue={searchValue}
@@ -292,7 +348,7 @@ export default function ResponsesPage() {
             placeholder="All employment statuses"
           />
 
-          <div className="flex flex-col md:flex-row col-span-1 xl:col-span-2 items-end gap-2">
+          <div className="flex flex-row col-span-1 xl:col-span-2 items-end gap-2 md:gap-4">
             <Button
               type="button"
               variant="outline-elevated"
@@ -339,16 +395,27 @@ export default function ResponsesPage() {
         <ManualResponseModal
           onClose={() => {
             setShowManualResponse(false);
-            void refreshManualDraft();
           }}
+          onDraftSaved={setManualDraftId}
           onComplete={() => {
             setShowManualResponse(false);
-            setHasManualDraft(false);
+            setManualDraftId(null);
             updateQuery({ page: undefined });
             setTableKey((current) => current + 1);
           }}
         />
       )}
+
+      <ConfirmationDialog
+        open={showDeleteDraftModal}
+        onClose={() => setShowDeleteDraftModal(false)}
+        onConfirm={() => void deleteManualDraft()}
+        title="Delete draft response?"
+        description="This draft response and its document records will be permanently deleted. This action cannot be undone."
+        confirmLabel="Delete Draft Response"
+        busy={deletingDraft}
+        tone="danger"
+      />
     </div>
   );
 }

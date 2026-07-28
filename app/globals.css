@@ -16,11 +16,16 @@
   --popover: var(--color-white);
   --popover-foreground: var(--color-sky-950);
   --primary: var(--color-sky-600);
+  --primary-hover: var(--color-sky-700);
   --primary-foreground: var(--color-white);
-  --secondary: var(--color-slate-100);
+  --secondary: var(--color-slate-200);
   --secondary-foreground: var(--color-sky-950);
-  --muted: var(--color-slate-100);
-  --muted-foreground: var(--color-slate-600);
+  --muted: color-mix(
+    in oklab,
+    var(--color-slate-100) 55%,
+    var(--color-slate-200)
+  );
+  --muted-foreground: var(--color-slate-700);
   --accent-foreground: var(--color-sky-950);
   --destructive: var(--color-rose-600);
   --destructive-foreground: var(--color-white);
@@ -29,9 +34,9 @@
   --warning: var(--color-amber-800);
   --warning-foreground: var(--color-white);
   --overlay: color-mix(in oklab, var(--color-black) 40%, transparent);
-  --border: var(--color-slate-200);
-  --input: var(--color-slate-200);
-  --ring: var(--color-sky-400);
+  --border: var(--color-slate-300);
+  --input: var(--color-slate-300);
+  --ring: var(--color-sky-500);
   --chart-1: var(--color-slate-300);
   --chart-2: var(--color-slate-500);
   --chart-3: var(--color-slate-600);
@@ -42,10 +47,10 @@
   --sidebar-foreground: var(--color-sky-950);
   --sidebar-primary: var(--color-sky-600);
   --sidebar-primary-foreground: var(--color-white);
-  --sidebar-accent: var(--color-slate-100);
+  --sidebar-accent: var(--color-slate-200);
   --sidebar-accent-foreground: var(--color-sky-950);
-  --sidebar-border: var(--color-slate-200);
-  --sidebar-ring: var(--color-sky-400);
+  --sidebar-border: var(--color-slate-300);
+  --sidebar-ring: var(--color-sky-500);
   scrollbar-color: var(--color-border) transparent;
 }
 
@@ -89,6 +94,7 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
   --color-primary: var(--primary);
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
@@ -136,7 +142,8 @@ label {
   pointer-events: none;
 }
 
-label :is(input, textarea, select, button, [role="combobox"]) {
+label
+  :is(input, textarea, select, button, [role="checkbox"], [role="combobox"]) {
   pointer-events: auto;
 }
 
@@ -200,6 +207,7 @@ label :is(input, textarea, select, button, [role="combobox"]) {
   --popover: var(--color-slate-900);
   --popover-foreground: var(--color-slate-200);
   --primary: var(--color-sky-500);
+  --primary-hover: var(--color-sky-400);
   --primary-foreground: var(--color-slate-950);
   --secondary: var(--color-slate-800);
   --secondary-foreground: var(--color-slate-200);

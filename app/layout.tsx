@@ -46,6 +46,18 @@ const themeScript = `
   } catch {}
 `;
 
+function InlineScript({ html }: { html: string }) {
+  return (
+    <script
+      type={
+        typeof window === "undefined" ? "text/javascript" : "text/plain"
+      }
+      suppressHydrationWarning
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
+}
+
 export default async function RootLayout({
   children,
 }: Readonly<{
@@ -58,10 +70,7 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <head>
-        <script
-          id="theme-bootstrap"
-          dangerouslySetInnerHTML={{ __html: themeScript }}
-        />
+        <InlineScript html={themeScript} />
       </head>
       <body className="relative min-h-full w-full">
         <ToastProvider>{children}</ToastProvider>

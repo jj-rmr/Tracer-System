@@ -150,7 +150,7 @@ export default async function AlumniPage() {
             {(openContext || responses.length > 0) && (
               <Link
                 href="/alumni/responses"
-                className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors duration-200 hover:bg-primary/85"
+                className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors duration-200 hover:bg-primary-hover"
               >
                 {openContext ? actionLabel : "View your latest response"}
                 <LuArrowRight aria-hidden="true" />

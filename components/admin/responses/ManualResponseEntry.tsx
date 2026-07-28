@@ -3,7 +3,13 @@
 import { Input } from "@/components/ui/input";
 
 import { useRouter } from "next/navigation";
-import { forwardRef, useImperativeHandle, useRef, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from "react";
 
 import { SelectField } from "@/components/forms/SelectField";
 import GraduateTracerForm, {
@@ -29,7 +35,7 @@ export interface ManualResponseDraft {
 }
 
 export interface ManualResponseEntryHandle {
-  saveDraft: () => Promise<void>;
+  saveDraft: () => Promise<{ id: string; updatedAt?: string }>;
   discardDraft: () => Promise<void>;
 }
 
@@ -38,13 +44,14 @@ interface ManualResponseEntryProps {
   initialDraft?: ManualResponseDraft | null;
   onComplete?: () => void;
   onRequestClose?: () => void;
+  onDirtyChange?: (isDirty: boolean) => void;
 }
 
 const ManualResponseEntry = forwardRef<
   ManualResponseEntryHandle,
   ManualResponseEntryProps
 >(function ManualResponseEntry(
-  { studies, initialDraft, onComplete, onRequestClose },
+  { studies, initialDraft, onComplete, onRequestClose, onDirtyChange },
   ref,
 ) {
   const router = useRouter();
@@ -56,6 +63,7 @@ const ManualResponseEntry = forwardRef<
   const [respondentEmail, setRespondentEmail] = useState(
     initialDraft?.respondentEmail ?? "",
   );
+  const [responseDirty, setResponseDirty] = useState(false);
   const latestResponseRef = useRef<Survey>(
     structuredClone(initialDraft?.response ?? defaultSurvey),
   );
@@ -64,6 +72,34 @@ const ManualResponseEntry = forwardRef<
     initialDraft?.importToken ?? crypto.randomUUID(),
   );
   const uploadKeysRef = useRef(new WeakMap<File, string>());
+  const lastPersistedSignatureRef = useRef<string | null>(
+    initialDraft
+      ? JSON.stringify({
+          studyId: initialDraft.studyId,
+          respondentEmail: initialDraft.respondentEmail,
+          response: initialDraft.response,
+        })
+      : null,
+  );
+  const pendingPersistRef = useRef<{
+    signature: string;
+    promise: Promise<{ id: string; updatedAt?: string }>;
+  } | null>(null);
+  const initialMetadataRef = useRef({
+    studyId:
+      initialDraft?.studyId ??
+      studies.find((study) => study.status === "open")?.id ??
+      "",
+    respondentEmail: initialDraft?.respondentEmail ?? "",
+  });
+
+  const metadataDirty =
+    studyId !== initialMetadataRef.current.studyId ||
+    respondentEmail !== initialMetadataRef.current.respondentEmail;
+
+  useEffect(() => {
+    onDirtyChange?.(metadataDirty || responseDirty);
+  }, [metadataDirty, onDirtyChange, responseDirty]);
 
   function getUploadKey(file: File) {
     const existingKey = uploadKeysRef.current.get(file);
@@ -82,6 +118,14 @@ const ManualResponseEntry = forwardRef<
       throw new Error("Select an open study before saving the response.");
     }
 
+    const signature = JSON.stringify({ studyId, respondentEmail, response });
+    if (
+      mode === "draft" &&
+      pendingPersistRef.current?.signature === signature
+    ) {
+      return pendingPersistRef.current.promise;
+    }
+
     const respondentName = [
       response.firstName,
       response.middleName,
@@ -91,32 +135,50 @@ const ManualResponseEntry = forwardRef<
       .filter(Boolean)
       .join(" ")
       .trim();
-    const saveResponse = await fetch(
-      `/api/admin/studies/${studyId}/responses/manual`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          respondentName,
-          respondentEmail,
-          answers: surveyToAnswers(response),
-          importToken: importTokenRef.current,
-          mode,
-        }),
-      },
-    );
-    const result = await saveResponse.json();
+    const persist = (async () => {
+      const saveResponse = await fetch(
+        `/api/admin/studies/${studyId}/responses/manual`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            respondentName,
+            respondentEmail,
+            answers: surveyToAnswers(response),
+            importToken: importTokenRef.current,
+            mode,
+          }),
+        },
+      );
+      const result = await saveResponse.json();
 
-    if (!saveResponse.ok || typeof result.data?.id !== "string") {
-      throw new Error(result.message ?? "Failed to save the manual response.");
+      if (!saveResponse.ok || typeof result.data?.id !== "string") {
+        throw new Error(
+          result.message ?? "Failed to save the manual response.",
+        );
+      }
+
+      responseIdRef.current = result.data.id;
+      if (typeof result.data.importToken === "string") {
+        importTokenRef.current = result.data.importToken;
+      }
+      latestResponseRef.current = structuredClone(response);
+      lastPersistedSignatureRef.current = signature;
+      initialMetadataRef.current = { studyId, respondentEmail };
+      return result.data as { id: string; updatedAt?: string };
+    })();
+
+    if (mode === "draft") {
+      pendingPersistRef.current = { signature, promise: persist };
     }
 
-    responseIdRef.current = result.data.id;
-    if (typeof result.data.importToken === "string") {
-      importTokenRef.current = result.data.importToken;
+    try {
+      return await persist;
+    } finally {
+      if (pendingPersistRef.current?.promise === persist) {
+        pendingPersistRef.current = null;
+      }
     }
-    latestResponseRef.current = structuredClone(response);
-    return result.data as { id: string; updatedAt?: string };
   }
 
   async function uploadManualDocument(
@@ -203,7 +265,18 @@ const ManualResponseEntry = forwardRef<
 
   useImperativeHandle(ref, () => ({
     async saveDraft() {
-      await persistManualResponse(latestResponseRef.current, "draft");
+      const signature = JSON.stringify({
+        studyId,
+        respondentEmail,
+        response: latestResponseRef.current,
+      });
+      if (signature === lastPersistedSignatureRef.current) {
+        const id = responseIdRef.current;
+        if (!id) throw new Error("The draft has not been saved yet.");
+        return { id };
+      }
+
+      return persistManualResponse(latestResponseRef.current, "draft");
     },
     async discardDraft() {
       const responseId = responseIdRef.current;
@@ -287,6 +360,7 @@ const ManualResponseEntry = forwardRef<
         onValuesChange={(response) => {
           latestResponseRef.current = structuredClone(response);
         }}
+        onDirtyChange={setResponseDirty}
         onDraftSave={async (response) => {
           const saved = await persistManualResponse(response, "draft");
           return saved.updatedAt;

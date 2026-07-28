@@ -8,15 +8,15 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/80",
+        default: "bg-primary text-primary-foreground hover:bg-primary-hover",
         elevated:
-          "bg-primary text-primary-foreground shadow-md  hover:bg-primary/85 hover:shadow-lg",
+          "bg-primary text-primary-foreground shadow-md hover:bg-primary-hover hover:shadow-lg",
         outline:
           "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground",
         "outline-elevated":
           "border-border bg-background shadow-sm hover:bg-muted hover:text-foreground hover:shadow-md aria-expanded:bg-muted aria-expanded:text-foreground",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+          "bg-secondary text-secondary-foreground hover:bg-slate-300 dark:hover:bg-slate-700 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
         success:
           "bg-success text-success-foreground shadow-sm hover:bg-success/85 focus-visible:border-success focus-visible:ring-success/30",
         ghost:
