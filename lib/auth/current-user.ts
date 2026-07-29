@@ -1,6 +1,7 @@
 import { Account } from "node-appwrite";
 import { createSessionClient } from "@/lib/appwrite/session";
 import { EXTERNAL_TIMEOUTS, withExternalTimeout } from "@/lib/server/timeouts";
+import { isInvalidSessionError } from "./errors";
 
 export async function getCurrentUser(session: string | null) {
   if (!session) return null;
@@ -19,6 +20,11 @@ export async function getCurrentUser(session: string | null) {
       message: error instanceof Error ? error.message : "Unknown error",
     });
 
-    return null;
+    // Only an explicit authentication rejection proves that the session is no
+    // longer usable. A timeout or upstream Appwrite failure must not sign the
+    // user out by sending them through the session-expired route.
+    if (isInvalidSessionError(error)) return null;
+
+    throw error;
   }
 }
