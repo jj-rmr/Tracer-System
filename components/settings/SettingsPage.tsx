@@ -4,19 +4,23 @@ import {
   LuMail,
   LuShieldCheck,
   LuUserRound,
-} from "react-icons/lu";
+} from "@/components/ui/icons";
 
 import { SignOutButton } from "@/components/auth/SignOutButton";
 import {
   InfoAccordion,
   type InfoAccordionItem,
 } from "@/components/settings/InfoAccordion";
+import { MotionPreference } from "@/components/settings/MotionPreference";
+import { ColorThemePreference } from "@/components/settings/ColorThemePreference";
+import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
 import { type Role, ROLES } from "@/types";
 
 interface SettingsPageProps {
   name: string;
   email: string;
   role: Role;
+  pictureUrl: string | null;
 }
 
 const alumniInformation: InfoAccordionItem[] = [
@@ -61,7 +65,12 @@ const adminInformation: InfoAccordionItem[] = [
   },
 ];
 
-export default function SettingsPage({ name, email, role }: SettingsPageProps) {
+export default function SettingsPage({
+  name,
+  email,
+  role,
+  pictureUrl,
+}: SettingsPageProps) {
   const informationItems =
     role === ROLES.ADMIN ? adminInformation : alumniInformation;
 
@@ -72,12 +81,15 @@ export default function SettingsPage({ name, email, role }: SettingsPageProps) {
           Settings
         </h1>
         <p className="mt-1 text-sm leading-6 text-muted-foreground sm:text-base">
-          Review your access details and Tracer System information.
+          Personalize your display and review your Tracer System access.
         </p>
       </header>
 
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-6">
         <main className="min-w-0 space-y-5 sm:space-y-6">
+          <ColorThemePreference />
+          <MotionPreference />
+
           <section className="rounded-3xl border border-border bg-card p-5 shadow-sm sm:p-6">
             <div className="flex items-start gap-3 sm:gap-4">
               <div className="rounded-2xl bg-secondary p-3 text-muted-foreground">
@@ -119,10 +131,8 @@ export default function SettingsPage({ name, email, role }: SettingsPageProps) {
 
         <aside className="min-w-0 space-y-5 lg:sticky lg:top-6">
           <section className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
-            <div className="flex items-center gap-3 border-b border-border p-5">
-              <div className="rounded-2xl bg-secondary p-3 text-muted-foreground">
-                <LuUserRound aria-hidden="true" size={22} />
-              </div>
+            <div className="flex items-center gap-4 border-b border-border p-5">
+              <ProfileAvatar name={name} pictureUrl={pictureUrl} size={56} />
               <div className="min-w-0">
                 <h2 className="font-semibold text-foreground">
                   Account profile

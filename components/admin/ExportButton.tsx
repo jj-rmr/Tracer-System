@@ -1,7 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { LuDownload, LuFileSpreadsheet, LuFileText } from "react-icons/lu";
+import {
+  LuDownload,
+  LuFileSpreadsheet,
+  LuFileText,
+} from "@/components/ui/icons";
 
 import { Button } from "@/components/ui/button";
 import Modal from "@/components/ui/Modal";
@@ -30,7 +34,7 @@ export default function ExportButton({
   return (
     <>
       <Button type="button" onClick={() => setOpen(true)} variant="success">
-        <LuDownload />
+        <LuDownload animated />
         {label}
       </Button>
 

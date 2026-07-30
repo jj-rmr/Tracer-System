@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
 import { useCallback, useState } from "react";
-import { LuLock, LuPlay, LuPlus } from "react-icons/lu";
+import { LuLock, LuPlay, LuPlus } from "@/components/ui/icons";
 import { useRouter } from "next/navigation";
 
 import { SelectField } from "@/components/forms/SelectField";
@@ -170,8 +170,8 @@ export default function StudyScheduler({
             Create studies, manually control access, and export responses.
           </p>
         </div>
-        <Button type="button" variant="elevated" onClick={openCreateForm}>
-          <LuPlus size={16} />
+        <Button type="button" variant="default" onClick={openCreateForm}>
+          <LuPlus size={16} animated />
           Create Study
         </Button>
       </header>
@@ -243,7 +243,7 @@ export default function StudyScheduler({
               <Button type="button" variant="ghost" onClick={requestClose}>
                 Cancel
               </Button>
-              <Button type="submit" variant="elevated" disabled={saving}>
+              <Button type="submit" variant="default" disabled={saving}>
                 {saving ? "Creating..." : "Create Study"}
               </Button>
             </div>
@@ -343,7 +343,7 @@ export default function StudyScheduler({
                       setPendingStatusChange({ study, status: "open" })
                     }
                   >
-                    <LuPlay />
+                    <LuPlay animated />
                     {study.responseCount > 0 ? "Reopen" : "Open"}
                   </Button>
                 ) : (

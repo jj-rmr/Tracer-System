@@ -1,19 +1,20 @@
+"use client";
+
 import { Button as ButtonPrimitive } from "@base-ui/react/button";
 import { cva, type VariantProps } from "class-variance-authority";
+import { useRef, useState } from "react";
 
+import { IconInteractionProvider } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "group/button inline-flex max-w-full shrink-0 items-center justify-center rounded-xl border border-transparent bg-clip-padding text-center text-sm font-semibold! whitespace-normal transition-[color,background-color,border-color,box-shadow,transform,opacity] duration-200 outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 active:not-aria-[haspopup]:translate-y-px disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex max-w-full shrink-0 items-center justify-center rounded-xl border border-transparent bg-clip-padding text-center text-sm font-semibold! whitespace-normal transition-[color,background-color,border-color,box-shadow,opacity] duration-200 outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 [&>svg]:pointer-events-none [&>svg]:shrink-0 [&>svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary-hover",
-        elevated:
+        default:
           "bg-primary text-primary-foreground shadow-md hover:bg-primary-hover hover:shadow-lg",
         outline:
-          "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground",
-        "outline-elevated":
           "border-border bg-background shadow-sm hover:bg-muted hover:text-foreground hover:shadow-md aria-expanded:bg-muted aria-expanded:text-foreground",
         secondary:
           "bg-secondary text-secondary-foreground hover:bg-slate-300 dark:hover:bg-slate-700 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
@@ -28,9 +29,9 @@ const buttonVariants = cva(
         inverse:
           "bg-transparent text-primary-foreground hover:bg-primary-foreground/10 focus-visible:border-primary-foreground/50 focus-visible:ring-primary-foreground/40",
         navigation:
-          "text-muted-foreground hover:bg-muted hover:text-foreground active:not-aria-[haspopup]:translate-y-0 active:scale-[0.98]",
+          "text-nav-inactive hover:bg-muted hover:text-nav-active focus-visible:ring-inset",
         "navigation-active":
-          "bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary active:not-aria-[haspopup]:translate-y-0 active:scale-[0.98]",
+          "bg-primary/10 text-nav-active hover:bg-primary/10 hover:text-nav-active focus-visible:ring-inset",
       },
       size: {
         default:
@@ -68,13 +69,72 @@ type ButtonProps = Omit<ButtonPrimitive.Props, "className"> &
     className?: string;
   };
 
-function Button({ className, variant, size, ...props }: ButtonProps) {
+function Button({
+  className,
+  variant,
+  size,
+  onPointerEnter,
+  onPointerLeave,
+  onPointerDown,
+  onPointerUp,
+  onPointerCancel,
+  onFocus,
+  onBlur,
+  ...props
+}: ButtonProps) {
+  const [iconInteractionActive, setIconInteractionActive] = useState(false);
+  const touchStopTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function clearTouchStopTimer() {
+    if (touchStopTimerRef.current) clearTimeout(touchStopTimerRef.current);
+    touchStopTimerRef.current = null;
+  }
+
   return (
-    <ButtonPrimitive
-      data-slot="button"
-      className={cn(buttonVariants({ variant, size }), className)}
-      {...props}
-    />
+    <IconInteractionProvider active={iconInteractionActive}>
+      <ButtonPrimitive
+        data-slot="button"
+        data-button-variant={variant ?? "ghost"}
+        className={cn(buttonVariants({ variant, size }), className)}
+        onPointerEnter={(event) => {
+          setIconInteractionActive(true);
+          onPointerEnter?.(event);
+        }}
+        onPointerLeave={(event) => {
+          if (event.pointerType === "mouse") setIconInteractionActive(false);
+          onPointerLeave?.(event);
+        }}
+        onPointerDown={(event) => {
+          clearTouchStopTimer();
+          setIconInteractionActive(true);
+          onPointerDown?.(event);
+        }}
+        onPointerUp={(event) => {
+          if (event.pointerType !== "mouse") {
+            clearTouchStopTimer();
+            touchStopTimerRef.current = setTimeout(
+              () => setIconInteractionActive(false),
+              350,
+            );
+          }
+          onPointerUp?.(event);
+        }}
+        onPointerCancel={(event) => {
+          clearTouchStopTimer();
+          setIconInteractionActive(false);
+          onPointerCancel?.(event);
+        }}
+        onFocus={(event) => {
+          setIconInteractionActive(true);
+          onFocus?.(event);
+        }}
+        onBlur={(event) => {
+          setIconInteractionActive(false);
+          onBlur?.(event);
+        }}
+        {...props}
+      />
+    </IconInteractionProvider>
   );
 }
 

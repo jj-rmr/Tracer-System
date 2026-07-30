@@ -1,6 +1,6 @@
-import Link from "next/link";
+import { IconLink as Link } from "@/components/ui/icon-link";
 import {
-  LuArrowRight,
+  LuChevronRight,
   LuBriefcaseBusiness,
   LuCalendarDays,
   LuCircleCheck,
@@ -9,8 +9,9 @@ import {
   LuGraduationCap,
   LuHistory,
   LuShieldCheck,
-} from "react-icons/lu";
-import type { IconType } from "react-icons";
+} from "@/components/ui/icons";
+import type { SystemIconProps } from "@/components/ui/icons";
+import type { ComponentType } from "react";
 
 import { buttonVariants } from "@/components/ui/button";
 import { requireUserRole } from "@/lib/auth";
@@ -22,13 +23,13 @@ import { ROLES } from "@/types";
 type DashboardItem = {
   label: string;
   value: number | string;
-  icon: IconType;
+  icon: ComponentType<SystemIconProps>;
 };
 
 type ChecklistItem = {
   title: string;
   description: string;
-  icon: IconType;
+  icon: ComponentType<SystemIconProps>;
 };
 
 function firstName(name: string) {
@@ -153,7 +154,7 @@ export default async function AlumniPage() {
                 className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors duration-200 hover:bg-primary-hover"
               >
                 {openContext ? actionLabel : "View your latest response"}
-                <LuArrowRight aria-hidden="true" />
+                <LuChevronRight aria-hidden="true" />
               </Link>
             )}
           </div>
@@ -226,7 +227,7 @@ export default async function AlumniPage() {
             )}
           >
             Review account information
-            <LuArrowRight aria-hidden="true" />
+            <LuChevronRight aria-hidden="true" />
           </Link>
         </section>
       </div>

@@ -5,7 +5,7 @@ import { TableActionMenu } from "@/components/ui/table-action-menu";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { LuEye, LuShieldCheck, LuTrash2 } from "react-icons/lu";
+import { LuEye, LuShieldCheck, LuTrash2 } from "@/components/ui/icons";
 import { Role } from "@/types";
 import { useToast } from "@/components/ui/Toast";
 import LoadingState from "@/components/ui/LoadingState";
@@ -21,11 +21,13 @@ import {
 } from "@/components/ui/table";
 import Modal from "@/components/ui/Modal";
 import { Input } from "@/components/ui/input";
+import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
 
 interface Account {
   id: string;
   name: string;
   email: string;
+  pictureUrl: string | null;
   role: Role;
   verified: boolean;
   createdAt: string;
@@ -289,11 +291,18 @@ export default function AccountsTable({
           {accounts.map((account) => (
             <TableRow key={account.id}>
               <TableCell className="font-semibold whitespace-nowrap text-foreground">
-                {account.name || (
-                  <span className="italic text-muted-foreground">
-                    Unnamed User
-                  </span>
-                )}
+                <div className="flex items-center gap-3">
+                  <ProfileAvatar
+                    name={account.name}
+                    pictureUrl={account.pictureUrl}
+                    size={36}
+                  />
+                  {account.name || (
+                    <span className="italic text-muted-foreground">
+                      Unnamed User
+                    </span>
+                  )}
+                </div>
               </TableCell>
 
               <TableCell className="text-muted-foreground">
@@ -351,7 +360,7 @@ export default function AccountsTable({
                     items={[
                       {
                         label: "View Account",
-                        icon: <LuEye aria-hidden="true" size={16} />,
+                        icon: <LuEye aria-hidden="true" size={16} animated />,
                         onSelect: () => setAccountToView(account),
                       },
                       ...(account.id !== currentUserId
@@ -396,13 +405,20 @@ export default function AccountsTable({
         {accountToView && (
           <div className="space-y-5">
             <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Full name
-                </p>
-                <p className="mt-1 text-xl font-semibold text-foreground">
-                  {accountToView.name || "Unnamed User"}
-                </p>
+              <div className="flex items-center gap-4">
+                <ProfileAvatar
+                  name={accountToView.name}
+                  pictureUrl={accountToView.pictureUrl}
+                  size={56}
+                />
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Full name
+                  </p>
+                  <p className="mt-1 text-xl font-semibold text-foreground">
+                    {accountToView.name || "Unnamed User"}
+                  </p>
+                </div>
               </div>
               <span
                 className={`rounded-full px-3 py-1 text-xs font-semibold ${
@@ -463,7 +479,7 @@ export default function AccountsTable({
                       setAccountToDelete(account);
                     }}
                   >
-                    <LuTrash2 aria-hidden="true" />
+                    <LuTrash2 aria-hidden="true" animated />
                     Delete Account
                   </Button>
                 )}

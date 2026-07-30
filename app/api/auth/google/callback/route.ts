@@ -113,6 +113,28 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    const googlePicture =
+      typeof googleUser.picture === "string" ? googleUser.picture : null;
+    let profilePictureUrl: string | null = null;
+
+    if (googlePicture) {
+      const pictureUrl = new URL(googlePicture);
+      if (
+        pictureUrl.protocol === "https:" &&
+        (pictureUrl.hostname === "googleusercontent.com" ||
+          pictureUrl.hostname.endsWith(".googleusercontent.com"))
+      ) {
+        profilePictureUrl = pictureUrl.toString();
+      }
+    }
+
+    if (appwriteUser.prefs.profilePictureUrl !== profilePictureUrl) {
+      appwriteUser = await users.updatePrefs({
+        userId: appwriteUser.$id,
+        prefs: { ...appwriteUser.prefs, profilePictureUrl },
+      });
+    }
+
     const token = await users.createToken({
       userId: appwriteUser.$id,
     });

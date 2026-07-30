@@ -1,6 +1,6 @@
-import Link from "next/link";
+import { IconLink as Link } from "@/components/ui/icon-link";
 import {
-  LuArrowRight,
+  LuChevronRight,
   LuCalendarClock,
   LuChartNoAxesCombined,
   LuCircleCheck,
@@ -9,7 +9,7 @@ import {
   LuFolderOpen,
   LuPlus,
   LuUsersRound,
-} from "react-icons/lu";
+} from "@/components/ui/icons";
 
 import RecentResponses from "@/components/admin/dashboard/RecentResponses";
 import { requireAdmin } from "@/lib/auth";
@@ -92,7 +92,7 @@ export default async function AdminPage() {
             className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors duration-200 hover:bg-primary-hover"
           >
             View responses
-            <LuArrowRight aria-hidden="true" />
+            <LuChevronRight aria-hidden="true" />
           </Link>
         </div>
       </header>
@@ -193,7 +193,7 @@ export default async function AdminPage() {
                   className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-primary transition-colors duration-200 hover:bg-primary/10"
                 >
                   View study responses
-                  <LuArrowRight aria-hidden="true" />
+                  <LuChevronRight aria-hidden="true" />
                 </Link>
               </div>
             </div>
@@ -231,7 +231,7 @@ export default async function AdminPage() {
                   <Icon aria-hidden="true" size={18} />
                 </span>
                 {label as string}
-                <LuArrowRight
+                <LuChevronRight
                   aria-hidden="true"
                   className="ml-auto text-muted-foreground"
                 />

@@ -10,7 +10,7 @@ import {
   SurveyDocument,
   SurveyDocumentType,
 } from "@/types";
-import { LuPlus, LuTrash2 } from "react-icons/lu";
+import { LuPlus, LuTrash2 } from "@/components/ui/icons";
 import { useRouter } from "next/navigation";
 import FormModal from "@/components/ui/FormModal";
 import Modal from "@/components/ui/Modal";
@@ -266,13 +266,8 @@ export default function ResponseWorkspace({
           below to start answering the form.
         </p>
 
-        <Button
-          variant="elevated"
-          size="lg"
-          onClick={openForm}
-          className="mt-6"
-        >
-          <LuPlus size={16} />
+        <Button variant="default" size="lg" onClick={openForm} className="mt-6">
+          <LuPlus size={16} animated />
           Add New Response
         </Button>
 
@@ -345,7 +340,7 @@ export default function ResponseWorkspace({
 
             <div className="flex w-full items-center gap-2 lg:w-auto">
               <Button
-                variant="elevated"
+                variant="default"
                 onClick={openForm}
                 disabled={open}
                 className="flex-1"
@@ -363,7 +358,7 @@ export default function ResponseWorkspace({
                   aria-label="Delete response"
                   title="Delete response"
                 >
-                  <LuTrash2 aria-hidden="true" size={18} />
+                  <LuTrash2 aria-hidden="true" size={18} animated />
                 </Button>
               )}
             </div>

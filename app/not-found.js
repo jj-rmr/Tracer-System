@@ -9,7 +9,7 @@ export default function NotFound() {
       </div>
       <Link
         href="/"
-        className="border border-sky-200 rounded-2xl py-2 px-4 hover:bg-sky-100 hover:text-sky-400 active:scale-95 active:bg-sky-100 active:text-sky-400 transition-[colors, scale] duration-300"
+        className="rounded-2xl border border-border px-4 py-2 text-primary transition-colors duration-200 hover:bg-primary/10 active:bg-primary/15"
       >
         Return Home
       </Link>

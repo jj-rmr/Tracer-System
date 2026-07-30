@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 
 import { useState } from "react";
-import { LuChevronDown } from "react-icons/lu";
+import { LuChevronDown } from "@/components/ui/icons";
 
 export interface InfoAccordionItem {
   id: string;

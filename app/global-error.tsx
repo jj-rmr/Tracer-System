@@ -18,11 +18,7 @@ export default function GlobalError({
           <p className="mt-3 text-sm leading-6 text-muted-foreground">
             We couldn’t load the system. Your existing records were not changed.
           </p>
-          <Button
-            className="mt-5"
-            variant="outline-elevated"
-            onClick={unstable_retry}
-          >
+          <Button className="mt-5" variant="outline" onClick={unstable_retry}>
             Refresh system
           </Button>
         </main>

@@ -1,31 +1,31 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
+import type { IconHandle } from "@animateicons/react";
+import {
+  LuChevronRight as AnimatedChevronRightIcon,
+  LuCloudUpload as AnimatedCloudIcon,
+  LuEllipsisVertical as AnimatedEllipsisVerticalIcon,
+  LuExternalLink as AnimatedExternalLinkIcon,
+  LuFileText as AnimatedFileTextIcon,
+  LuFolder as AnimatedFolderIcon,
+  LuImage as AnimatedImageIcon,
+  LuInfo as AnimatedInfoIcon,
+  LuPencil as AnimatedPencilIcon,
+  LuPlus as AnimatedPlusIcon,
+  LuRefreshCw as AnimatedRefreshIcon,
+  LuSettings2 as AnimatedFolderSettingsIcon,
+  LuTrash2 as AnimatedTrashIcon,
+  LuUpload as AnimatedUploadIcon,
+} from "@/components/ui/icons";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  LuChevronRight,
-  LuCloud,
-  LuExternalLink,
-  LuFile,
-  LuFolder,
-  LuFolderCog,
-  LuImage,
-  LuEllipsisVertical,
-  LuInfo,
-  LuMove,
-  LuPencil,
-  LuPlus,
-  LuRefreshCw,
-  LuUpload,
-  LuTrash2,
-} from "react-icons/lu";
-
+import { forwardRef, useCallback, useEffect, useRef, useState } from "react";
 import { FileUploadField } from "@/components/forms/FileUploadField";
 import { fieldStyles as styles } from "@/components/forms/graduate-tracer/shared";
+import { useReducedMotionPreference } from "@/lib/hooks/use-reduced-motion-preference";
 import ConfirmationDialog from "@/components/ui/ConfirmationDialog";
 import FormModal from "@/components/ui/FormModal";
 import LoadingState from "@/components/ui/LoadingState";
@@ -88,13 +88,40 @@ function formatFileType(item: DriveBrowserItem) {
   return item.mimeType.split("/").at(-1)?.toUpperCase() ?? "File";
 }
 
-function FileIcon({ item }: { item: DriveBrowserItem }) {
-  if (item.isFolder) return <LuFolder className="text-warning" size={22} />;
-  if (item.mimeType.startsWith("image/")) {
-    return <LuImage className="text-secondary-foreground" size={22} />;
-  }
-  return <LuFile className="text-muted-foreground" size={22} />;
-}
+const FileIcon = forwardRef<IconHandle, { item: DriveBrowserItem }>(
+  function FileIcon({ item }, ref) {
+    if (item.isFolder) {
+      return (
+        <AnimatedFolderIcon
+          ref={ref}
+          className="text-warning"
+          size={22}
+          duration={0.65}
+        />
+      );
+    }
+
+    if (item.mimeType.startsWith("image/")) {
+      return (
+        <AnimatedImageIcon
+          ref={ref}
+          className="text-secondary-foreground"
+          size={22}
+          duration={0.65}
+        />
+      );
+    }
+
+    return (
+      <AnimatedFileTextIcon
+        ref={ref}
+        className="text-muted-foreground"
+        size={22}
+        duration={0.65}
+      />
+    );
+  },
+);
 
 function FileSearchField({ onSearch }: { onSearch: (value: string) => void }) {
   const [value, setValue] = useState("");
@@ -125,9 +152,11 @@ function FileSearchField({ onSearch }: { onSearch: (value: string) => void }) {
 
 export default function DriveFileBrowser() {
   const { showToast } = useToast();
+  const reduceMotion = useReducedMotionPreference();
   const [folder, setFolder] = useState<FolderPayload | null>(null);
   const folderIdRef = useRef<string | undefined>(undefined);
   const latestRequestIdRef = useRef(0);
+  const itemIconRefs = useRef(new Map<string, IconHandle>());
   const [items, setItems] = useState<DriveBrowserItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchInputKey, setSearchInputKey] = useState(0);
@@ -596,6 +625,9 @@ export default function DriveFileBrowser() {
   const selectedItems = items.filter((item) => selectedItemIds.has(item.id));
   const allVisibleItemsSelected =
     items.length > 0 && items.every((item) => selectedItemIds.has(item.id));
+  const someVisibleItemsSelected =
+    !allVisibleItemsSelected &&
+    items.some((item) => selectedItemIds.has(item.id));
   const moveBreadcrumbs = moveBrowser
     ? moveBrowser.breadcrumbs.slice(
         Math.max(
@@ -622,9 +654,9 @@ export default function DriveFileBrowser() {
           type="button"
           onClick={() => setShowSyncInfo(true)}
           aria-label="About Drive synchronization"
-          className="inline-flex items-center justify-center self-start rounded-xl border border-border bg-card p-2.5 text-muted-foreground shadow-sm transition-[color,background-color,border-color,box-shadow,transform] duration-200 hover:bg-muted hover:text-muted-foreground md:self-auto"
+          className="inline-flex items-center justify-center self-start rounded-xl border border-border bg-card p-2.5 text-muted-foreground shadow-sm transition-[color,background-color,border-color,box-shadow,transform] duration-200 hover:bg-data-hover hover:text-muted-foreground md:self-auto"
         >
-          <LuInfo size={19} />
+          <AnimatedInfoIcon size={19} />
         </Button>
       </header>
       <section className="rounded-3xl border border-border bg-card shadow-sm">
@@ -643,9 +675,9 @@ export default function DriveFileBrowser() {
                     ? "Upload files to this folder"
                     : "Open a folder inside Admin Files to upload"
                 }
-                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-border bg-card px-4 py-3 text-sm font-semibold text-muted-foreground shadow-sm hover:bg-muted disabled:cursor-not-allowed disabled:opacity-45"
+                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-border bg-card px-4 py-3 text-sm font-semibold text-muted-foreground shadow-sm hover:bg-data-hover disabled:cursor-not-allowed disabled:opacity-45"
               >
-                <LuUpload size={17} /> Upload files
+                <AnimatedUploadIcon size={17} /> Upload files
               </Button>
               <Button
                 type="button"
@@ -653,7 +685,7 @@ export default function DriveFileBrowser() {
                 onClick={() => setShowNewFolder(true)}
                 className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-45"
               >
-                <LuPlus size={17} /> New folder
+                <AnimatedPlusIcon size={17} /> New folder
               </Button>
             </div>
           </div>
@@ -666,7 +698,11 @@ export default function DriveFileBrowser() {
               {folder.breadcrumbs.map((crumb, index) => (
                 <div key={crumb.id} className="flex min-w-0 items-center gap-1">
                   {index > 0 && (
-                    <LuChevronRight className="shrink-0 text-primary" />
+                    <AnimatedChevronRightIcon
+                      className="shrink-0 text-primary"
+                      size={16}
+                      animated={false}
+                    />
                   )}
                   <Button
                     type="button"
@@ -675,7 +711,7 @@ export default function DriveFileBrowser() {
                       crumb.id === folder.folderId ? "page" : undefined
                     }
                     onClick={() => openFolder(crumb.id)}
-                    className={`truncate rounded-lg px-2 py-1 enabled:hover:bg-muted enabled:hover:text-muted-foreground ${
+                    className={`truncate rounded-lg px-2 py-1 enabled:hover:bg-data-hover enabled:hover:text-muted-foreground ${
                       index === folder.breadcrumbs.length - 1
                         ? "cursor-default font-semibold text-foreground"
                         : "text-muted-foreground"
@@ -695,7 +731,11 @@ export default function DriveFileBrowser() {
           />
         ) : items.length === 0 ? (
           <div className="flex min-h-64 flex-col items-center justify-center p-8 text-center text-muted-foreground">
-            <LuCloud size={36} className="mb-3 text-primary" />
+            <AnimatedCloudIcon
+              size={36}
+              animated={false}
+              className="mb-3 text-primary"
+            />
             <p className="font-semibold text-foreground">
               {isSearching ? "No matching files found" : "This folder is empty"}
             </p>
@@ -708,9 +748,10 @@ export default function DriveFileBrowser() {
         ) : (
           <div>
             {canUpload && (
-              <label className="flex items-center gap-2 border-b border-border bg-muted px-5 py-3 text-sm font-medium text-muted-foreground md:hidden">
+              <label className="flex items-center gap-2 border-b border-border bg-data-header px-5 py-3 text-sm font-medium text-muted-foreground md:hidden">
                 <Checkbox
                   checked={allVisibleItemsSelected}
+                  indeterminate={someVisibleItemsSelected}
                   onCheckedChange={(checked) =>
                     setSelectedItemIds(
                       checked
@@ -723,35 +764,35 @@ export default function DriveFileBrowser() {
               </label>
             )}
             {canUpload && selectedItems.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2 border-b border-border bg-muted px-5 py-3">
+              <div className="flex flex-wrap items-center gap-2 border-b border-border bg-data-header px-5 py-3">
                 <span className="mr-auto text-sm font-semibold text-foreground">
                   {selectedItems.length} selected
                 </span>
                 <Button
                   type="button"
                   onClick={() => void openMoveDialog(selectedItems)}
-                  className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-sm font-semibold text-muted-foreground hover:bg-secondary"
+                  className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-sm font-semibold text-muted-foreground hover:bg-data-hover"
                 >
-                  <LuMove size={15} /> Move
+                  <AnimatedChevronRightIcon size={15} /> Move
                 </Button>
                 <Button
                   type="button"
                   onClick={() => setDeletingItems(selectedItems)}
                   className="inline-flex items-center gap-2 rounded-xl border border-destructive/30 bg-card px-3 py-2 text-sm font-semibold text-destructive hover:bg-destructive/10"
                 >
-                  <LuTrash2 size={15} /> Delete
+                  <AnimatedTrashIcon size={15} /> Delete
                 </Button>
                 <Button
                   type="button"
                   onClick={() => setSelectedItemIds(new Set())}
                   className="rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-card"
                 >
-                  Clear
+                  Clear Selection
                 </Button>
               </div>
             )}
             <div
-              className={`hidden items-center gap-3 border-b border-border bg-muted px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:grid ${
+              className={`hidden items-center gap-3 border-b border-border bg-data-header px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:grid ${
                 canUpload
                   ? "lg:grid-cols-[auto_auto_minmax(0,1fr)_7rem_9rem_11rem_auto]"
                   : "lg:grid-cols-[auto_auto_minmax(0,1fr)_7rem_9rem_11rem]"
@@ -761,6 +802,7 @@ export default function DriveFileBrowser() {
                 <Checkbox
                   aria-label="Select all files and folders"
                   checked={allVisibleItemsSelected}
+                  indeterminate={someVisibleItemsSelected}
                   onCheckedChange={(checked) =>
                     setSelectedItemIds(
                       checked
@@ -783,7 +825,9 @@ export default function DriveFileBrowser() {
               {items.map((item) => (
                 <div
                   key={item.id}
+                  data-file-row
                   onPointerUp={(event) => {
+                    itemIconRefs.current.get(item.id)?.stopAnimation();
                     if (
                       event.pointerType === "mouse" ||
                       (event.target as HTMLElement).closest(
@@ -794,6 +838,21 @@ export default function DriveFileBrowser() {
                     }
                     openBrowserItem(item);
                   }}
+                  onPointerDown={(event) => {
+                    if (!reduceMotion && event.pointerType !== "mouse") {
+                      itemIconRefs.current.get(item.id)?.startAnimation();
+                    }
+                  }}
+                  onPointerEnter={() =>
+                    !reduceMotion &&
+                    itemIconRefs.current.get(item.id)?.startAnimation()
+                  }
+                  onPointerLeave={() =>
+                    itemIconRefs.current.get(item.id)?.stopAnimation()
+                  }
+                  onPointerCancel={() =>
+                    itemIconRefs.current.get(item.id)?.stopAnimation()
+                  }
                   onDoubleClick={(event) => {
                     if (
                       (event.target as HTMLElement).closest(
@@ -804,7 +863,7 @@ export default function DriveFileBrowser() {
                     }
                     openBrowserItem(item);
                   }}
-                  className={`relative grid w-full cursor-pointer items-center gap-3 px-5 py-4 text-left transition-colors duration-200 hover:bg-muted last:rounded-b-[calc(var(--radius-3xl)-1px)] ${
+                  className={`group/file-row relative grid w-full cursor-pointer items-center gap-3 px-5 py-4 text-left transition-colors duration-200 hover:bg-data-hover last:rounded-b-[calc(var(--radius-3xl)-1px)] ${
                     canUpload
                       ? "grid-cols-[auto_auto_minmax(0,1fr)_auto] lg:grid-cols-[auto_auto_minmax(0,1fr)_7rem_9rem_11rem_auto]"
                       : "grid-cols-[auto_auto_minmax(0,1fr)] lg:grid-cols-[auto_auto_minmax(0,1fr)_7rem_9rem_11rem]"
@@ -830,6 +889,7 @@ export default function DriveFileBrowser() {
                   )}
                   <Button
                     type="button"
+                    data-file-open
                     variant="plain"
                     onPointerUp={(event) => {
                       event.stopPropagation();
@@ -839,15 +899,31 @@ export default function DriveFileBrowser() {
                       event.stopPropagation();
                       openBrowserItem(item);
                     }}
+                    onFocus={() => {
+                      if (!reduceMotion) {
+                        itemIconRefs.current.get(item.id)?.startAnimation();
+                      }
+                    }}
+                    onBlur={() =>
+                      itemIconRefs.current.get(item.id)?.stopAnimation()
+                    }
                     onKeyDown={(event) => {
                       if (event.key !== "Enter" && event.key !== " ") return;
                       event.preventDefault();
                       openBrowserItem(item);
                     }}
                     aria-label={`${item.isFolder ? "Open folder" : "Open file"} ${item.name}`}
-                    className="col-span-2 flex h-auto w-full min-w-0 justify-start gap-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    className="col-span-2 flex h-auto w-full min-w-0 justify-start gap-3 text-left"
                   >
-                    <FileIcon item={item} />
+                    <span className="flex shrink-0 items-center self-center">
+                      <FileIcon
+                        ref={(handle) => {
+                          if (handle) itemIconRefs.current.set(item.id, handle);
+                          else itemIconRefs.current.delete(item.id);
+                        }}
+                        item={item}
+                      />
+                    </span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-sm font-semibold text-foreground">
                         {item.name}
@@ -891,7 +967,7 @@ export default function DriveFileBrowser() {
                         aria-expanded={activeMenuId === item.id}
                         className="rounded-lg p-2 text-muted-foreground hover:bg-card hover:text-muted-foreground"
                       >
-                        <LuEllipsisVertical size={18} />
+                        <AnimatedEllipsisVerticalIcon size={18} />
                       </Button>
                       {activeMenuId === item.id && (
                         <div className="absolute top-[calc(100%+0.25rem)] right-0 z-50 w-40 overflow-hidden rounded-xl border border-border bg-card p-1.5 shadow-xl">
@@ -905,7 +981,8 @@ export default function DriveFileBrowser() {
                               setRenamingItem(item);
                             }}
                           >
-                            <LuPencil size={15} /> Rename
+                            <AnimatedPencilIcon size={15} />
+                            Rename
                           </Button>
                           <Button
                             type="button"
@@ -916,7 +993,8 @@ export default function DriveFileBrowser() {
                               void openMoveDialog([item]);
                             }}
                           >
-                            <LuMove size={15} /> Move
+                            <AnimatedChevronRightIcon size={15} />
+                            Move
                           </Button>
                           <Button
                             type="button"
@@ -927,7 +1005,8 @@ export default function DriveFileBrowser() {
                               setInfoItem(item);
                             }}
                           >
-                            <LuInfo size={15} /> Info
+                            <AnimatedInfoIcon size={15} />
+                            Info
                           </Button>
                           <Button
                             type="button"
@@ -938,7 +1017,8 @@ export default function DriveFileBrowser() {
                               setDeletingItems([item]);
                             }}
                           >
-                            <LuTrash2 size={15} /> Delete
+                            <AnimatedTrashIcon size={15} />
+                            Delete
                           </Button>
                         </div>
                       )}
@@ -962,9 +1042,12 @@ export default function DriveFileBrowser() {
                   append: true,
                 })
               }
-              className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-muted disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-data-hover disabled:opacity-50"
             >
-              <LuRefreshCw className={loadingMore ? "animate-spin" : ""} />
+              <AnimatedRefreshIcon
+                animated={!loadingMore}
+                className={loadingMore ? "animate-spin" : ""}
+              />
               {loadingMore ? "Loading..." : "Load more"}
             </Button>
           </div>
@@ -1087,14 +1170,20 @@ export default function DriveFileBrowser() {
               {moveBreadcrumbs.length > 0 && (
                 <nav
                   aria-label="Destination folder path"
-                  className="flex flex-wrap items-center gap-1 border-b border-border bg-muted px-4 py-3 text-sm"
+                  className="flex flex-wrap items-center gap-1 border-b border-border bg-data-header px-4 py-3 text-sm"
                 >
                   {moveBreadcrumbs.map((crumb, index) => (
                     <div
                       key={crumb.id}
                       className="flex min-w-0 items-center gap-1"
                     >
-                      {index > 0 && <LuChevronRight className="text-primary" />}
+                      {index > 0 && (
+                        <AnimatedChevronRightIcon
+                          className="text-primary"
+                          size={16}
+                          animated={false}
+                        />
+                      )}
                       <Button
                         type="button"
                         disabled={crumb.id === moveBrowser?.folderId}
@@ -1115,7 +1204,7 @@ export default function DriveFileBrowser() {
                 />
               ) : moveBrowser ? (
                 <div className="max-h-80 overflow-y-auto">
-                  <div className="border-b border-border bg-muted px-4 py-3 text-sm text-foreground">
+                  <div className="border-b border-border bg-data-header px-4 py-3 text-sm text-foreground">
                     Destination:{" "}
                     <span className="font-semibold">
                       {moveBrowser.breadcrumbs.at(-1)?.name}
@@ -1135,16 +1224,20 @@ export default function DriveFileBrowser() {
                         <Button
                           type="button"
                           onClick={() => void loadMoveFolder(item.id)}
-                          className="flex w-full min-w-0 items-center gap-3 px-4 py-3 text-left hover:bg-muted"
+                          className="flex w-full min-w-0 items-center gap-3 px-4 py-3 text-left hover:bg-data-hover"
                         >
-                          <LuFolder
+                          <AnimatedFolderIcon
                             className="shrink-0 text-warning"
                             size={21}
                           />
                           <span className="truncate text-sm font-semibold text-foreground">
                             {item.name}
                           </span>
-                          <LuChevronRight className="ml-auto shrink-0 text-primary" />
+                          <AnimatedChevronRightIcon
+                            className="ml-auto shrink-0 text-primary"
+                            size={16}
+                            animated={false}
+                          />
                         </Button>
                       </div>
                     ))
@@ -1242,9 +1335,10 @@ export default function DriveFileBrowser() {
               onClick={() => void prepareFolders()}
               className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors duration-200 hover:bg-primary-hover disabled:cursor-wait disabled:opacity-60"
             >
-              <LuFolderCog
+              <AnimatedFolderSettingsIcon
                 className={preparing ? "animate-spin" : ""}
                 size={17}
+                animated={!preparing}
               />
               {preparing ? "Syncing Drive..." : "Sync Drive"}
             </Button>
@@ -1339,7 +1433,11 @@ export default function DriveFileBrowser() {
               />
             ) : (
               <div className="flex min-h-96 flex-1 flex-col items-center justify-center rounded-xl border border-border bg-card p-8 text-center">
-                <LuFile size={40} className="text-primary" />
+                <AnimatedFileTextIcon
+                  size={40}
+                  animated={false}
+                  className="text-primary"
+                />
                 <p className="mt-4 font-semibold text-foreground">
                   This format cannot be previewed securely in the browser.
                 </p>
@@ -1357,7 +1455,7 @@ export default function DriveFileBrowser() {
                 rel="noreferrer"
                 className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
               >
-                <LuExternalLink size={16} /> Open in new tab
+                <AnimatedExternalLinkIcon size={16} /> Open in new tab
               </a>
             </div>
           </div>

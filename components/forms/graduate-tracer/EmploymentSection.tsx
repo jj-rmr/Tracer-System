@@ -359,6 +359,8 @@ export function EmploymentSection({
             </label>
 
             <div
+              data-input-surface
+              data-invalid={!!errors.unemploymentReasons || undefined}
               className={`${styles.choiceGroup(
                 !!errors.unemploymentReasons,
                 readOnly,

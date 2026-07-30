@@ -14,7 +14,7 @@ export default function Unauthorized() {
 
       <Link
         href="/"
-        className="rounded-2xl border border-border px-4 py-2 transition-[color,background-color,transform] duration-200 hover:bg-secondary hover:text-primary active:scale-95 active:bg-secondary active:text-primary"
+        className="rounded-2xl border border-border px-4 py-2 transition-colors duration-200 hover:bg-secondary hover:text-primary active:bg-secondary active:text-primary"
       >
         Return Home
       </Link>

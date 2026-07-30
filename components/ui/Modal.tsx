@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { LuX } from "react-icons/lu";
+import { LuX } from "@/components/ui/icons";
 import { AnimatePresence, motion, useDragControls } from "motion/react";
 
 type ModalWidth = "sm" | "md" | "lg" | "xl";
@@ -258,7 +258,7 @@ export default function Modal({
                   onClick={onClose}
                   aria-label={closeLabel}
                 >
-                  <LuX aria-hidden="true" size={22} />
+                  <LuX aria-hidden="true" size={22} animated />
                 </Button>
               )}
             </header>

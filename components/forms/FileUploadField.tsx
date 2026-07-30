@@ -6,7 +6,12 @@ import { Button } from "@/components/ui/button";
 
 import { SurveyDocument } from "@/types";
 import { useEffect, useRef, useState } from "react";
-import { LuCloudUpload, LuFileText, LuFileType2, LuX } from "react-icons/lu";
+import {
+  LuCloudUpload,
+  LuFileText,
+  LuFileType2,
+  LuX,
+} from "@/components/ui/icons";
 
 interface FileUploadFieldProps {
   id: string;
@@ -239,6 +244,8 @@ export function FileUploadField({
       </label>
 
       <div
+        data-input-surface
+        data-invalid={hasError || undefined}
         onDragEnter={handleDragEnter}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -340,7 +347,7 @@ export function FileUploadField({
                     onClick={() => onRequestDeleteDocument(document)}
                     aria-label={`Remove ${document.filename}`}
                   >
-                    <LuX size={18} />
+                    <LuX size={18} animated />
                   </Button>
                 )}
               </div>
@@ -407,7 +414,7 @@ export function FileUploadField({
                     onClick={() => removeFile(index)}
                     aria-label={`Remove ${file.name}`}
                   >
-                    <LuX size={18} />
+                    <LuX size={18} animated />
                   </Button>
                 )}
               </div>

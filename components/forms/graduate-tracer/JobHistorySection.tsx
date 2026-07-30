@@ -193,6 +193,8 @@ export function JobHistorySection({
               all that apply. *
             </label>
             <div
+              data-input-surface
+              data-invalid={!!errors.stayingReasons || undefined}
               className={`${styles.choiceGroup(
                 !!errors.stayingReasons,
                 readOnly,
@@ -242,6 +244,8 @@ export function JobHistorySection({
                 all that apply. *
               </label>
               <div
+                data-input-surface
+                data-invalid={!!errors.acceptingReasons || undefined}
                 className={`${styles.choiceGroup(
                   !!errors.acceptingReasons,
                   readOnly,
@@ -310,6 +314,8 @@ export function JobHistorySection({
               Select all that apply. *
             </label>
             <div
+              data-input-surface
+              data-invalid={!!errors.changingReasons || undefined}
               className={`${styles.choiceGroup(
                 !!errors.changingReasons,
                 readOnly,
@@ -588,6 +594,8 @@ export function JobHistorySection({
               in your first job? Select all that apply. *
             </label>
             <div
+              data-input-surface
+              data-invalid={!!errors.usefulCompetencies || undefined}
               className={`${styles.choiceGroup(
                 !!errors.usefulCompetencies,
                 readOnly,

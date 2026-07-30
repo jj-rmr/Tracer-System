@@ -1,7 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
-import { LuMonitor, LuMoon, LuSun } from "react-icons/lu";
+import { LuMonitor, LuMoon, LuSun } from "@/components/ui/icons";
 import { AnimatePresence, motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 
@@ -100,9 +100,10 @@ export default function ThemeToggle({
   return (
     <MotionButton
       type="button"
+      data-nav-control={placement === "floating" ? undefined : ""}
       variant={
         placement === "floating"
-          ? "outline-elevated"
+          ? "outline"
           : placement === "sidebar"
             ? "navigation"
             : "ghost"
@@ -117,7 +118,6 @@ export default function ThemeToggle({
       onClick={toggleTheme}
       title={label}
       aria-label={label}
-      whileTap={{ scale: 0.98 }}
       className={
         placement === "floating"
           ? "size-11 gap-0 px-0 sm:w-auto sm:gap-3 sm:px-4"
@@ -136,9 +136,9 @@ export default function ThemeToggle({
         <AnimatePresence mode="wait" initial={false}>
           <motion.span
             key={theme}
-            initial={{ y: -8, opacity: 0, scale: 0.8 }}
-            animate={{ y: 0, opacity: 1, scale: 1 }}
-            exit={{ y: 8, opacity: 0, scale: 0.8 }}
+            initial={{ y: -8, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 8, opacity: 0 }}
             transition={{ duration: 0.2, ease: "backInOut" }}
             className="absolute grid place-items-center"
           >

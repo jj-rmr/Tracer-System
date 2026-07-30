@@ -2,9 +2,9 @@
 
 import type { ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
+import { IconLink as Link } from "@/components/ui/icon-link";
 import { createPortal } from "react-dom";
-import { LuEllipsisVertical } from "react-icons/lu";
+import { LuEllipsisVertical } from "@/components/ui/icons";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 
@@ -90,7 +90,7 @@ export function TableActionMenu({ label, items }: TableActionMenuProps) {
         aria-haspopup="menu"
         onClick={toggleMenu}
       >
-        <LuEllipsisVertical aria-hidden="true" />
+        <LuEllipsisVertical aria-hidden="true" animated />
       </Button>
 
       {open &&

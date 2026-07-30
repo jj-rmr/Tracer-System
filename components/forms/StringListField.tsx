@@ -2,7 +2,7 @@ import { Input } from "@/components/ui/input";
 
 import { Button } from "@/components/ui/button";
 
-import { LuPlus, LuX } from "react-icons/lu";
+import { LuPlus, LuX } from "@/components/ui/icons";
 
 interface StringListFieldProps {
   value: string[];
@@ -19,10 +19,10 @@ interface StringListFieldProps {
 const styles = {
   input: (err: boolean, disabled: boolean) => {
     const stateClass = disabled
-      ? "cursor-not-allowed border-border bg-secondary text-muted-foreground shadow-none placeholder:text-muted-foreground"
+      ? "cursor-not-allowed border-border bg-secondary text-muted-foreground shadow-none inset-shadow-none placeholder:text-muted-foreground"
       : err
-        ? "border-destructive bg-destructive/10 text-foreground shadow-sm focus:border-destructive focus:bg-card focus:outline-none focus:ring-4 focus:ring-destructive/20"
-        : "border-border bg-muted text-foreground shadow-sm focus:border-ring focus:bg-card focus:outline-none focus:ring-4 focus:ring-ring/30";
+        ? "border-destructive bg-destructive/10 text-foreground inset-shadow-sm focus:border-destructive focus:bg-card focus:outline-none focus:ring-4 focus:ring-destructive/20"
+        : "border-border bg-muted text-foreground inset-shadow-sm focus:border-ring focus:bg-card focus:outline-none focus:ring-4 focus:ring-ring/30";
 
     return `min-w-0 flex-1 rounded-2xl border px-4 py-3 text-sm transition duration-200 placeholder:text-muted-foreground ${stateClass}`;
   },
@@ -91,7 +91,7 @@ export function StringListField({
               size="icon-lg"
               aria-label={`Remove ${fieldName} ${index + 1}`}
             >
-              <LuX size={18} />
+              <LuX size={18} animated />
             </Button>
           )}
         </div>
@@ -104,7 +104,7 @@ export function StringListField({
           variant="outline"
           size="sm"
         >
-          <LuPlus size={16} />
+          <LuPlus size={16} animated />
           {addButtonLabel}
         </Button>
       )}

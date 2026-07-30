@@ -564,7 +564,7 @@ export default function GraduateTracerForm({
         {onRequestClose && !readOnly && (
           <Button
             type="button"
-            variant="outline-elevated"
+            variant="outline"
             onClick={onRequestClose}
             disabled={isSubmitting}
           >
@@ -573,7 +573,7 @@ export default function GraduateTracerForm({
         )}
         {step > 1 && (
           <Button
-            variant="outline-elevated"
+            variant="outline"
             onClick={() => handleStep("backward")}
             disabled={isSubmitting || activeDocumentUploads > 0}
           >
@@ -584,7 +584,7 @@ export default function GraduateTracerForm({
         {!readOnly ? (
           step === sections.length ? (
             <Button
-              variant="elevated"
+              variant="default"
               onClick={handlePreSubmitCheck}
               disabled={isSubmitting || activeDocumentUploads > 0}
             >
@@ -592,7 +592,7 @@ export default function GraduateTracerForm({
             </Button>
           ) : (
             <Button
-              variant="elevated"
+              variant="default"
               onClick={() => validateStep(step) && handleStep("forward")}
               disabled={isSubmitting || activeDocumentUploads > 0}
             >
@@ -601,7 +601,7 @@ export default function GraduateTracerForm({
           )
         ) : (
           step < sections.length && (
-            <Button variant="elevated" onClick={() => handleStep("forward")}>
+            <Button variant="default" onClick={() => handleStep("forward")}>
               Next Section
             </Button>
           )

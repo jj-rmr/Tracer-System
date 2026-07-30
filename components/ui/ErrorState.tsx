@@ -1,6 +1,6 @@
 "use client";
 
-import { LuRefreshCw } from "react-icons/lu";
+import { LuRefreshCw } from "@/components/ui/icons";
 
 import { Button } from "@/components/ui/button";
 
@@ -29,12 +29,15 @@ export default function ErrorState({
       {onRetry && (
         <Button
           type="button"
-          variant="outline-elevated"
+          variant="outline"
           className="mt-4"
           disabled={retrying}
           onClick={onRetry}
         >
-          <LuRefreshCw className={retrying ? "animate-spin" : undefined} />
+          <LuRefreshCw
+            animated={!retrying}
+            className={retrying ? "animate-spin" : undefined}
+          />
           {retrying ? "Refreshing..." : retryLabel}
         </Button>
       )}

@@ -37,7 +37,7 @@ export default function LoadingState({
       <div className="flex flex-col items-center justify-center gap-3 text-center text-muted-foreground">
         <div
           aria-hidden="true"
-          className="h-8 w-8 animate-spin rounded-full border-4 border-border border-t-sky-500"
+          className="h-8 w-8 animate-spin rounded-full border-4 border-border border-t-primary"
         />
         <span className="text-sm font-medium">{message}</span>
       </div>

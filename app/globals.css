@@ -5,28 +5,55 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --accent: var(--color-sky-400);
-  --surface: var(--color-slate-100);
-  --brand-accent: var(--color-sky-400);
-  interpolate-size: allow-keywords;
-  --background: var(--color-slate-50);
-  --foreground: var(--color-sky-950);
-  --card: var(--color-white);
-  --card-foreground: var(--color-sky-950);
-  --popover: var(--color-white);
-  --popover-foreground: var(--color-sky-950);
-  --primary: var(--color-sky-600);
-  --primary-hover: var(--color-sky-700);
-  --primary-foreground: var(--color-white);
-  --secondary: var(--color-slate-200);
-  --secondary-foreground: var(--color-sky-950);
-  --muted: color-mix(
+  --palette-300: var(--color-sky-300);
+  --palette-400: var(--color-sky-400);
+  --palette-500: var(--color-sky-500);
+  --palette-600: var(--color-sky-600);
+  --palette-700: var(--color-sky-700);
+  --palette-800: var(--color-sky-800);
+  --palette-950: var(--color-sky-950);
+  --undertone-50: var(--color-slate-50);
+  --undertone-100: var(--color-slate-100);
+  --undertone-200: var(--color-slate-200);
+  --undertone-300: var(--color-slate-300);
+  --undertone-400: var(--color-slate-400);
+  --undertone-500: var(--color-slate-500);
+  --undertone-600: var(--color-slate-600);
+  --undertone-700: var(--color-slate-700);
+  --undertone-800: var(--color-slate-800);
+  --undertone-900: var(--color-slate-900);
+  --undertone-950: var(--color-slate-950);
+  --font-system-sans:
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+  --font-system-mono:
+    ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --accent: var(--palette-400);
+  --surface: var(--undertone-100);
+  --data-hover: var(--undertone-50);
+  --data-header: color-mix(
     in oklab,
-    var(--color-slate-100) 55%,
-    var(--color-slate-200)
+    var(--undertone-50) 50%,
+    var(--undertone-100)
   );
-  --muted-foreground: var(--color-slate-700);
-  --accent-foreground: var(--color-sky-950);
+  --nav-inactive: var(--undertone-500);
+  --nav-active: var(--palette-700);
+  --brand-accent: var(--palette-400);
+  interpolate-size: allow-keywords;
+  --background: var(--undertone-100);
+  --foreground: var(--undertone-950);
+  --card: var(--color-white);
+  --card-foreground: var(--undertone-950);
+  --popover: var(--color-white);
+  --popover-foreground: var(--undertone-950);
+  --primary: var(--palette-600);
+  --primary-hover: var(--palette-700);
+  --primary-foreground: var(--color-white);
+  --secondary: var(--undertone-200);
+  --secondary-foreground: var(--undertone-950);
+  --muted: color-mix(in oklab, var(--undertone-100) 55%, var(--undertone-200));
+  --muted-foreground: var(--undertone-700);
+  --accent-foreground: var(--undertone-950);
   --destructive: var(--color-rose-600);
   --destructive-foreground: var(--color-white);
   --success: var(--color-emerald-700);
@@ -34,9 +61,24 @@
   --warning: var(--color-amber-800);
   --warning-foreground: var(--color-white);
   --overlay: color-mix(in oklab, var(--color-black) 40%, transparent);
-  --border: var(--color-slate-300);
-  --input: var(--color-slate-300);
-  --ring: var(--color-sky-500);
+  --border-light: color-mix(
+    in oklab,
+    var(--undertone-300) 88%,
+    var(--palette-400)
+  );
+  --input-light: color-mix(
+    in oklab,
+    var(--undertone-300) 84%,
+    var(--palette-400)
+  );
+  --control-border-subtle: color-mix(
+    in oklab,
+    var(--undertone-200) 94%,
+    var(--palette-400)
+  );
+  --border: var(--border-light);
+  --input: var(--input-light);
+  --ring: var(--palette-500);
   --chart-1: var(--color-slate-300);
   --chart-2: var(--color-slate-500);
   --chart-3: var(--color-slate-600);
@@ -44,13 +86,14 @@
   --chart-5: var(--color-slate-800);
   --radius: 0.625rem;
   --sidebar: var(--color-white);
-  --sidebar-foreground: var(--color-sky-950);
-  --sidebar-primary: var(--color-sky-600);
+  --sidebar-foreground: var(--undertone-950);
+  --sidebar-primary: var(--palette-600);
   --sidebar-primary-foreground: var(--color-white);
-  --sidebar-accent: var(--color-slate-200);
-  --sidebar-accent-foreground: var(--color-sky-950);
-  --sidebar-border: var(--color-slate-300);
-  --sidebar-ring: var(--color-sky-500);
+  --sidebar-accent: var(--undertone-200);
+  --sidebar-accent-foreground: var(--undertone-950);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--palette-500);
+  --elevation-color: color-mix(in oklab, var(--undertone-950) 16%, transparent);
   scrollbar-color: var(--color-border) transparent;
 }
 
@@ -60,9 +103,13 @@
 
   --color-accent: var(--accent);
   --color-surface: var(--surface);
+  --color-data-hover: var(--data-hover);
+  --color-data-header: var(--data-header);
+  --color-nav-inactive: var(--nav-inactive);
+  --color-nav-active: var(--nav-active);
 
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-system-sans);
+  --font-mono: var(--font-system-mono);
   --font-heading: var(--font-sans);
   --color-brand-accent: var(--brand-accent);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -107,6 +154,13 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  /* Broad, low-opacity shadows read as height instead of a second border. */
+  --shadow-xs: 0 2px 6px -2px var(--elevation-color);
+  --shadow-sm: 0 5px 16px -6px var(--elevation-color);
+  --shadow-md: 0 10px 28px -10px var(--elevation-color);
+  --shadow-lg: 0 18px 44px -16px var(--elevation-color);
+  --shadow-xl: 0 26px 64px -22px var(--elevation-color);
+  --shadow-2xl: 0 34px 80px -26px var(--elevation-color);
 }
 
 body {
@@ -127,12 +181,142 @@ body {
   min-height: 100%;
 }
 
+/* Hidden borders are structurally disabled instead of faded with transparent
+   colors. Custom navigation links join the shared button system through
+   data-nav-control. */
+:where([data-nav-control]) {
+  border-width: 1px;
+  border-style: solid;
+}
+
+:root:not([data-border-style]) *,
+:root:not([data-border-style]) *::before,
+:root:not([data-border-style]) *::after,
+:root[data-border-style="none"] *,
+:root[data-border-style="none"] *::before,
+:root[data-border-style="none"] *::after,
+:root[data-border-style="light"] *,
+:root[data-border-style="light"] *::before,
+:root[data-border-style="light"] *::after {
+  border-style: none !important;
+}
+
+:root[data-border-style="light"]
+  :where(
+    [data-slot="input"],
+    textarea,
+    select,
+    [data-slot="checkbox"],
+    [data-slot="combobox-trigger"],
+    [data-slot="combobox-input-group"],
+    [data-input-surface]
+  ) {
+  border-style: solid !important;
+  border-color: var(--control-border-subtle) !important;
+}
+
+:root[data-border-style="light"]
+  :where(
+    [data-slot="input"],
+    textarea,
+    select,
+    [data-slot="checkbox"],
+    [data-slot="combobox-trigger"],
+    [data-input-surface]
+  ):is(:focus, :focus-visible, :focus-within),
+:root[data-border-style="light"]
+  [data-slot="combobox-input-group"]:focus-within {
+  border-color: var(--ring) !important;
+}
+
+:root[data-border-style="light"]
+  :where([aria-invalid="true"], [data-input-surface][data-invalid="true"]),
+:root[data-border-style="light"]
+  [data-slot="combobox-input-group"]:has([aria-invalid="true"]) {
+  border-color: var(--destructive) !important;
+}
+
+:root[data-border-style="light"]
+  :where(
+    [role="radio"],
+    [role="switch"],
+    [data-button-variant="outline"],
+    [data-slot="combobox-content"],
+    [role="dialog"],
+    [role="menu"],
+    [class~="border-dashed"],
+    [data-slot="table-header"],
+    [data-slot="table-row"],
+    [data-slot="table-footer"],
+    [class~="border"],
+    [class~="sm:border"],
+    [class~="md:border"],
+    [class~="lg:border"],
+    [class~="border-x"],
+    [class~="border-y"],
+    [class~="border-t"],
+    [class~="border-b"],
+    [class~="border-l"],
+    [class~="border-r"],
+    [class*="divide-y"] > :not(:last-child),
+    [class*="divide-x"] > :not(:last-child)
+  ) {
+  border-style: solid !important;
+}
+
+:root[data-border-style="hard"] {
+  --border: var(--border-light);
+  --input: var(--input-light);
+}
+
+:root[data-border-style="hard"]
+  :where(button, [role="button"], [data-slot="button"]):not(
+    [data-nav-control]
+  ) {
+  border-color: var(--input-light);
+}
+
+/* Navigation uses selection fills instead of individual outlines. Keeping all
+   navigation actions borderless prevents links and adjacent buttons from
+   receiving different treatments in enhanced-border mode. */
+:root[data-border-style="hard"] [data-nav-control] {
+  border-color: transparent;
+}
+
 button {
   cursor: pointer;
 }
 
 button:disabled {
   cursor: not-allowed;
+}
+
+/* File rows open from the full pointer hitbox. Keep the semantic inner button,
+   but draw its keyboard focus on that same full row instead of the filename. */
+[data-file-open]:focus-visible {
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+[data-file-row]:has([data-file-open]:focus-visible) {
+  outline: 3px solid color-mix(in oklab, var(--ring) 50%, transparent);
+  outline-offset: -3px;
+}
+
+/* Consistent tactile feedback for native controls and links, including touch. */
+:where(button, [role="button"], a[href], summary) {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+:where(button, [role="button"], a[href], summary):not(:disabled):active {
+  transform: translateY(1px);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :where(tr, [role="row"]):not(:has(button:hover, a:hover)) {
+    transition: background-color 180ms ease;
+  }
 }
 
 /* Keep visible labels outside the interactive hitbox. Controls nested in a
@@ -199,22 +383,30 @@ label
 
 .dark {
   color-scheme: dark;
-  --surface: var(--color-slate-800);
-  --background: var(--color-slate-950);
-  --foreground: var(--color-slate-200);
-  --card: var(--color-slate-900);
-  --card-foreground: var(--color-slate-200);
-  --popover: var(--color-slate-900);
-  --popover-foreground: var(--color-slate-200);
-  --primary: var(--color-sky-500);
-  --primary-hover: var(--color-sky-400);
-  --primary-foreground: var(--color-slate-950);
-  --secondary: var(--color-slate-800);
-  --secondary-foreground: var(--color-slate-200);
-  --muted: var(--color-slate-800);
-  --muted-foreground: var(--color-slate-400);
-  --accent: var(--color-sky-500);
-  --accent-foreground: var(--color-slate-950);
+  --surface: var(--undertone-800);
+  --data-hover: var(--undertone-800);
+  --data-header: color-mix(
+    in oklab,
+    var(--undertone-800) 50%,
+    var(--undertone-900)
+  );
+  --nav-inactive: var(--undertone-400);
+  --nav-active: var(--palette-300);
+  --background: var(--undertone-950);
+  --foreground: var(--undertone-200);
+  --card: var(--undertone-900);
+  --card-foreground: var(--undertone-200);
+  --popover: var(--undertone-900);
+  --popover-foreground: var(--undertone-200);
+  --primary: var(--palette-500);
+  --primary-hover: var(--palette-400);
+  --primary-foreground: var(--undertone-950);
+  --secondary: var(--undertone-800);
+  --secondary-foreground: var(--undertone-200);
+  --muted: var(--undertone-800);
+  --muted-foreground: var(--undertone-400);
+  --accent: var(--palette-500);
+  --accent-foreground: var(--undertone-950);
   --destructive: var(--color-rose-400);
   --destructive-foreground: var(--color-slate-950);
   --success: var(--color-emerald-400);
@@ -222,22 +414,225 @@ label
   --warning: var(--color-amber-300);
   --warning-foreground: var(--color-slate-950);
   --overlay: color-mix(in oklab, var(--color-black) 60%, transparent);
-  --border: var(--color-slate-800);
-  --input: var(--color-slate-700);
-  --ring: var(--color-sky-500);
+  --border-light: color-mix(
+    in oklab,
+    var(--undertone-700) 88%,
+    var(--palette-500)
+  );
+  --input-light: color-mix(
+    in oklab,
+    var(--undertone-700) 84%,
+    var(--palette-500)
+  );
+  --control-border-subtle: color-mix(
+    in oklab,
+    var(--undertone-800) 92%,
+    var(--palette-500)
+  );
+  --border: var(--border-light);
+  --input: var(--input-light);
+  --ring: var(--palette-500);
   --chart-1: var(--color-slate-300);
   --chart-2: var(--color-slate-500);
   --chart-3: var(--color-slate-600);
   --chart-4: var(--color-slate-700);
   --chart-5: var(--color-slate-800);
-  --sidebar: var(--color-slate-900);
-  --sidebar-foreground: var(--color-slate-200);
-  --sidebar-primary: var(--color-sky-500);
-  --sidebar-primary-foreground: var(--color-slate-950);
-  --sidebar-accent: var(--color-slate-800);
-  --sidebar-accent-foreground: var(--color-slate-200);
-  --sidebar-border: var(--color-slate-800);
-  --sidebar-ring: var(--color-sky-500);
+  --sidebar: var(--undertone-900);
+  --sidebar-foreground: var(--undertone-200);
+  --sidebar-primary: var(--palette-500);
+  --sidebar-primary-foreground: var(--undertone-950);
+  --sidebar-accent: var(--undertone-800);
+  --sidebar-accent-foreground: var(--undertone-200);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--palette-500);
+  --elevation-color: color-mix(in oklab, var(--undertone-950) 68%, transparent);
+}
+
+:root[data-color-theme="green"] {
+  --palette-300: var(--color-emerald-300);
+  --palette-400: var(--color-emerald-400);
+  --palette-500: var(--color-emerald-500);
+  --palette-600: var(--color-emerald-600);
+  --palette-700: var(--color-emerald-700);
+  --palette-800: var(--color-emerald-800);
+  --palette-950: var(--color-emerald-950);
+}
+
+:root[data-color-theme="purple"] {
+  --palette-300: color-mix(
+    in oklab,
+    var(--color-violet-200) 55%,
+    var(--color-slate-300)
+  );
+  --palette-400: color-mix(
+    in oklab,
+    var(--color-violet-300) 55%,
+    var(--color-slate-400)
+  );
+  --palette-500: color-mix(
+    in oklab,
+    var(--color-violet-400) 55%,
+    var(--color-slate-500)
+  );
+  --palette-600: color-mix(
+    in oklab,
+    var(--color-violet-500) 55%,
+    var(--color-slate-600)
+  );
+  --palette-700: color-mix(
+    in oklab,
+    var(--color-violet-600) 55%,
+    var(--color-slate-700)
+  );
+  --palette-800: color-mix(
+    in oklab,
+    var(--color-violet-700) 55%,
+    var(--color-slate-800)
+  );
+  --palette-950: color-mix(
+    in oklab,
+    var(--color-violet-950) 70%,
+    var(--color-slate-950)
+  );
+}
+
+:root[data-color-theme="gray"] {
+  --palette-300: var(--color-gray-300);
+  --palette-400: var(--color-gray-400);
+  --palette-500: var(--color-gray-500);
+  --palette-600: var(--color-gray-600);
+  --palette-700: var(--color-gray-700);
+  --palette-800: var(--color-gray-800);
+  --palette-950: var(--color-gray-950);
+  --undertone-50: var(--color-gray-50);
+  --undertone-100: var(--color-gray-100);
+  --undertone-200: var(--color-gray-200);
+  --undertone-300: var(--color-gray-300);
+  --undertone-400: var(--color-gray-400);
+  --undertone-500: var(--color-gray-500);
+  --undertone-600: var(--color-gray-600);
+  --undertone-700: var(--color-gray-700);
+  --undertone-800: var(--color-gray-800);
+  --undertone-900: var(--color-gray-900);
+  --undertone-950: var(--color-gray-950);
+  --background: var(--color-gray-100);
+  --surface: var(--color-gray-200);
+  --card: var(--color-gray-50);
+  --card-foreground: var(--color-gray-950);
+  --popover: var(--color-gray-50);
+  --popover-foreground: var(--color-gray-950);
+  --secondary: var(--color-gray-200);
+  --secondary-foreground: var(--color-gray-950);
+  --muted: color-mix(
+    in oklab,
+    var(--color-gray-100) 45%,
+    var(--color-gray-200)
+  );
+  --muted-foreground: var(--color-gray-600);
+  --data-hover: var(--color-white);
+  --data-header: var(--color-gray-50);
+  --nav-inactive: var(--undertone-500);
+  --nav-active: var(--palette-700);
+  --border-light: var(--color-gray-300);
+  --input-light: color-mix(
+    in oklab,
+    var(--color-gray-300) 82%,
+    var(--color-gray-400)
+  );
+  --control-border-subtle: var(--color-gray-200);
+  --border: var(--border-light);
+  --input: var(--input-light);
+  --sidebar: var(--color-gray-50);
+  --sidebar-foreground: var(--color-gray-950);
+  --sidebar-accent: var(--color-gray-200);
+  --sidebar-accent-foreground: var(--color-gray-950);
+  --accent: var(--color-gray-500);
+  --brand-accent: var(--color-gray-500);
+  --primary: var(--color-gray-700);
+  --primary-hover: var(--color-gray-800);
+  --primary-foreground: var(--color-white);
+  --ring: var(--color-gray-600);
+  --sidebar-primary: var(--color-gray-700);
+  --sidebar-ring: var(--color-gray-600);
+}
+
+:root.dark[data-color-theme="gray"] {
+  --background: var(--color-gray-950);
+  --surface: var(--color-gray-800);
+  --card: var(--color-gray-900);
+  --card-foreground: var(--color-gray-200);
+  --popover: var(--color-gray-900);
+  --popover-foreground: var(--color-gray-200);
+  --secondary: var(--color-gray-800);
+  --secondary-foreground: var(--color-gray-200);
+  --muted: var(--color-gray-800);
+  --muted-foreground: var(--color-gray-400);
+  --data-hover: var(--color-gray-800);
+  --data-header: color-mix(
+    in oklab,
+    var(--color-gray-800) 50%,
+    var(--color-gray-900)
+  );
+  --nav-inactive: var(--undertone-400);
+  --nav-active: var(--palette-300);
+  --border-light: var(--color-gray-700);
+  --input-light: color-mix(
+    in oklab,
+    var(--color-gray-700) 82%,
+    var(--color-gray-600)
+  );
+  --control-border-subtle: var(--color-gray-800);
+  --border: var(--border-light);
+  --input: var(--input-light);
+  --sidebar: var(--color-gray-900);
+  --sidebar-foreground: var(--color-gray-200);
+  --sidebar-accent: var(--color-gray-800);
+  --sidebar-accent-foreground: var(--color-gray-200);
+  --accent: var(--color-gray-400);
+  --brand-accent: var(--color-gray-400);
+  --primary: var(--color-gray-300);
+  --primary-hover: var(--color-gray-200);
+  --primary-foreground: var(--color-gray-950);
+  --ring: var(--color-gray-400);
+  --sidebar-primary: var(--color-gray-300);
+  --sidebar-primary-foreground: var(--color-gray-950);
+  --sidebar-ring: var(--color-gray-400);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  :where(button, [role="button"], a[href], summary):active {
+    transform: none;
+  }
+
+  :where([data-system-icon], [data-system-icon] *) {
+    transform: none !important;
+  }
+}
+
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after {
+  scroll-behavior: auto !important;
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+.reduce-motion :where(button, [role="button"], a[href], summary):active {
+  transform: none;
+}
+
+.reduce-motion :where([data-system-icon], [data-system-icon] *) {
+  transform: none !important;
 }
 
 @layer base {

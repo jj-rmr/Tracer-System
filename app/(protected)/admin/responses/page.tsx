@@ -12,7 +12,7 @@ import {
   LuPlus,
   LuRefreshCw,
   LuTrash2,
-} from "react-icons/lu";
+} from "@/components/ui/icons";
 
 import ManualResponseModal from "@/components/admin/responses/ManualResponseModal";
 import ExportButton from "@/components/admin/ExportButton";
@@ -247,12 +247,16 @@ export default function ResponsesPage() {
           <div className="flex gap-2">
             <Button
               type="button"
-              variant="outline-elevated"
+              variant="outline"
               onClick={openManualResponse}
               disabled={!studiesLoaded}
               className="flex-1 md:flex-none"
             >
-              {manualDraftId ? <LuPencil size={16} /> : <LuPlus size={16} />}
+              {manualDraftId ? (
+                <LuPencil size={16} animated />
+              ) : (
+                <LuPlus size={16} animated />
+              )}
               {manualDraftId ? "Edit Draft Response" : "Add Manual Response"}
             </Button>
             {manualDraftId && (
@@ -263,7 +267,7 @@ export default function ResponsesPage() {
                 aria-label="Delete draft response"
                 title="Delete draft response"
               >
-                <LuTrash2 size={16} />
+                <LuTrash2 size={16} animated />
               </Button>
             )}
           </div>
@@ -351,7 +355,7 @@ export default function ResponsesPage() {
           <div className="flex flex-row col-span-1 xl:col-span-2 items-end gap-2 md:gap-4">
             <Button
               type="button"
-              variant="outline-elevated"
+              variant="outline"
               size="lg"
               disabled={!hasFilters}
               onClick={clearFilters}
@@ -362,7 +366,7 @@ export default function ResponsesPage() {
             </Button>
             <Button
               type="button"
-              variant="outline-elevated"
+              variant="outline"
               size="lg"
               onClick={refreshResponses}
               disabled={refreshOnCooldown}
@@ -376,6 +380,7 @@ export default function ResponsesPage() {
             >
               <LuRefreshCw
                 size={16}
+                animated={!refreshOnCooldown}
                 className={refreshOnCooldown ? "animate-spin" : undefined}
               />
               Refresh

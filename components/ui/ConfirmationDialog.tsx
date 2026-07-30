@@ -52,7 +52,7 @@ export default function ConfirmationDialog({
         </Button>
         <Button
           type="button"
-          variant={tone === "danger" ? "destructive" : "elevated"}
+          variant={tone === "danger" ? "destructive" : "default"}
           disabled={busy}
           onClick={onConfirm}
           className="w-full sm:w-auto"

@@ -4,6 +4,12 @@ import { createAdminClient } from "@/lib/appwrite/admin";
 import { ROLES } from "@/types";
 import { EXTERNAL_TIMEOUTS, withExternalTimeout } from "@/lib/server/timeouts";
 
+export function getProfilePictureUrl(prefs: Models.Preferences) {
+  const value = (prefs as Record<string, unknown>).profilePictureUrl;
+
+  return typeof value === "string" ? value : null;
+}
+
 function getUsersService() {
   const client = createAdminClient();
 
@@ -15,6 +21,8 @@ export function formatAccount(user: Models.User<Models.Preferences>) {
     id: user.$id,
     name: user.name,
     email: user.email,
+
+    pictureUrl: getProfilePictureUrl(user.prefs),
 
     role: user.labels.includes(ROLES.ADMIN) ? "admin" : "alumni",
 

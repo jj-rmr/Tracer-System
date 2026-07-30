@@ -6,7 +6,7 @@ import { FcGoogle } from "react-icons/fc";
 
 import { Button } from "@/components/ui/button";
 import {
-  LuArrowRight,
+  LuChevronRight,
   LuBookOpen,
   LuBriefcaseBusiness,
   LuChartNoAxesCombined,
@@ -16,7 +16,7 @@ import {
   LuGraduationCap,
   LuShieldCheck,
   LuUsersRound,
-} from "react-icons/lu";
+} from "@/components/ui/icons";
 
 import Modal from "@/components/ui/Modal";
 
@@ -143,7 +143,7 @@ export default function SignInPage() {
               >
                 <LuBookOpen aria-hidden="true" />
                 Learn about tracer studies
-                <LuArrowRight aria-hidden="true" />
+                <LuChevronRight aria-hidden="true" />
               </Button>
             </div>
           </section>
@@ -198,7 +198,7 @@ export default function SignInPage() {
 
               <Button
                 type="button"
-                variant="outline-elevated"
+                variant="outline"
                 size="wide"
                 onClick={handleGoogleSignIn}
                 className="mt-7"

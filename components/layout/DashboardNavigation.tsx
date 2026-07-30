@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useTransition, type MouseEvent } from "react";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LuPanelLeftClose,
@@ -14,11 +13,12 @@ import {
   LuCalendarClock,
   LuFolderOpen,
   LuEllipsis,
-} from "react-icons/lu";
+} from "@/components/ui/icons";
 import { Role } from "@/types";
 import Modal from "@/components/ui/Modal";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { IconLink as Link } from "@/components/ui/icon-link";
 
 interface DashboardNavigationProps {
   role: Role;
@@ -201,7 +201,7 @@ export default function DashboardNavigation({
           </h1>
         </div>
 
-        <div className="my-3 h-px shrink-0 bg-secondary" />
+        <div className="my-3 shrink-0 border-t border-border" />
 
         <nav
           aria-label="Dashboard"
@@ -222,15 +222,16 @@ export default function DashboardNavigation({
                 return (
                   <Link
                     key={item.href}
+                    data-nav-control
                     href={item.href}
                     prefetch
                     title={isOpen ? undefined : item.label}
                     aria-label={item.label}
                     onClick={(event) => markNavigationPending(event, item.href)}
-                    className={`relative flex h-10 items-center rounded-xl px-4 transition-[color,background-color,transform] duration-200 active:scale-[0.98] ${
+                    className={`relative flex h-10 items-center rounded-xl px-4 outline-none transition-colors duration-200 focus-visible:ring-3 focus-visible:ring-inset focus-visible:ring-ring/50 ${
                       isActiveLink(item.href)
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                        ? "bg-primary/10 text-nav-active"
+                        : "text-nav-inactive hover:bg-muted hover:text-nav-active"
                     }`}
                   >
                     <Icon size={19} className="shrink-0" />
@@ -263,6 +264,7 @@ export default function DashboardNavigation({
             return (
               <Link
                 key={item.href}
+                data-nav-control
                 href={item.href}
                 prefetch
                 onClick={(event) => markNavigationPending(event, item.href)}
@@ -275,7 +277,7 @@ export default function DashboardNavigation({
                   size: "sidebar",
                 })} relative`}
               >
-                <Icon size={19} className="shrink-0" />
+                <Icon size={19} className="-ml-0.5 shrink-0" />
 
                 <span
                   className={`block overflow-hidden whitespace-nowrap text-sm font-medium transition-[max-width,margin,opacity,transform] duration-300 ease-out ${
@@ -298,6 +300,7 @@ export default function DashboardNavigation({
           <ThemeToggle expanded={isOpen} />
           <Button
             type="button"
+            data-nav-control
             variant="navigation"
             size="sidebar"
             onClick={() => setIsOpen((open) => !open)}
@@ -306,9 +309,9 @@ export default function DashboardNavigation({
             aria-expanded={isOpen}
           >
             {isOpen ? (
-              <LuPanelLeftClose size={19} className="shrink-0" />
+              <LuPanelLeftClose size={19} className="-ml-0.5 shrink-0" />
             ) : (
-              <LuPanelLeftOpen size={19} className="shrink-0" />
+              <LuPanelLeftOpen size={19} className="-ml-0.5 shrink-0" />
             )}
             <span
               className={`block overflow-hidden whitespace-nowrap text-sm font-medium transition-[max-width,margin,opacity,transform] duration-300 ease-out ${
@@ -338,11 +341,12 @@ export default function DashboardNavigation({
             return (
               <Link
                 key={item.href}
+                data-nav-control
                 href={item.href}
                 prefetch
                 onClick={(event) => markNavigationPending(event, item.href)}
-                className={`relative flex flex-col items-center flex-1 p-2 active:scale-90 ${
-                  active ? "text-accent" : "text-foreground"
+                className={`relative flex flex-1 flex-col items-center p-2 ${
+                  active ? "text-nav-active" : "text-nav-inactive"
                 }`}
               >
                 <Icon size={24} />
@@ -365,13 +369,14 @@ export default function DashboardNavigation({
           })}
           <Button
             type="button"
+            data-nav-control
             variant="plain"
             size="mobile-nav"
             aria-haspopup="dialog"
             aria-expanded={showMoreMenu}
             onClick={() => setShowMoreMenu(true)}
-            className={`relative active:scale-90 ${
-              isMoreActive ? "text-accent" : "text-foreground"
+            className={`relative ${
+              isMoreActive ? "text-nav-active" : "text-nav-inactive"
             }`}
           >
             <LuEllipsis aria-hidden="true" className="size-6" />
@@ -402,6 +407,7 @@ export default function DashboardNavigation({
             return (
               <Link
                 key={item.href}
+                data-nav-control
                 href={item.href}
                 prefetch
                 onClick={(event) => {
@@ -410,8 +416,8 @@ export default function DashboardNavigation({
                 }}
                 className={`relative flex min-h-14 items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition-colors duration-200 ${
                   active
-                    ? "bg-accent/15 text-accent"
-                    : "text-foreground hover:bg-muted"
+                    ? "bg-accent/15 text-nav-active"
+                    : "text-nav-inactive hover:bg-muted hover:text-nav-active"
                 }`}
               >
                 <Icon aria-hidden="true" size={22} />

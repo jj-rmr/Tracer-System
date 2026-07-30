@@ -1,6 +1,6 @@
 "use client";
 
-import { LuExternalLink, LuFileText } from "react-icons/lu";
+import { LuExternalLink, LuFileText } from "@/components/ui/icons";
 
 import { PROGRAMS } from "@/lib/programs/catalog";
 import type { Survey } from "@/types";

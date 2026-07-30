@@ -1,17 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/Toast";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import { MotionPreferenceProvider } from "@/components/settings/MotionPreference";
 
 export const metadata: Metadata = {
   title: "Placement Tracer System (Demo)",
@@ -46,12 +36,45 @@ const themeScript = `
   } catch {}
 `;
 
+const motionScript = `
+  try {
+    document.documentElement.classList.toggle(
+      "reduce-motion",
+      localStorage.getItem("tracer-reduce-motion") === "true"
+    );
+  } catch {}
+`;
+
+const colorThemeScript = `
+  try {
+    const savedColorTheme = localStorage.getItem("tracer-color-theme");
+    document.documentElement.dataset.colorTheme =
+      savedColorTheme === "monotone"
+        ? "gray"
+        : savedColorTheme === "green" || savedColorTheme === "purple" || savedColorTheme === "gray"
+        ? savedColorTheme
+        : "blue";
+  } catch {}
+`;
+
+const borderScript = `
+  try {
+    const savedBorderStyle = localStorage.getItem("tracer-border-style");
+    document.documentElement.dataset.borderStyle =
+      savedBorderStyle === "light" && localStorage.getItem("tracer-border-style-version") !== "2"
+        ? "hard"
+        : savedBorderStyle === "light" || savedBorderStyle === "hard" || savedBorderStyle === "none"
+        ? savedBorderStyle
+        : localStorage.getItem("tracer-show-borders") === "true"
+          ? "light"
+          : "none";
+  } catch {}
+`;
+
 function InlineScript({ html }: { html: string }) {
   return (
     <script
-      type={
-        typeof window === "undefined" ? "text/javascript" : "text/plain"
-      }
+      type={typeof window === "undefined" ? "text/javascript" : "text/plain"}
       suppressHydrationWarning
       dangerouslySetInnerHTML={{ __html: html }}
     />
@@ -64,16 +87,17 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
+    <html lang="en" suppressHydrationWarning className="h-full antialiased">
       <head>
         <InlineScript html={themeScript} />
+        <InlineScript html={colorThemeScript} />
+        <InlineScript html={borderScript} />
+        <InlineScript html={motionScript} />
       </head>
       <body className="relative min-h-full w-full">
-        <ToastProvider>{children}</ToastProvider>
+        <MotionPreferenceProvider>
+          <ToastProvider>{children}</ToastProvider>
+        </MotionPreferenceProvider>
       </body>
     </html>
   );

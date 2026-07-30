@@ -1,5 +1,5 @@
 import * as React from "react";
-import { LuSearch } from "react-icons/lu";
+import { LuSearch } from "@/components/ui/icons";
 
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";

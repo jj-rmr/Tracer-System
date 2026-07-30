@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
+import { IconLink as Link } from "@/components/ui/icon-link";
 import { useEffect, useState } from "react";
-import { LuArrowRight } from "react-icons/lu";
+import { LuChevronRight } from "@/components/ui/icons";
 
 import ManualResponseEditor from "@/components/admin/responses/ManualResponseEditor";
 import ReadOnlyResponseDetails from "@/components/responses/ReadOnlyResponseDetails";
@@ -94,12 +94,12 @@ export default function RecentResponses({ responses }: RecentResponsesProps) {
         <Link
           href="/admin/responses"
           className={cn(
-            buttonVariants({ variant: "ghost", size: "sm" }),
+            buttonVariants({ variant: "plain", size: "sm" }),
             "text-primary hover:bg-primary/10 hover:text-primary",
           )}
         >
-          View all
-          <LuArrowRight aria-hidden="true" />
+          View all responses
+          <LuChevronRight aria-hidden="true" />
         </Link>
       </div>
 
@@ -123,7 +123,7 @@ export default function RecentResponses({ responses }: RecentResponsesProps) {
                   setSelectedResponseId(item.id);
                 }
               }}
-              className="flex cursor-pointer flex-col gap-3 px-5 py-4 outline-none transition-colors duration-200 hover:bg-muted focus-visible:bg-muted focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:flex-row sm:items-center sm:px-6"
+              className="flex cursor-pointer flex-col gap-3 px-5 py-4 outline-none transition-colors duration-200 hover:bg-data-hover focus-visible:bg-data-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:flex-row sm:items-center sm:px-6"
             >
               <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-primary/10 text-sm font-semibold text-primary">
                 {(item.respondentName ?? item.respondentEmail ?? "R")

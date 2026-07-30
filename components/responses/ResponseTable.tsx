@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { AdminResponseFilters, AdminResponseSummary, Survey } from "@/types";
 import ManualResponseEditor from "@/components/admin/responses/ManualResponseEditor";
 import ReadOnlyResponseDetails from "@/components/responses/ReadOnlyResponseDetails";
-import { LuEye, LuPencil, LuRefreshCw, LuTrash2 } from "react-icons/lu";
+import { LuEye, LuPencil, LuRefreshCw, LuTrash2 } from "@/components/ui/icons";
 import { useToast } from "@/components/ui/Toast";
 import Modal from "@/components/ui/Modal";
 import ConfirmationDialog from "@/components/ui/ConfirmationDialog";
@@ -391,6 +391,9 @@ export default function ResponseTable({
                                 <LuRefreshCw
                                   aria-hidden="true"
                                   size={16}
+                                  animated={
+                                    organizingResponseId !== response.id
+                                  }
                                   className={
                                     organizingResponseId === response.id
                                       ? "animate-spin"
@@ -410,9 +413,9 @@ export default function ResponseTable({
                             : "View Response",
                         icon:
                           response.source === "admin_import" ? (
-                            <LuPencil aria-hidden="true" size={16} />
+                            <LuPencil aria-hidden="true" size={16} animated />
                           ) : (
-                            <LuEye aria-hidden="true" size={16} />
+                            <LuEye aria-hidden="true" size={16} animated />
                           ),
                         onSelect: () => setSelectedSurveyId(response.id),
                       },
@@ -422,7 +425,13 @@ export default function ResponseTable({
                               label: "Delete Response",
                               variant: "destructive" as const,
                               disabled: isDeleting,
-                              icon: <LuTrash2 aria-hidden="true" size={16} />,
+                              icon: (
+                                <LuTrash2
+                                  aria-hidden="true"
+                                  size={16}
+                                  animated
+                                />
+                              ),
                               onSelect: () => {
                                 setSurveyToDelete(response.id);
                                 setShowDeleteModal(true);
