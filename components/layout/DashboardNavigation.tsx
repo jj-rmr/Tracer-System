@@ -200,7 +200,7 @@ export default function DashboardNavigation({
                     key={item.href}
                     data-nav-control
                     href={item.href}
-                    prefetch={false}
+                    prefetch={!isActiveLink(item.href)}
                     title={isOpen ? undefined : item.label}
                     aria-label={item.label}
                     onClick={(event) => markNavigationPending(event, item.href)}
@@ -242,7 +242,7 @@ export default function DashboardNavigation({
                 key={item.href}
                 data-nav-control
                 href={item.href}
-                prefetch={false}
+                prefetch={!isActiveLink(item.href)}
                 onClick={(event) => markNavigationPending(event, item.href)}
                 title={isOpen ? undefined : item.label}
                 aria-label={item.label}
@@ -319,7 +319,7 @@ export default function DashboardNavigation({
                 key={item.href}
                 data-nav-control
                 href={item.href}
-                prefetch={false}
+                prefetch={!active}
                 onClick={(event) => markNavigationPending(event, item.href)}
                 className={`relative flex flex-1 flex-col items-center p-2 ${
                   active ? "text-nav-active" : "text-nav-inactive"
@@ -385,7 +385,7 @@ export default function DashboardNavigation({
                 key={item.href}
                 data-nav-control
                 href={item.href}
-                prefetch={false}
+                prefetch={!active}
                 onClick={(event) => {
                   setShowMoreMenu(false);
                   markNavigationPending(event, item.href);
