@@ -11,7 +11,7 @@ export default async function AdminSettingsPage() {
       name={user.name}
       email={user.email}
       role={ROLES.ADMIN}
-      pictureUrl={getProfilePictureUrl(user.prefs)}
+      pictureUrl={getProfilePictureUrl(user)}
     />
   );
 }

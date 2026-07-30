@@ -89,9 +89,7 @@ Rules:
 - Increase elevation by one level on hover only when the element is clickable.
 - Use `shadow-none` for disabled controls.
 - Keep borders subtle. A border defines an edge; a shadow communicates height.
-- Borders use the settings-only Interface borders preference. This preference is independent of the light/dark color theme: each border level restores the same elements in both color modes, with only its semantic token colors adapting for contrast. `No borders` structurally removes edges with `border-style: none`; do not simulate removal with transparent colors or opacity. `Light borders` restores declared edges across inputs, buttons, cards, panels, navigation shells, tables, dividers, menus, and dialogs with one shared extra-subtle token. `Hard borders` restores the same semantic edges at the standard strength and ensures custom button-like controls participate consistently. Border and `divide-*` treatments must follow the selected visibility level.
-- The Settings page groups Interface borders with Reduce motion in one Accessibility section; do not present borders as a separate top-level settings card.
-- Interface border levels use a card-style ARIA radio group with full-row button hitboxes and persistent radio-circle indicators. The indicator uses a ring rather than an interface border so it remains visible when `No borders` is selected.
+- Light borders are the permanent system treatment and are not user-configurable. Restore only declared edges across inputs, buttons, cards, panels, navigation shells, tables, dividers, menus, and dialogs with the shared extra-subtle semantic tokens. Keep ordinary structural borders quiet in both color modes; reserve stronger ring and destructive colors for focus, validation, and other meaningful states. Border and `divide-*` treatments must follow this same subtle treatment.
 - In dark mode, rely on the global elevation color rather than adding pale outlines.
 
 ## Components
@@ -159,6 +157,7 @@ Rules:
 ### Dialogs, menus, and toasts
 
 - Modals use the highest elevation and a dimmed semantic overlay.
+- Pages reserve a stable scrollbar gutter so changing content height does not shift their layout. Modal scroll locking must preserve that page width without applying the gutter to modal scrollers: measure the root gutter, temporarily replace it with equivalent page-only right padding, lock root overflow, and let the backdrop span the full viewport width. Keep this compensation in place through the complete exit animation before restoring the root gutter so the closing dialog does not shift horizontally.
 - Menus use `shadow-md` or `shadow-xl`, depending on size and stacking context.
 - Animate overlays with short fade and scale transitions around their transform origin.
 - Toasts should be brief, readable, and centered within the viewport on small screens.

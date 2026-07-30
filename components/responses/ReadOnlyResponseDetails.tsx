@@ -1,7 +1,15 @@
 "use client";
 
-import { LuExternalLink, LuFileText } from "@/components/ui/icons";
+import type { ReactNode } from "react";
 
+import {
+  LuBriefcaseBusiness,
+  LuExternalLink,
+  LuFileText,
+  LuGraduationCap,
+  LuHistory,
+  LuUserRound,
+} from "@/components/ui/icons";
 import { PROGRAMS } from "@/lib/programs/catalog";
 import type { Survey } from "@/types";
 
@@ -11,6 +19,7 @@ interface ReadOnlyResponseDetailsProps {
 }
 
 type DisplayValue = string | number | boolean | null | undefined | string[];
+type Field = [label: string, value: DisplayValue];
 
 function normalizeValue(value: DisplayValue) {
   if (Array.isArray(value)) {
@@ -23,6 +32,28 @@ function normalizeValue(value: DisplayValue) {
   return null;
 }
 
+function resolveOther(value: DisplayValue, otherValue: string) {
+  const other = otherValue.trim();
+
+  if (Array.isArray(value)) {
+    return value.map((item) => (item === "Others" && other ? other : item));
+  }
+
+  return value === "Others" && other ? other : value;
+}
+
+function fullName(response: Survey) {
+  return [
+    response.firstName,
+    response.middleName,
+    response.lastName,
+    response.extensionName,
+  ]
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(" ");
+}
+
 function ResponseField({
   label,
   value,
@@ -33,19 +64,102 @@ function ResponseField({
   const displayValue = normalizeValue(value);
 
   return (
-    <div className="min-w-0 rounded-2xl border border-border bg-card px-4 py-3.5 shadow-sm">
-      <dt className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+    <div className="grid min-w-0 gap-1 border-b border-border/70 py-3.5 last:border-b-0 sm:grid-cols-[minmax(9rem,0.8fr)_minmax(0,1.5fr)] sm:gap-6">
+      <dt className="text-xs font-medium leading-5 text-muted-foreground">
         {label}
       </dt>
       <dd
         className={
           displayValue
-            ? "mt-1.5 break-words text-sm font-medium leading-6 text-foreground"
-            : "mt-1.5 text-sm italic leading-6 text-muted-foreground"
+            ? "break-words text-sm font-medium leading-5 text-foreground"
+            : "text-sm italic leading-5 text-muted-foreground/80"
         }
       >
         {displayValue ?? "Not provided"}
       </dd>
+    </div>
+  );
+}
+
+function DetailSection({
+  title,
+  description,
+  icon,
+  fields,
+}: {
+  title: string;
+  description: string;
+  icon: ReactNode;
+  fields: Field[];
+}) {
+  return (
+    <section className="overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="flex items-start gap-3 border-b border-border bg-muted/35 px-4 py-4 sm:px-5">
+        <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          {icon}
+        </span>
+        <div>
+          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+          <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+            {description}
+          </p>
+        </div>
+      </div>
+      <dl className="px-4 sm:px-5">
+        {fields.map(([label, value]) => (
+          <ResponseField key={label} label={label} value={value} />
+        ))}
+      </dl>
+    </section>
+  );
+}
+
+export function TracerResponseModalHeader({ response }: { response: Survey }) {
+  const programLabel =
+    PROGRAMS.find((program) => program.value === response.program)?.label ??
+    response.program;
+  const respondentName = fullName(response) || "Unnamed respondent";
+
+  return (
+    <div className="pr-2">
+      <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-primary-foreground/70">
+        Tracer response
+      </p>
+      <h3 className="mt-0.5 break-words text-lg font-semibold tracking-tight text-primary-foreground sm:text-xl">
+        {respondentName}
+      </h3>
+      <p className="mt-0.5 text-xs text-primary-foreground/80 sm:text-sm">
+        {normalizeValue(programLabel) ?? "Program not provided"}
+        {normalizeValue(response.yearGraduated)
+          ? ` · Class of ${response.yearGraduated}`
+          : ""}
+      </p>
+      <dl className="mt-3 grid gap-3 border-t border-primary-foreground/20 pt-3 sm:grid-cols-3 sm:gap-6">
+        <div>
+          <dt className="text-[0.6875rem] text-primary-foreground/65">
+            Employment
+          </dt>
+          <dd className="text-xs font-semibold text-primary-foreground sm:text-sm">
+            {normalizeValue(response.employmentStatus) ?? "Not provided"}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-[0.6875rem] text-primary-foreground/65">
+            Current role
+          </dt>
+          <dd className="text-xs font-semibold text-primary-foreground sm:text-sm">
+            {normalizeValue(response.currentOccupation) ?? "Not provided"}
+          </dd>
+        </div>
+        <div>
+          <dt className="text-[0.6875rem] text-primary-foreground/65">
+            Employer
+          </dt>
+          <dd className="text-xs font-semibold text-primary-foreground sm:text-sm">
+            {normalizeValue(response.companyName) ?? "Not provided"}
+          </dd>
+        </div>
+      </dl>
     </div>
   );
 }
@@ -57,69 +171,119 @@ export default function ReadOnlyResponseDetails({
   const programLabel =
     PROGRAMS.find((program) => program.value === response.program)?.label ??
     response.program;
-  const groups = [
+
+  const sections = [
     {
-      title: "Personal information",
+      title: "Contact & personal details",
+      description: "Identity, contact information, and current address.",
+      icon: <LuUserRound size={18} aria-hidden="true" />,
       fields: [
-        ["First name", response.firstName],
-        ["Middle name", response.middleName],
-        ["Last name", response.lastName],
-        ["Extension name", response.extensionName],
+        ["Email address", respondentEmail],
+        ["Contact numbers", response.contactNumbers],
         ["Sex", response.sex],
         ["Civil status", response.civilStatus],
-        ["Contact numbers", response.contactNumbers],
-        ["Respondent email", respondentEmail],
-        ["Street", response.street],
-        ["Barangay", response.barangay],
-        ["Municipality", response.municipality],
-        ["Province", response.province],
-        ["Region", response.region],
+        [
+          "Address",
+          [
+            response.street,
+            response.barangay,
+            response.municipality,
+            response.province,
+            response.region,
+          ]
+            .map((part) => part.trim())
+            .filter(Boolean)
+            .join(", "),
+        ],
       ],
     },
     {
-      title: "Education and further studies",
+      title: "Education & further studies",
+      description: "Degree completed, achievements, and continuing education.",
+      icon: <LuGraduationCap size={18} aria-hidden="true" />,
       fields: [
-        ["Program", programLabel],
-        ["Year graduated", response.yearGraduated],
+        ["Degree program", programLabel],
+        ["Graduation year", response.yearGraduated],
         ["Honors and awards", response.honors],
         ["Trainings and certifications", response.trainings],
-        ["Advanced-study degree", response.advancedStudyDegree],
-        ["Other advanced-study degree", response.advancedStudyOther],
-        ["Reason for advanced study", response.advancedStudyReasons],
-        ["Other advanced-study reason", response.advancedStudyReasonOther],
+        [
+          "Advanced-study degree",
+          resolveOther(
+            response.advancedStudyDegree,
+            response.advancedStudyOther,
+          ),
+        ],
+        [
+          "Reason for advanced study",
+          resolveOther(
+            response.advancedStudyReasons,
+            response.advancedStudyReasonOther,
+          ),
+        ],
       ],
     },
     {
       title: "Current employment",
+      description: "Present work status, employer, role, and workplace.",
+      icon: <LuBriefcaseBusiness size={18} aria-hidden="true" />,
       fields: [
         ["Currently employed", response.employmentStatus],
-        ["Reasons for unemployment", response.unemploymentReasons],
-        ["Other unemployment reason", response.unemploymentReasonOther],
+        [
+          "Reasons for unemployment",
+          resolveOther(
+            response.unemploymentReasons,
+            response.unemploymentReasonOther,
+          ),
+        ],
         ["Employment status", response.currentEmploymentStatus],
         ["Occupation", response.currentOccupation],
-        ["Company name", response.companyName],
+        ["Company", response.companyName],
         ["Company address", response.companyAddress],
         ["Business or industry", response.businessIndustry],
         ["Place of work", response.placeOfWork],
       ],
     },
     {
-      title: "First job and career history",
+      title: "First job & career history",
+      description:
+        "How the respondent entered work and progressed in their career.",
+      icon: <LuHistory size={18} aria-hidden="true" />,
       fields: [
         ["Current job is first job", response.isFirstJob],
         ["First job related to program", response.isFirstJobRelated],
-        ["Reasons for staying", response.stayingReasons],
-        ["Other reason for staying", response.stayingReasonOther],
-        ["Reasons for accepting first job", response.acceptingReasons],
-        ["Other reason for accepting", response.acceptingReasonOther],
-        ["Reasons for changing job", response.changingReasons],
-        ["Other reason for changing", response.changingReasonOther],
-        ["Time before first job", response.firstJobDuration],
-        ["Other first-job duration", response.firstJobDurationOther],
-        ["How first job was found", response.firstJobSource],
-        ["Other first-job source", response.firstJobSourceOther],
-        ["First-job search duration", response.firstJobSearchDuration],
-        ["Other search duration", response.firstJobSearchDurationOther],
+        [
+          "Reasons for staying",
+          resolveOther(response.stayingReasons, response.stayingReasonOther),
+        ],
+        [
+          "Reasons for accepting first job",
+          resolveOther(
+            response.acceptingReasons,
+            response.acceptingReasonOther,
+          ),
+        ],
+        [
+          "Reasons for changing job",
+          resolveOther(response.changingReasons, response.changingReasonOther),
+        ],
+        [
+          "Time before first job",
+          resolveOther(
+            response.firstJobDuration,
+            response.firstJobDurationOther,
+          ),
+        ],
+        [
+          "How first job was found",
+          resolveOther(response.firstJobSource, response.firstJobSourceOther),
+        ],
+        [
+          "First-job search duration",
+          resolveOther(
+            response.firstJobSearchDuration,
+            response.firstJobSearchDurationOther,
+          ),
+        ],
         ["First job title", response.firstJobTitle],
         ["First-job level", response.firstJobLevel],
         ["Current-job level", response.currentJobLevel],
@@ -128,76 +292,72 @@ export default function ReadOnlyResponseDetails({
     },
     {
       title: "Curriculum relevance",
+      description: "Connection between the degree program and employment.",
+      icon: <LuFileText size={18} aria-hidden="true" />,
       fields: [
         ["Curriculum relevant to first job", response.curriculumRelevant],
-        ["Useful competencies", response.usefulCompetencies],
-        ["Other useful competency", response.usefulCompetencyOther],
+        [
+          "Useful competencies",
+          resolveOther(
+            response.usefulCompetencies,
+            response.usefulCompetencyOther,
+          ),
+        ],
       ],
     },
   ] satisfies Array<{
     title: string;
-    fields: Array<[string, DisplayValue]>;
+    description: string;
+    icon: ReactNode;
+    fields: Field[];
   }>;
 
   return (
-    <section className="overflow-hidden rounded-3xl border border-border bg-muted/70">
-      <div className="border-b border-border bg-card px-5 py-4 sm:px-6">
-        <h2 className="text-lg font-semibold text-foreground">
-          Complete response
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Blank answers are marked as “Not provided.”
-        </p>
+    <div className="space-y-5 pb-1">
+      <div className="grid items-start gap-5 lg:grid-cols-2">
+        {sections.map((section) => (
+          <DetailSection key={section.title} {...section} />
+        ))}
       </div>
 
-      <div className="space-y-8 p-5 sm:p-6">
-        {groups.map((group) => (
-          <div key={group.title}>
-            <h3 className="mb-3 text-sm font-semibold text-foreground">
-              {group.title}
-            </h3>
-            <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {group.fields.map(([label, value]) => (
-                <ResponseField key={label} label={label} value={value} />
-              ))}
-            </dl>
-          </div>
-        ))}
-
-        <div>
-          <h3 className="mb-3 text-sm font-semibold text-foreground">
+      <section className="overflow-hidden rounded-2xl border border-border bg-card">
+        <div className="border-b border-border bg-muted/35 px-4 py-4 sm:px-5">
+          <h3 className="text-sm font-semibold text-foreground">
             Supporting documents
           </h3>
-          {response.documents.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-input bg-card px-4 py-5 text-sm italic text-muted-foreground">
-              Not provided
-            </div>
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {response.documents.map((document) => (
-                <a
-                  key={document.id}
-                  href={`/api/admin/files/${encodeURIComponent(document.googleDriveFileId)}/content`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="flex min-w-0 items-center gap-3 rounded-2xl border border-border bg-card p-4 text-foreground shadow-sm transition duration-200 hover:border-input hover:text-muted-foreground"
-                >
-                  <LuFileText className="shrink-0" size={20} />
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-semibold">
-                      {document.filename}
-                    </span>
-                    <span className="text-xs capitalize text-muted-foreground">
-                      {document.documentType ?? "Supporting document"}
-                    </span>
-                  </span>
-                  <LuExternalLink className="shrink-0" size={16} />
-                </a>
-              ))}
-            </div>
-          )}
+          <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+            Files submitted with this tracer response.
+          </p>
         </div>
-      </div>
-    </section>
+        {response.documents.length === 0 ? (
+          <p className="px-5 py-5 text-sm italic text-muted-foreground">
+            No supporting documents provided.
+          </p>
+        ) : (
+          <div className="grid gap-3 p-4 sm:grid-cols-2 sm:p-5">
+            {response.documents.map((document) => (
+              <a
+                key={document.id}
+                href={`/api/admin/files/${encodeURIComponent(document.googleDriveFileId)}/content`}
+                target="_blank"
+                rel="noreferrer"
+                className="flex min-w-0 items-center gap-3 rounded-xl border border-border p-3.5 text-foreground transition-colors hover:border-primary/40 hover:bg-muted/40"
+              >
+                <LuFileText className="shrink-0 text-primary" size={19} />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-semibold">
+                    {document.filename}
+                  </span>
+                  <span className="text-xs capitalize text-muted-foreground">
+                    {document.documentType ?? "Supporting document"}
+                  </span>
+                </span>
+                <LuExternalLink className="shrink-0" size={15} />
+              </a>
+            ))}
+          </div>
+        )}
+      </section>
+    </div>
   );
 }

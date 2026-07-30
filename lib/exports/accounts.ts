@@ -39,7 +39,6 @@ export async function getAccountExportRows() {
   );
 }
 
-export async function exportAccountsCsv() {
-  const rows = await getAccountExportRows();
+export function exportAccountsCsv(rows: Record<string, unknown>[]) {
   return rows.length === 0 ? "" : stringify(rows, { header: true });
 }

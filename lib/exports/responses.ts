@@ -52,7 +52,6 @@ export async function getResponseExportRows(
   );
 }
 
-export async function exportResponsesCsv(filters: AdminResponseFilters = {}) {
-  const rows = await getResponseExportRows(filters);
+export function exportResponsesCsv(rows: Record<string, unknown>[]) {
   return rows.length === 0 ? "" : stringify(rows, { header: true });
 }

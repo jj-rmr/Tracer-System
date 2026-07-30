@@ -208,21 +208,21 @@ export default function SignInPage() {
               </Button>
 
               <div className="mt-6 grid gap-3 rounded-2xl border border-border bg-muted/50 p-4 text-sm text-muted-foreground">
-                <p className="flex items-start gap-2">
+                <div className="flex items-start gap-2">
                   <LuShieldCheck
                     aria-hidden="true"
                     className="mt-0.5 shrink-0 text-success"
                   />
                   Authentication is handled through your official Google
                   account.
-                </p>
-                <p className="flex items-start gap-2">
+                </div>
+                <div className="flex items-start gap-2">
                   <LuCheck
                     aria-hidden="true"
                     className="mt-0.5 shrink-0 text-success"
                   />
                   Use the same account associated with your university record.
-                </p>
+                </div>
               </div>
 
               <p className="mt-6 text-center text-xs leading-5 text-muted-foreground">

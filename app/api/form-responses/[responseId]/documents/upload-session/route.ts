@@ -42,7 +42,7 @@ export async function POST(
       );
     }
     const response = await getFormResponseById(responseId);
-    if (!response || (!isAdmin(user) && response.userId !== user.$id)) {
+    if (!response || (!isAdmin(user) && response.userId !== user.id)) {
       return NextResponse.json(
         { success: false, message: "Response not found." },
         { status: 404 },
@@ -159,7 +159,7 @@ export async function POST(
     await createDirectDriveUploadSession({
       id: sessionId,
       responseId,
-      actorUserId: user.$id,
+      actorUserId: user.id,
       documentType,
       uploadKey,
       filename,

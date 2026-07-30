@@ -3,6 +3,7 @@ import { isIP } from "node:net";
 
 import { AUTH_COOKIE } from "@/lib/auth";
 import { InMemoryRateLimiter } from "@/lib/security/rate-limit";
+import { classifyRateLimitedRequest } from "@/lib/security/rate-limit-policy";
 
 const AUTH_ROUTES = ["/signin"];
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
@@ -26,11 +27,13 @@ function clientAddress(request: NextRequest) {
 
 function rateLimit(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
-  const authRequest = pathname.startsWith("/api/auth/");
-  const exportRequest = pathname.endsWith("/export");
-  const windowMs = authRequest ? 10 * 60_000 : 60_000;
-  const maximum = exportRequest ? 10 : authRequest ? 30 : 120;
-  const key = `${clientAddress(request)}:${authRequest ? "auth" : exportRequest ? "export" : "mutation"}`;
+  const requestClass = classifyRateLimitedRequest(pathname, request.method);
+  if (!requestClass) return null;
+
+  const windowMs = requestClass === "auth" ? 10 * 60_000 : 60_000;
+  const maximum =
+    requestClass === "export" ? 10 : requestClass === "auth" ? 30 : 120;
+  const key = `${clientAddress(request)}:${requestClass}`;
   const result = rateLimiter.consume(key, maximum, windowMs);
   if (!result.limited) return null;
 

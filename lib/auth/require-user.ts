@@ -2,27 +2,17 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 
 import { getCurrentUser } from "./current-user";
-import { getSessionCookie } from "./cookies";
 import { requireRole } from "./roles";
 import { Role, ROLES } from "@/types";
 
 export const requireUser = cache(async function requireUser() {
-  const session = await getSessionCookie();
-
-  if (!session) {
-    redirect("/signin");
-  }
-
-  const user = await getCurrentUser(session);
+  const user = await getCurrentUser();
 
   if (!user) {
     redirect("/api/auth/session-expired");
   }
 
-  return {
-    session,
-    user,
-  };
+  return { user };
 });
 
 export async function requireUserRole(allowed: Role[]) {

@@ -49,7 +49,7 @@ const adminInformation: InfoAccordionItem[] = [
     id: "access",
     title: "Administrator access",
     content:
-      "Administrator access is tied to your official @parsu.edu.ph Google account and the admin role assigned to your Appwrite user record.",
+      "Administrator access is tied to your official @parsu.edu.ph Google account and the admin role assigned to your Tracer System account.",
   },
   {
     id: "accounts",

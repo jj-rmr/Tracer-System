@@ -35,7 +35,7 @@ export async function PATCH(
 
     const study = await setStudyPeriodStatus(studyId, body.status);
     await recordSecurityAuditEventSafely({
-      actorUserId: admin.$id,
+      actorUserId: admin.id,
       action: "study.status_changed",
       targetType: "study_period",
       targetId: studyId,

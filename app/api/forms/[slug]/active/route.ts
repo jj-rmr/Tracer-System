@@ -26,7 +26,7 @@ export async function GET(
       );
     }
 
-    const response = await getFormResponse(context.study.id, user.$id);
+    const response = await getFormResponse(context.study.id, user.id);
 
     return NextResponse.json({
       success: true,

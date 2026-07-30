@@ -15,9 +15,9 @@ import { defaultSurvey } from "@/lib/surveys/defaults";
 export default async function ResponsesPage() {
   const { user } = await requireUser();
   const openContext = await getOpenStudyByFormSlug("graduate-tracer");
-  const previousResponses = await listFormResponsesByUser(user.$id);
+  const previousResponses = await listFormResponsesByUser(user.id);
   const response = openContext
-    ? await getFormResponse(openContext.study.id, user.$id)
+    ? await getFormResponse(openContext.study.id, user.id)
     : (previousResponses[0] ?? null);
   const context =
     openContext ??
@@ -37,7 +37,7 @@ export default async function ResponsesPage() {
 
   const responseView = response
     ? formResponseToSurvey(response, documents)
-    : { ...defaultSurvey, userId: user.$id };
+    : { ...defaultSurvey, userId: user.id };
   const readOnly = context.study.status !== "open";
 
   return (

@@ -41,13 +41,12 @@ export async function POST(
   let claimedSessionId: string | null = null;
   let stagedDocumentId: string | null = null;
   let movedFile:
-    | { fileId: string; fromFolderId: string; toFolderId: string }
-    | undefined;
+    { fileId: string; fromFolderId: string; toFolderId: string } | undefined;
   try {
     const { user } = await requireUser();
     const { responseId, sessionId } = await params;
     const response = await getFormResponseById(responseId);
-    if (!response || (!isAdmin(user) && response.userId !== user.$id)) {
+    if (!response || (!isAdmin(user) && response.userId !== user.id)) {
       return NextResponse.json(
         { success: false, message: "Response not found." },
         { status: 404 },
@@ -74,7 +73,7 @@ export async function POST(
     if (
       !session ||
       session.responseId !== responseId ||
-      session.actorUserId !== user.$id
+      session.actorUserId !== user.id
     ) {
       return NextResponse.json(
         { success: false, message: "Upload session not found." },

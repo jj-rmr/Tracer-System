@@ -18,14 +18,6 @@ function createGoogleOAuthClient(
   return new google.auth.OAuth2(clientId, clientSecret, redirectUri);
 }
 
-export function createGoogleSignInClient() {
-  return createGoogleOAuthClient(
-    requireEnvironmentVariable("GOOGLE_SIGN_IN_CLIENT_ID"),
-    requireEnvironmentVariable("GOOGLE_SIGN_IN_CLIENT_SECRET"),
-    requireEnvironmentVariable("GOOGLE_SIGN_IN_REDIRECT_URI"),
-  );
-}
-
 export function createGoogleDriveAuthorizationClient() {
   return createGoogleOAuthClient(
     requireEnvironmentVariable("GOOGLE_DRIVE_CLIENT_ID"),

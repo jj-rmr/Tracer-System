@@ -31,7 +31,7 @@ export async function DELETE(
       !response ||
       !document ||
       document.response_id !== responseId ||
-      (!isAdmin(user) && response.userId !== user.$id)
+      (!isAdmin(user) && response.userId !== user.id)
     ) {
       return NextResponse.json(
         { success: false, message: "Document not found." },

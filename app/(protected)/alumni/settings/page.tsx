@@ -11,7 +11,7 @@ export default async function AlumniSettingsPage() {
       name={user.name}
       email={user.email}
       role={ROLES.ALUMNI}
-      pictureUrl={getProfilePictureUrl(user.prefs)}
+      pictureUrl={getProfilePictureUrl(user)}
     />
   );
 }

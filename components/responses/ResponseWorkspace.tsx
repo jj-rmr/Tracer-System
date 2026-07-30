@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 
 import { useCallback, useRef, useState } from "react";
 import GraduateTracerForm from "@/components/forms/GraduateTracerForm";
+import ReadOnlyResponseDetails, {
+  TracerResponseModalHeader,
+} from "@/components/responses/ReadOnlyResponseDetails";
 import {
   FormResponseStatus,
   Survey,
@@ -371,14 +374,11 @@ export default function ResponseWorkspace({
           open={open}
           onClose={() => setOpen(false)}
           title="View Tracer Response"
+          headerContent={<TracerResponseModalHeader response={currentSurvey} />}
+          headerVariant="accent"
           width="xl"
         >
-          <GraduateTracerForm
-            initialData={currentSurvey}
-            isNew={false}
-            onSuccess={handleSuccess}
-            readOnly
-          />
+          <ReadOnlyResponseDetails response={currentSurvey} />
         </Modal>
       ) : (
         <FormModal

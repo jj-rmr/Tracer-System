@@ -14,6 +14,8 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   description?: string;
+  headerContent?: ReactNode;
+  headerVariant?: "default" | "accent";
   children: ReactNode;
   width?: ModalWidth;
   layer?: "modal" | "nested";
@@ -40,23 +42,47 @@ const focusableSelector = [
   "[tabindex]:not([tabindex='-1'])",
 ].join(",");
 
-let bodyScrollLockCount = 0;
-let bodyOverflowBeforeLock = "";
+const modalExitDurationMs = 300;
 
-function lockBodyScroll() {
-  if (bodyScrollLockCount === 0) {
-    bodyOverflowBeforeLock = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+let rootScrollLockCount = 0;
+let rootOverflowBeforeLock = "";
+let rootScrollbarGutterBeforeLock = "";
+let bodyPaddingRightBeforeLock = "";
+
+function lockPageScroll() {
+  if (rootScrollLockCount === 0) {
+    const gutterWidth =
+      window.innerWidth - document.documentElement.clientWidth;
+
+    rootOverflowBeforeLock = document.documentElement.style.overflow;
+    rootScrollbarGutterBeforeLock =
+      document.documentElement.style.scrollbarGutter;
+    bodyPaddingRightBeforeLock = document.body.style.paddingRight;
+
+    if (gutterWidth > 0) {
+      const bodyPaddingRight = Number.parseFloat(
+        window.getComputedStyle(document.body).paddingRight,
+      );
+      document.body.style.paddingRight = `${bodyPaddingRight + gutterWidth}px`;
+    }
+
+    document.documentElement.style.scrollbarGutter = "auto";
+    document.documentElement.style.overflow = "hidden";
   }
-  bodyScrollLockCount += 1;
+  rootScrollLockCount += 1;
 }
 
-function unlockBodyScroll() {
-  bodyScrollLockCount = Math.max(0, bodyScrollLockCount - 1);
-  if (bodyScrollLockCount !== 0) return;
+function unlockPageScroll() {
+  rootScrollLockCount = Math.max(0, rootScrollLockCount - 1);
+  if (rootScrollLockCount !== 0) return;
 
-  document.body.style.overflow = bodyOverflowBeforeLock;
-  bodyOverflowBeforeLock = "";
+  document.documentElement.style.overflow = rootOverflowBeforeLock;
+  document.documentElement.style.scrollbarGutter =
+    rootScrollbarGutterBeforeLock;
+  document.body.style.paddingRight = bodyPaddingRightBeforeLock;
+  rootOverflowBeforeLock = "";
+  rootScrollbarGutterBeforeLock = "";
+  bodyPaddingRightBeforeLock = "";
 }
 
 export default function Modal({
@@ -64,6 +90,8 @@ export default function Modal({
   onClose,
   title,
   description,
+  headerContent,
+  headerVariant = "default",
   children,
   width = "xl",
   layer = "modal",
@@ -90,7 +118,7 @@ export default function Modal({
     if (!open) return;
 
     const previouslyFocused = document.activeElement as HTMLElement | null;
-    lockBodyScroll();
+    lockPageScroll();
 
     const focusFrame = window.requestAnimationFrame(() => {
       const firstFocusable =
@@ -141,7 +169,7 @@ export default function Modal({
 
     return () => {
       window.cancelAnimationFrame(focusFrame);
-      unlockBodyScroll();
+      window.setTimeout(unlockPageScroll, modalExitDurationMs);
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("stepchanged", handleScrollToTop);
       previouslyFocused?.focus();
@@ -160,7 +188,7 @@ export default function Modal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
-          className={`fixed inset-0 flex h-dvh justify-center bg-overlay p-3 [padding-bottom:max(0.75rem,env(safe-area-inset-bottom))] [padding-top:max(0.75rem,env(safe-area-inset-top))] md:p-6 md:[padding-bottom:max(1.5rem,env(safe-area-inset-bottom))] md:[padding-top:max(1.5rem,env(safe-area-inset-top))] ${
+          className={`fixed inset-y-0 left-0 flex h-dvh w-screen justify-center bg-overlay p-3 [padding-bottom:max(0.75rem,env(safe-area-inset-bottom))] [padding-top:max(0.75rem,env(safe-area-inset-top))] md:p-6 md:[padding-bottom:max(1.5rem,env(safe-area-inset-bottom))] md:[padding-top:max(1.5rem,env(safe-area-inset-top))] ${
             placement === "bottom"
               ? "items-end overflow-hidden md:items-center"
               : "items-center overflow-y-auto backdrop-blur-sm"
@@ -174,7 +202,9 @@ export default function Modal({
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}
-            aria-describedby={description ? descriptionId : undefined}
+            aria-describedby={
+              description && !headerContent ? descriptionId : undefined
+            }
             tabIndex={-1}
             initial={placement === "bottom" ? { y: 48 } : false}
             animate={
@@ -228,27 +258,36 @@ export default function Modal({
                   ? (event) => dragControls.start(event)
                   : undefined
               }
-              className={`flex shrink-0 items-start justify-between gap-4 border-b border-border px-5 pb-4 md:px-6 ${
+              className={`flex shrink-0 items-start justify-between gap-4 border-b px-5 pb-4 md:px-6 ${
+                headerVariant === "accent"
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border"
+              } ${
                 placement === "bottom"
                   ? "touch-none cursor-grab select-none pt-7 active:cursor-grabbing"
                   : "pt-4"
               }`}
             >
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <h2
                   id={titleId}
-                  className="text-lg font-semibold text-foreground"
+                  className={
+                    headerContent
+                      ? "sr-only"
+                      : "text-lg font-semibold text-foreground"
+                  }
                 >
                   {title}
                 </h2>
-                {description && (
-                  <p
-                    id={descriptionId}
-                    className="mt-0.5 text-sm text-muted-foreground"
-                  >
-                    {description}
-                  </p>
-                )}
+                {headerContent ??
+                  (description && (
+                    <p
+                      id={descriptionId}
+                      className="mt-0.5 text-sm text-muted-foreground"
+                    >
+                      {description}
+                    </p>
+                  ))}
               </div>
               {showCloseButton && placement !== "bottom" && (
                 <Button
@@ -257,6 +296,11 @@ export default function Modal({
                   size="icon-sm"
                   onClick={onClose}
                   aria-label={closeLabel}
+                  className={
+                    headerVariant === "accent"
+                      ? "text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground"
+                      : undefined
+                  }
                 >
                   <LuX aria-hidden="true" size={22} animated />
                 </Button>

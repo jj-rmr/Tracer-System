@@ -525,8 +525,8 @@ export default function AccountsTable({
           <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm leading-6 text-destructive">
             <p className="font-semibold">This action cannot be undone</p>
             <p className="mt-1">
-              The Appwrite login account, all draft responses, draft manual
-              imports, draft documents, and their Google Drive folders will be
+              The login account, all draft responses, draft manual imports,
+              draft documents, and their Google Drive folders will be
               permanently deleted.
             </p>
           </div>

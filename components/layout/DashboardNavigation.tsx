@@ -24,21 +24,6 @@ interface DashboardNavigationProps {
   role: Role;
 }
 
-const ADMIN_PREFETCH_ROUTES = [
-  "/admin",
-  "/admin/accounts",
-  "/admin/responses",
-  "/admin/studies",
-  "/admin/files",
-  "/admin/settings",
-];
-
-const ALUMNI_PREFETCH_ROUTES = [
-  "/alumni",
-  "/alumni/responses",
-  "/alumni/settings",
-];
-
 export default function DashboardNavigation({
   role,
 }: DashboardNavigationProps) {
@@ -48,15 +33,6 @@ export default function DashboardNavigation({
   const [isNavigationPending, startNavigation] = useTransition();
   const pathname = usePathname();
   const router = useRouter();
-
-  useEffect(() => {
-    const routes =
-      role === "admin" ? ADMIN_PREFETCH_ROUTES : ALUMNI_PREFETCH_ROUTES;
-
-    for (const route of routes) {
-      if (route !== pathname) router.prefetch(route);
-    }
-  }, [pathname, role, router]);
 
   useEffect(() => {
     const mediumViewport = window.matchMedia("(min-width: 48rem)");
@@ -224,7 +200,7 @@ export default function DashboardNavigation({
                     key={item.href}
                     data-nav-control
                     href={item.href}
-                    prefetch
+                    prefetch={false}
                     title={isOpen ? undefined : item.label}
                     aria-label={item.label}
                     onClick={(event) => markNavigationPending(event, item.href)}
@@ -266,7 +242,7 @@ export default function DashboardNavigation({
                 key={item.href}
                 data-nav-control
                 href={item.href}
-                prefetch
+                prefetch={false}
                 onClick={(event) => markNavigationPending(event, item.href)}
                 title={isOpen ? undefined : item.label}
                 aria-label={item.label}
@@ -343,7 +319,7 @@ export default function DashboardNavigation({
                 key={item.href}
                 data-nav-control
                 href={item.href}
-                prefetch
+                prefetch={false}
                 onClick={(event) => markNavigationPending(event, item.href)}
                 className={`relative flex flex-1 flex-col items-center p-2 ${
                   active ? "text-nav-active" : "text-nav-inactive"
@@ -409,7 +385,7 @@ export default function DashboardNavigation({
                 key={item.href}
                 data-nav-control
                 href={item.href}
-                prefetch
+                prefetch={false}
                 onClick={(event) => {
                   setShowMoreMenu(false);
                   markNavigationPending(event, item.href);

@@ -1,26 +1,19 @@
 import { NextResponse } from "next/server";
 
-import { createGoogleSignInClient } from "@/lib/google/oauth";
+import { authProvider } from "@/lib/auth/provider";
 
-export async function GET() {
-  const state = crypto.randomUUID();
-  const googleClient = createGoogleSignInClient();
-  const authorizationUrl = googleClient.generateAuthUrl({
-    prompt: "select_account",
-    scope: ["openid", "email", "profile"],
-    state,
-  });
-
-  const response = NextResponse.redirect(authorizationUrl);
-
-  response.headers.set("Cache-Control", "no-store");
-  response.cookies.set("google_oauth_state", state, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 10 * 60,
-  });
-
-  return response;
+export async function GET(request: Request) {
+  try {
+    const url = await authProvider.getGoogleAuthorizationUrl(
+      new URL(request.url).origin,
+    );
+    const response = NextResponse.redirect(url);
+    response.headers.set("Cache-Control", "no-store");
+    return response;
+  } catch (error) {
+    console.error("Failed to start Google sign-in:", error);
+    return NextResponse.redirect(
+      new URL("/signin?error=oauth_failed", request.url),
+    );
+  }
 }

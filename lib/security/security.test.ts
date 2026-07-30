@@ -3,6 +3,7 @@ import test from "node:test";
 
 import { spreadsheetSafeRecord, spreadsheetSafeValue } from "./csv.ts";
 import { InMemoryRateLimiter } from "./rate-limit.ts";
+import { classifyRateLimitedRequest } from "./rate-limit-policy.ts";
 import { validateUpload, validateUploadMetadata } from "./uploads.ts";
 
 test("neutralizes spreadsheet formula prefixes", () => {
@@ -43,7 +44,13 @@ test("rejects disguised and unsupported uploads", async () => {
 test("rejects malformed upload sizes before creating an external session", () => {
   for (const size of [Number.NaN, Number.POSITIVE_INFINITY, -1, 1.5]) {
     assert.throws(
-      () => validateUploadMetadata("document.pdf", "application/pdf", size, "document"),
+      () =>
+        validateUploadMetadata(
+          "document.pdf",
+          "application/pdf",
+          size,
+          "document",
+        ),
       /empty/,
     );
   }
@@ -59,6 +66,23 @@ test("limits requests until their window expires", () => {
   assert.equal(rejected.limited, true);
   assert.equal(rejected.retryAfterSeconds, 1);
   assert.equal(limiter.consume("client", 2, 1_000, 1_000).limited, false);
+});
+
+test("only rate limits authentication, exports, and mutations", () => {
+  assert.equal(classifyRateLimitedRequest("/api/auth/google", "GET"), "auth");
+  assert.equal(
+    classifyRateLimitedRequest("/api/admin/accounts/export", "GET"),
+    "export",
+  );
+  assert.equal(
+    classifyRateLimitedRequest("/api/admin/accounts", "POST"),
+    "mutation",
+  );
+  assert.equal(classifyRateLimitedRequest("/api/admin/accounts", "GET"), null);
+  assert.equal(
+    classifyRateLimitedRequest("/api/admin/accounts", "OPTIONS"),
+    null,
+  );
 });
 
 test("removes expired buckets and keeps its memory bounded", () => {

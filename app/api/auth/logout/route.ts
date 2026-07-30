@@ -1,31 +1,16 @@
 import { NextResponse } from "next/server";
-import { Account } from "node-appwrite";
 
-import { createSessionClient } from "@/lib/appwrite/session";
-import { AUTH_COOKIE, COOKIE_OPTIONS, getSessionCookie } from "@/lib/auth";
+import { AUTH_COOKIE, COOKIE_OPTIONS } from "@/lib/auth";
+import { authProvider } from "@/lib/auth/provider";
 
 export async function POST() {
   try {
-    const session = await getSessionCookie();
+    await authProvider.signOut();
+  } catch (error) {
+    console.error("Failed to sign out provider session:", error);
+  }
 
-    if (session) {
-      const client = createSessionClient(session);
-      const account = new Account(client);
-
-      try {
-        await account.deleteSessions();
-      } catch {}
-    }
-  } catch {}
-
-  const response = NextResponse.json({
-    success: true,
-  });
-
-  response.cookies.set(AUTH_COOKIE, "", {
-    ...COOKIE_OPTIONS,
-    maxAge: 0,
-  });
-
+  const response = NextResponse.json({ success: true });
+  response.cookies.set(AUTH_COOKIE, "", { ...COOKIE_OPTIONS, maxAge: 0 });
   return response;
 }

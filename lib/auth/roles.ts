@@ -1,22 +1,11 @@
-import { Models } from "node-appwrite";
-import { Role, ROLES } from "@/types";
+import type { AuthUser } from "./types";
+import { type Role, ROLES } from "../../types/roles.ts";
 
-export function getRole(user: Models.User<Models.Preferences>): Role | null {
-  if (user.labels.includes(ROLES.ADMIN)) {
-    return ROLES.ADMIN;
-  }
-
-  if (user.labels.includes(ROLES.ALUMNI)) {
-    return ROLES.ALUMNI;
-  }
-
-  return null;
+export function getRole(user: AuthUser): Role {
+  return user.role;
 }
 
-export function requireRole(
-  user: Models.User<Models.Preferences>,
-  allowed: Role[],
-) {
+export function requireRole(user: AuthUser, allowed: Role[]) {
   const role = getRole(user);
 
   if (!role || !allowed.includes(role)) {
@@ -26,6 +15,6 @@ export function requireRole(
   return role;
 }
 
-export function isAdmin(user: Models.User<Models.Preferences>) {
-  return user.labels.includes(ROLES.ADMIN);
+export function isAdmin(user: AuthUser) {
+  return user.role === ROLES.ADMIN;
 }

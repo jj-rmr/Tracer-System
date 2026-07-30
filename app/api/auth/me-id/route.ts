@@ -6,7 +6,7 @@ export async function GET() {
     const { user } = await requireUser();
 
     return ok({
-      id: user.$id,
+      id: user.id,
     });
   } catch {
     return fail("Unauthorized", 401);

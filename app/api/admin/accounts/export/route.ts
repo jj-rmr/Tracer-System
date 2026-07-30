@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
   const rows = await getAccountExportRows();
 
   await recordSecurityAuditEvent({
-    actorUserId: admin.$id,
+    actorUserId: admin.id,
     action: "accounts.exported",
     targetType: "account_collection",
     metadata: { format, rowCount: rows.length },
@@ -43,10 +43,11 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  return new NextResponse(await exportAccountsCsv(), {
+  return new NextResponse(exportAccountsCsv(rows), {
     headers: {
-      "Content-Type": "text/csv",
+      "Content-Type": "text/csv; charset=utf-8",
       "Content-Disposition": `attachment; filename="EXPORTED-ACCOUNTS-${timestamp}.csv"`,
+      "Cache-Control": "no-store",
     },
   });
 }

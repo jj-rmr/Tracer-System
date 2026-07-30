@@ -94,7 +94,7 @@ export async function POST(
 
     const saved = await createManualFormResponse({
       studyPeriodId: studyId,
-      enteredByUserId: admin.$id,
+      enteredByUserId: admin.id,
       respondentName: respondentName || undefined,
       respondentEmail,
       answers: body.answers,

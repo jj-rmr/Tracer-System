@@ -647,7 +647,8 @@ export default function DriveFileBrowser() {
             Files
           </h1>
           <p className="text-muted-foreground">
-            Browse and preview files stored in the tracer system Drive.
+            Browse and preview files stored in the Placement Tracer System
+            Drive.
           </p>
         </div>
         <Button
@@ -668,6 +669,8 @@ export default function DriveFileBrowser() {
             <div className="flex flex-col gap-2 sm:flex-row">
               <Button
                 type="button"
+                variant="outline"
+                size="lg"
                 disabled={!canUpload}
                 onClick={() => setShowUpload(true)}
                 title={
@@ -675,15 +678,17 @@ export default function DriveFileBrowser() {
                     ? "Upload files to this folder"
                     : "Open a folder inside Admin Files to upload"
                 }
-                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-border bg-card px-4 py-3 text-sm font-semibold text-muted-foreground shadow-sm hover:bg-data-hover disabled:cursor-not-allowed disabled:opacity-45"
+                className="whitespace-nowrap rounded-2xl text-muted-foreground disabled:cursor-not-allowed disabled:opacity-45"
               >
                 <AnimatedUploadIcon size={17} /> Upload files
               </Button>
               <Button
                 type="button"
+                variant="default"
+                size="lg"
                 disabled={!canUpload}
                 onClick={() => setShowNewFolder(true)}
-                className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-sm hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-45"
+                className="whitespace-nowrap rounded-2xl disabled:cursor-not-allowed disabled:opacity-45"
               >
                 <AnimatedPlusIcon size={17} /> New folder
               </Button>
@@ -792,7 +797,7 @@ export default function DriveFileBrowser() {
               </div>
             )}
             <div
-              className={`hidden items-center gap-3 border-b border-border bg-data-header px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:grid ${
+              className={`hidden items-center gap-3 border-b border-white bg-data-header px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:grid ${
                 canUpload
                   ? "lg:grid-cols-[auto_auto_minmax(0,1fr)_7rem_9rem_11rem_auto]"
                   : "lg:grid-cols-[auto_auto_minmax(0,1fr)_7rem_9rem_11rem]"
@@ -891,6 +896,7 @@ export default function DriveFileBrowser() {
                     type="button"
                     data-file-open
                     variant="plain"
+                    animateIcon={false}
                     onPointerUp={(event) => {
                       event.stopPropagation();
                       if (event.pointerType !== "mouse") openBrowserItem(item);
@@ -899,21 +905,13 @@ export default function DriveFileBrowser() {
                       event.stopPropagation();
                       openBrowserItem(item);
                     }}
-                    onFocus={() => {
-                      if (!reduceMotion) {
-                        itemIconRefs.current.get(item.id)?.startAnimation();
-                      }
-                    }}
-                    onBlur={() =>
-                      itemIconRefs.current.get(item.id)?.stopAnimation()
-                    }
                     onKeyDown={(event) => {
                       if (event.key !== "Enter" && event.key !== " ") return;
                       event.preventDefault();
                       openBrowserItem(item);
                     }}
                     aria-label={`${item.isFolder ? "Open folder" : "Open file"} ${item.name}`}
-                    className="col-span-2 flex h-auto w-full min-w-0 justify-start gap-3 text-left"
+                    className="col-span-2 h-auto w-full min-w-0 justify-start gap-3 text-left"
                   >
                     <span className="flex shrink-0 items-center self-center">
                       <FileIcon
@@ -1331,9 +1329,10 @@ export default function DriveFileBrowser() {
           <div className="flex justify-end">
             <Button
               type="button"
+              variant="default"
               disabled={preparing}
               onClick={() => void prepareFolders()}
-              className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors duration-200 hover:bg-primary-hover disabled:cursor-wait disabled:opacity-60"
+              className="whitespace-nowrap disabled:cursor-wait disabled:opacity-60"
             >
               <AnimatedFolderSettingsIcon
                 className={preparing ? "animate-spin" : ""}
@@ -1449,14 +1448,18 @@ export default function DriveFileBrowser() {
             )}
 
             <div className="flex justify-end">
-              <a
-                href={`/api/admin/files/${encodeURIComponent(preview.id)}/content`}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-hover"
+              <Button
+                variant="default"
+                render={
+                  <a
+                    href={`/api/admin/files/${encodeURIComponent(preview.id)}/content`}
+                    target="_blank"
+                    rel="noreferrer"
+                  />
+                }
               >
                 <AnimatedExternalLinkIcon size={16} /> Open in new tab
-              </a>
+              </Button>
             </div>
           </div>
         )}

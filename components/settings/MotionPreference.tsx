@@ -8,7 +8,6 @@ import {
   MOTION_STORAGE_KEY,
   useReducedMotionPreference,
 } from "@/lib/hooks/use-reduced-motion-preference";
-import { BorderPreference } from "@/components/settings/BorderPreference";
 
 export function MotionPreferenceProvider({
   children,
@@ -72,8 +71,6 @@ export function MotionPreference() {
               <span className="block size-4.5 rounded-full bg-card shadow-xs transition-transform group-aria-checked:translate-x-5" />
             </button>
           </div>
-
-          <BorderPreference />
         </div>
       </div>
     </section>

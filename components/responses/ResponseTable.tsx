@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { AdminResponseFilters, AdminResponseSummary, Survey } from "@/types";
 import ManualResponseEditor from "@/components/admin/responses/ManualResponseEditor";
-import ReadOnlyResponseDetails from "@/components/responses/ReadOnlyResponseDetails";
+import ReadOnlyResponseDetails, {
+  TracerResponseModalHeader,
+} from "@/components/responses/ReadOnlyResponseDetails";
 import { LuEye, LuPencil, LuRefreshCw, LuTrash2 } from "@/components/ui/icons";
 import { useToast } from "@/components/ui/Toast";
 import Modal from "@/components/ui/Modal";
@@ -458,6 +460,16 @@ export default function ResponseTable({
           responseMetadata?.source === "admin_import"
             ? "Edit Manual Response"
             : "View Tracer Response"
+        }
+        headerContent={
+          surveyData && responseMetadata?.source !== "admin_import" ? (
+            <TracerResponseModalHeader response={surveyData} />
+          ) : undefined
+        }
+        headerVariant={
+          surveyData && responseMetadata?.source !== "admin_import"
+            ? "accent"
+            : "default"
         }
         width="xl"
       >

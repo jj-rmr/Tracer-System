@@ -24,8 +24,6 @@ export default function SessionKeepAlive() {
           window.location.assign("/signin");
         }
       } catch {
-        // Network and upstream failures do not invalidate an existing session.
-        // The next interval or tab activation will retry the refresh.
       } finally {
         refreshInProgress = false;
       }

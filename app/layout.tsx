@@ -57,20 +57,6 @@ const colorThemeScript = `
   } catch {}
 `;
 
-const borderScript = `
-  try {
-    const savedBorderStyle = localStorage.getItem("tracer-border-style");
-    document.documentElement.dataset.borderStyle =
-      savedBorderStyle === "light" && localStorage.getItem("tracer-border-style-version") !== "2"
-        ? "hard"
-        : savedBorderStyle === "light" || savedBorderStyle === "hard" || savedBorderStyle === "none"
-        ? savedBorderStyle
-        : localStorage.getItem("tracer-show-borders") === "true"
-          ? "light"
-          : "none";
-  } catch {}
-`;
-
 function InlineScript({ html }: { html: string }) {
   return (
     <script
@@ -91,7 +77,6 @@ export default async function RootLayout({
       <head>
         <InlineScript html={themeScript} />
         <InlineScript html={colorThemeScript} />
-        <InlineScript html={borderScript} />
         <InlineScript html={motionScript} />
       </head>
       <body className="relative min-h-full w-full">

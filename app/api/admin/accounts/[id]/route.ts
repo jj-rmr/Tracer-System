@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Models } from "node-appwrite";
-
-import { requireUser } from "@/lib/auth";
+import { requireUser, type AuthUser } from "@/lib/auth";
 import { isAdmin } from "@/lib/auth/roles";
 import {
   deleteAccount,
@@ -13,9 +11,7 @@ import {
 import { deleteAccountDraftResponses } from "@/lib/forms/account-role-change";
 import { recordSecurityAuditEventSafely } from "@/lib/repositories/audit.repository";
 
-async function authorize(): Promise<
-  Models.User<Models.Preferences> | NextResponse
-> {
+async function authorize(): Promise<AuthUser | NextResponse> {
   const { user } = await requireUser();
 
   if (!isAdmin(user)) {
@@ -98,7 +94,7 @@ export async function PATCH(
         );
       }
 
-      if (auth.$id === id && targetRole !== "admin") {
+      if (auth.id === id && targetRole !== "admin") {
         return NextResponse.json(
           { success: false, message: "You cannot demote your own account." },
           { status: 400 },
@@ -116,7 +112,7 @@ export async function PATCH(
       await updateAccountRole(id, targetRole);
       const deletedDrafts = await deleteAccountDraftResponses(id);
       await recordSecurityAuditEventSafely({
-        actorUserId: auth.$id,
+        actorUserId: auth.id,
         action: "account.role_changed",
         targetType: "account",
         targetId: id,
@@ -201,7 +197,7 @@ export async function DELETE(
       );
     }
 
-    if (user.$id === id) {
+    if (user.id === id) {
       return NextResponse.json(
         {
           success: false,
@@ -223,7 +219,7 @@ export async function DELETE(
       throw error;
     }
     await recordSecurityAuditEventSafely({
-      actorUserId: user.$id,
+      actorUserId: user.id,
       action: "account.deleted",
       targetType: "account",
       targetId: id,

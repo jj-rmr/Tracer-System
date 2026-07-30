@@ -58,7 +58,7 @@ export async function GET(
       );
     }
 
-    const response = await getFormResponse(studyId, user.$id);
+    const response = await getFormResponse(studyId, user.id);
 
     return NextResponse.json({
       success: true,
@@ -161,14 +161,14 @@ export async function PUT(
       }
     }
 
-    const existingResponse = await getFormResponse(studyId, user.$id);
+    const existingResponse = await getFormResponse(studyId, user.id);
     const shouldOrganize = hasResponseOrganizationChanged(
       existingResponse?.answers ?? null,
       body.answers,
     );
     const response = await saveFormResponse({
       studyPeriodId: studyId,
-      userId: user.$id,
+      userId: user.id,
       status: body.status,
       answers: body.answers,
       resetDriveOrganization: shouldOrganize,
@@ -240,7 +240,7 @@ export async function DELETE(
 
     const existingResponse = await getFormResponseForUserDeletion(
       studyId,
-      user.$id,
+      user.id,
     );
 
     if (!existingResponse) {
@@ -253,7 +253,7 @@ export async function DELETE(
         : await claimFormResponseDeletion(existingResponse.id);
 
     for (let attempt = 0; !claimedResponse && attempt < 20; attempt += 1) {
-      const activeResponse = await getFormResponse(studyId, user.$id);
+      const activeResponse = await getFormResponse(studyId, user.id);
       if (
         !activeResponse ||
         activeResponse.driveOrganizationStatus !== "organizing"

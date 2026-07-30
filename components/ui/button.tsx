@@ -51,7 +51,7 @@ const buttonVariants = cva(
         wide: "h-12 w-full gap-3 px-5",
         fill: "h-10 gap-2 px-4 has-data-[icon=inline-end]:pr-3.5 has-data-[icon=inline-start]:pl-3.5 flex-1",
         inline: "h-auto gap-1 p-0 text-xs",
-        option: "h-11 w-full justify-start px-5",
+        option: "h-11 w-full justify-start gap-2 px-5",
         "theme-menu": "min-h-14 w-full justify-start gap-3 px-4",
         "theme-floating": "h-11 gap-3 px-4",
         combobox: "h-11 w-full min-w-0 justify-between px-4 text-left",
@@ -67,6 +67,7 @@ const buttonVariants = cva(
 type ButtonProps = Omit<ButtonPrimitive.Props, "className"> &
   VariantProps<typeof buttonVariants> & {
     className?: string;
+    animateIcon?: boolean;
   };
 
 function Button({
@@ -80,6 +81,7 @@ function Button({
   onPointerCancel,
   onFocus,
   onBlur,
+  animateIcon = true,
   ...props
 }: ButtonProps) {
   const [iconInteractionActive, setIconInteractionActive] = useState(false);
@@ -90,51 +92,87 @@ function Button({
     touchStopTimerRef.current = null;
   }
 
-  return (
+  const button = (
+    <ButtonPrimitive
+      data-slot="button"
+      data-button-variant={variant ?? "ghost"}
+      className={cn(buttonVariants({ variant, size }), className)}
+      onPointerEnter={
+        animateIcon
+          ? (event) => {
+              setIconInteractionActive(true);
+              onPointerEnter?.(event);
+            }
+          : onPointerEnter
+      }
+      onPointerLeave={
+        animateIcon
+          ? (event) => {
+              if (event.pointerType === "mouse") {
+                setIconInteractionActive(false);
+              }
+              onPointerLeave?.(event);
+            }
+          : onPointerLeave
+      }
+      onPointerDown={
+        animateIcon
+          ? (event) => {
+              clearTouchStopTimer();
+              setIconInteractionActive(true);
+              onPointerDown?.(event);
+            }
+          : onPointerDown
+      }
+      onPointerUp={
+        animateIcon
+          ? (event) => {
+              if (event.pointerType !== "mouse") {
+                clearTouchStopTimer();
+                touchStopTimerRef.current = setTimeout(
+                  () => setIconInteractionActive(false),
+                  350,
+                );
+              }
+              onPointerUp?.(event);
+            }
+          : onPointerUp
+      }
+      onPointerCancel={
+        animateIcon
+          ? (event) => {
+              clearTouchStopTimer();
+              setIconInteractionActive(false);
+              onPointerCancel?.(event);
+            }
+          : onPointerCancel
+      }
+      onFocus={
+        animateIcon
+          ? (event) => {
+              setIconInteractionActive(true);
+              onFocus?.(event);
+            }
+          : onFocus
+      }
+      onBlur={
+        animateIcon
+          ? (event) => {
+              setIconInteractionActive(false);
+              onBlur?.(event);
+            }
+          : onBlur
+      }
+      {...props}
+    />
+  );
+
+  return animateIcon ? (
     <IconInteractionProvider active={iconInteractionActive}>
-      <ButtonPrimitive
-        data-slot="button"
-        data-button-variant={variant ?? "ghost"}
-        className={cn(buttonVariants({ variant, size }), className)}
-        onPointerEnter={(event) => {
-          setIconInteractionActive(true);
-          onPointerEnter?.(event);
-        }}
-        onPointerLeave={(event) => {
-          if (event.pointerType === "mouse") setIconInteractionActive(false);
-          onPointerLeave?.(event);
-        }}
-        onPointerDown={(event) => {
-          clearTouchStopTimer();
-          setIconInteractionActive(true);
-          onPointerDown?.(event);
-        }}
-        onPointerUp={(event) => {
-          if (event.pointerType !== "mouse") {
-            clearTouchStopTimer();
-            touchStopTimerRef.current = setTimeout(
-              () => setIconInteractionActive(false),
-              350,
-            );
-          }
-          onPointerUp?.(event);
-        }}
-        onPointerCancel={(event) => {
-          clearTouchStopTimer();
-          setIconInteractionActive(false);
-          onPointerCancel?.(event);
-        }}
-        onFocus={(event) => {
-          setIconInteractionActive(true);
-          onFocus?.(event);
-        }}
-        onBlur={(event) => {
-          setIconInteractionActive(false);
-          onBlur?.(event);
-        }}
-        {...props}
-      />
+      {button}
     </IconInteractionProvider>
+  ) : (
+    button
   );
 }
 

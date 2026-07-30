@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     const rows = await getResponseExportRows(filters);
 
     await recordSecurityAuditEvent({
-      actorUserId: admin.$id,
+      actorUserId: admin.id,
       action: "responses.exported",
       targetType: "response_collection",
       metadata: { format, rowCount: rows.length },
@@ -45,9 +45,9 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    return new NextResponse(await exportResponsesCsv(filters), {
+    return new NextResponse(exportResponsesCsv(rows), {
       headers: {
-        "Content-Type": "text/csv",
+        "Content-Type": "text/csv; charset=utf-8",
         "Content-Disposition": `attachment; filename="TRACER-RESPONSES-${timestamp}.csv"`,
         "Cache-Control": "no-store",
       },

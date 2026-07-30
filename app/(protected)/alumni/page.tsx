@@ -40,7 +40,7 @@ export default async function AlumniPage() {
   const user = await requireUserRole([ROLES.ALUMNI]);
   const [openContext, responses] = await Promise.all([
     getOpenStudyByFormSlug("graduate-tracer"),
-    listFormResponsesByUser(user.$id),
+    listFormResponsesByUser(user.id),
   ]);
 
   const activeResponse = openContext

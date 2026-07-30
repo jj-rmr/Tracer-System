@@ -29,8 +29,10 @@
   --font-system-mono:
     ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   --accent: var(--palette-400);
+  --dark-accent: var(--palette-800);
+  --dark-accent-foreground: var(--color-white);
   --surface: var(--undertone-100);
-  --data-hover: var(--undertone-50);
+  --data-hover: var(--undertone-100);
   --data-header: color-mix(
     in oklab,
     var(--undertone-50) 50%,
@@ -61,23 +63,13 @@
   --warning: var(--color-amber-800);
   --warning-foreground: var(--color-white);
   --overlay: color-mix(in oklab, var(--color-black) 40%, transparent);
-  --border-light: color-mix(
-    in oklab,
-    var(--undertone-300) 88%,
-    var(--palette-400)
-  );
-  --input-light: color-mix(
-    in oklab,
-    var(--undertone-300) 84%,
-    var(--palette-400)
-  );
   --control-border-subtle: color-mix(
     in oklab,
     var(--undertone-200) 94%,
     var(--palette-400)
   );
-  --border: var(--border-light);
-  --input: var(--input-light);
+  --border: var(--control-border-subtle);
+  --input: var(--control-border-subtle);
   --ring: var(--palette-500);
   --chart-1: var(--color-slate-300);
   --chart-2: var(--color-slate-500);
@@ -102,6 +94,8 @@
   --color-foreground: var(--foreground);
 
   --color-accent: var(--accent);
+  --color-dark-accent: var(--dark-accent);
+  --color-dark-accent-foreground: var(--dark-accent-foreground);
   --color-surface: var(--surface);
   --color-data-hover: var(--data-hover);
   --color-data-header: var(--data-header);
@@ -167,6 +161,7 @@ body {
   font-family: var(--font-sans), Arial, sans-serif;
   line-height: 1.5;
   margin: 0;
+  scrollbar-gutter: stable;
 }
 
 h1,
@@ -181,27 +176,24 @@ body {
   min-height: 100%;
 }
 
-/* Hidden borders are structurally disabled instead of faded with transparent
-   colors. Custom navigation links join the shared button system through
-   data-nav-control. */
+[data-modal-root] {
+  scrollbar-gutter: auto;
+}
+
+/* The permanent light-border treatment hides incidental browser edges, then
+   restores only declared structural and control borders with subtle tokens. */
 :where([data-nav-control]) {
   border-width: 1px;
   border-style: solid;
 }
 
-:root:not([data-border-style]) *,
-:root:not([data-border-style]) *::before,
-:root:not([data-border-style]) *::after,
-:root[data-border-style="none"] *,
-:root[data-border-style="none"] *::before,
-:root[data-border-style="none"] *::after,
-:root[data-border-style="light"] *,
-:root[data-border-style="light"] *::before,
-:root[data-border-style="light"] *::after {
+:root *,
+:root *::before,
+:root *::after {
   border-style: none !important;
 }
 
-:root[data-border-style="light"]
+:root
   :where(
     [data-slot="input"],
     textarea,
@@ -215,7 +207,7 @@ body {
   border-color: var(--control-border-subtle) !important;
 }
 
-:root[data-border-style="light"]
+:root
   :where(
     [data-slot="input"],
     textarea,
@@ -224,19 +216,16 @@ body {
     [data-slot="combobox-trigger"],
     [data-input-surface]
   ):is(:focus, :focus-visible, :focus-within),
-:root[data-border-style="light"]
-  [data-slot="combobox-input-group"]:focus-within {
+:root [data-slot="combobox-input-group"]:focus-within {
   border-color: var(--ring) !important;
 }
 
-:root[data-border-style="light"]
-  :where([aria-invalid="true"], [data-input-surface][data-invalid="true"]),
-:root[data-border-style="light"]
-  [data-slot="combobox-input-group"]:has([aria-invalid="true"]) {
+:root :where([aria-invalid="true"], [data-input-surface][data-invalid="true"]),
+:root [data-slot="combobox-input-group"]:has([aria-invalid="true"]) {
   border-color: var(--destructive) !important;
 }
 
-:root[data-border-style="light"]
+:root
   :where(
     [role="radio"],
     [role="switch"],
@@ -262,25 +251,6 @@ body {
     [class*="divide-x"] > :not(:last-child)
   ) {
   border-style: solid !important;
-}
-
-:root[data-border-style="hard"] {
-  --border: var(--border-light);
-  --input: var(--input-light);
-}
-
-:root[data-border-style="hard"]
-  :where(button, [role="button"], [data-slot="button"]):not(
-    [data-nav-control]
-  ) {
-  border-color: var(--input-light);
-}
-
-/* Navigation uses selection fills instead of individual outlines. Keeping all
-   navigation actions borderless prevents links and adjacent buttons from
-   receiving different treatments in enhanced-border mode. */
-:root[data-border-style="hard"] [data-nav-control] {
-  border-color: transparent;
 }
 
 button {
@@ -331,49 +301,6 @@ label
   pointer-events: auto;
 }
 
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes toastIn {
-  from {
-    opacity: 0;
-    max-height: 0;
-  }
-  to {
-    opacity: 1;
-    max-height: 500px;
-  }
-}
-
-@keyframes toastOut {
-  from {
-    opacity: 1;
-    max-height: 500px;
-  }
-  to {
-    opacity: 0;
-    max-height: 0;
-  }
-}
-
-.page-transition {
-  animation: fadeIn 240ms ease-in;
-}
-
-.toast-in {
-  animation: toastIn 300ms ease-out;
-}
-
-.toast-out {
-  animation: toastOut 300ms ease-in;
-}
-
 .theme-changing,
 .theme-changing *,
 .theme-changing *::before,
@@ -414,23 +341,13 @@ label
   --warning: var(--color-amber-300);
   --warning-foreground: var(--color-slate-950);
   --overlay: color-mix(in oklab, var(--color-black) 60%, transparent);
-  --border-light: color-mix(
-    in oklab,
-    var(--undertone-700) 88%,
-    var(--palette-500)
-  );
-  --input-light: color-mix(
-    in oklab,
-    var(--undertone-700) 84%,
-    var(--palette-500)
-  );
   --control-border-subtle: color-mix(
     in oklab,
     var(--undertone-800) 92%,
     var(--palette-500)
   );
-  --border: var(--border-light);
-  --input: var(--input-light);
+  --border: var(--control-border-subtle);
+  --input: var(--control-border-subtle);
   --ring: var(--palette-500);
   --chart-1: var(--color-slate-300);
   --chart-2: var(--color-slate-500);
@@ -533,15 +450,9 @@ label
   --data-header: var(--color-gray-50);
   --nav-inactive: var(--undertone-500);
   --nav-active: var(--palette-700);
-  --border-light: var(--color-gray-300);
-  --input-light: color-mix(
-    in oklab,
-    var(--color-gray-300) 82%,
-    var(--color-gray-400)
-  );
   --control-border-subtle: var(--color-gray-200);
-  --border: var(--border-light);
-  --input: var(--input-light);
+  --border: var(--control-border-subtle);
+  --input: var(--control-border-subtle);
   --sidebar: var(--color-gray-50);
   --sidebar-foreground: var(--color-gray-950);
   --sidebar-accent: var(--color-gray-200);
@@ -575,15 +486,9 @@ label
   );
   --nav-inactive: var(--undertone-400);
   --nav-active: var(--palette-300);
-  --border-light: var(--color-gray-700);
-  --input-light: color-mix(
-    in oklab,
-    var(--color-gray-700) 82%,
-    var(--color-gray-600)
-  );
   --control-border-subtle: var(--color-gray-800);
-  --border: var(--border-light);
-  --input: var(--input-light);
+  --border: var(--control-border-subtle);
+  --input: var(--control-border-subtle);
   --sidebar: var(--color-gray-900);
   --sidebar-foreground: var(--color-gray-200);
   --sidebar-accent: var(--color-gray-800);

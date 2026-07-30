@@ -11,7 +11,7 @@ import { getStudyContext } from "@/lib/repositories/forms.repository";
 export async function GET() {
   try {
     const admin = await requireAdmin();
-    const drafts = await listManualDraftsForAdmin(admin.$id);
+    const drafts = await listManualDraftsForAdmin(admin.id);
     let draft = null;
 
     for (const candidate of drafts) {

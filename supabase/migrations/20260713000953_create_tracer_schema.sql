@@ -1,6 +1,6 @@
 -- ==========================================================
 -- Tracer System Database Schema
--- Appwrite Authentication + Supabase Database
+-- Provider-neutral Authentication + Supabase Database
 -- ==========================================================
 
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
