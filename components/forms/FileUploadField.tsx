@@ -30,6 +30,7 @@ interface FileUploadFieldProps {
   onError?: (message: string) => void;
   uploadingFiles?: File[];
   uploadProgress?: ReadonlyMap<File, number>;
+  variant?: "small" | "large";
 }
 
 const styles = {
@@ -41,18 +42,21 @@ const styles = {
     disabled: boolean,
     isDragActive: boolean,
     hasFile: boolean,
+    variant: "small" | "large",
   ) => {
     const stateClass = disabled
-      ? "cursor-not-allowed border-border bg-secondary text-muted-foreground shadow-none"
+      ? "cursor-not-allowed border-border bg-card text-muted-foreground shadow-none"
       : err
         ? "border-destructive bg-destructive/10 text-foreground focus-within:ring-4 focus-within:ring-destructive/20"
         : isDragActive
           ? "border-ring bg-muted"
           : hasFile
-            ? "border-ring bg-muted"
-            : "border-border bg-muted hover:border-ring hover:bg-card";
+            ? "border-ring bg-card"
+            : "border-border bg-card hover:border-ring";
 
-    return `flex min-h-32 w-full cursor-default items-center gap-3 rounded-2xl border border-dashed px-5 py-5 text-sm transition duration-200 ${stateClass}`;
+    const sizeClass = variant === "large" ? "min-h-52 p-6" : "min-h-32 p-4";
+
+    return `w-full overflow-hidden rounded-2xl border border-dashed text-left text-sm transition duration-200 ${disabled ? "" : "cursor-pointer"} ${sizeClass} ${stateClass}`;
   },
 };
 
@@ -118,6 +122,7 @@ export function FileUploadField({
   onError,
   uploadingFiles = [],
   uploadProgress = new Map(),
+  variant = "large",
 }: FileUploadFieldProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isDragActive, setIsDragActive] = useState(false);
@@ -206,34 +211,42 @@ export function FileUploadField({
   };
 
   const handleDragEnter = (event: React.DragEvent<HTMLDivElement>) => {
-    if (disabled) return;
-
     event.preventDefault();
+    if (disabled) return;
     setIsDragActive(true);
   };
 
   const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
-    if (disabled) return;
-
     event.preventDefault();
+    if (disabled) return;
     event.dataTransfer.dropEffect = "copy";
     setIsDragActive(true);
   };
 
   const handleDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
-    if (disabled) return;
-
     event.preventDefault();
+    if (
+      disabled ||
+      (event.relatedTarget instanceof Node &&
+        event.currentTarget.contains(event.relatedTarget))
+    ) {
+      return;
+    }
     setIsDragActive(false);
   };
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
-    if (disabled) return;
-
     event.preventDefault();
     setIsDragActive(false);
+    if (disabled) return;
 
     handleFiles(event.dataTransfer.files);
+  };
+
+  const openFilePicker = () => {
+    if (!disabled && totalFiles < maxFiles) {
+      inputRef.current?.click();
+    }
   };
 
   return (
@@ -246,51 +259,67 @@ export function FileUploadField({
       <div
         data-input-surface
         data-invalid={hasError || undefined}
+        role="button"
+        tabIndex={disabled ? -1 : 0}
+        aria-disabled={disabled || totalFiles >= maxFiles}
+        aria-describedby={`${id}-requirements`}
+        onClick={openFilePicker}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            openFilePicker();
+          }
+        }}
         onDragEnter={handleDragEnter}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={styles.input(hasError, disabled, dragActive, hasFile)}
+        className={styles.input(
+          hasError,
+          disabled,
+          dragActive,
+          hasFile,
+          variant,
+        )}
       >
-        <LuCloudUpload
-          size={36}
-          className={`shrink-0 pointer-events-none ${
-            disabled
-              ? "text-muted-foreground"
-              : dragActive || hasFile
-                ? "text-muted-foreground"
-                : "text-muted-foreground"
+        <div
+          className={`pointer-events-none flex items-center ${
+            variant === "large"
+              ? "min-h-32 flex-col justify-center gap-3 text-center"
+              : "gap-3"
           }`}
-        />
-
-        <div className="min-w-0 flex-1 pointer-events-none">
-          <h4
-            className={`text-base font-semibold ${
-              disabled ? "text-muted-foreground" : "text-foreground"
-            }`}
-          >
-            {dragActive ? "Drop files here" : `Choose ${label.toLowerCase()}`}
-          </h4>
-
-          {hint && (
-            <span className="text-xs text-muted-foreground">{hint}</span>
-          )}
-
-          <p className="mt-1 text-xs text-muted-foreground">
-            {totalFiles}/{maxFiles} files selected
-          </p>
-        </div>
-
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={disabled || totalFiles >= maxFiles}
-          onClick={() => inputRef.current?.click()}
-          className="shrink-0"
         >
-          Choose files
-        </Button>
+          <div
+            className={`flex size-11 shrink-0 items-center justify-center rounded-xl bg-secondary text-muted-foreground transition-colors
+            ${dragActive ? "animate-bounce" : ""}`}
+          >
+            <LuCloudUpload size={24} />
+          </div>
+
+          <div className="min-w-0">
+            <h4
+              className={`font-semibold ${
+                variant === "large"
+                  ? dragActive
+                    ? "text-2xl"
+                    : "text-base"
+                  : dragActive
+                    ? "text-base"
+                    : "text-sm"
+              } ${disabled ? "text-muted-foreground" : "text-foreground"}`}
+            >
+              {dragActive
+                ? "Drop files here"
+                : totalFiles >= maxFiles
+                  ? "File limit reached"
+                  : "Drop files here or click to browse"}
+            </h4>
+
+            {hint && !dragActive && (
+              <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
+            )}
+          </div>
+        </div>
 
         <Input
           ref={inputRef}
@@ -302,131 +331,146 @@ export function FileUploadField({
           multiple
           required={required && totalFiles === 0}
           disabled={disabled}
+          onClick={(event) => event.stopPropagation()}
           onChange={(event) => {
             if (event.target.files) {
               handleFiles(event.target.files);
             }
           }}
         />
-      </div>
+        {/* Existing uploaded files */}
+        {existingDocuments.length > 0 && (
+          <div className="mt-4 space-y-2 border-t border-border pt-4">
+            {existingDocuments.map((document) => {
+              const FileIcon = getFileIcon(
+                document.mimeType,
+                document.filename,
+              );
 
-      {/* Existing uploaded files */}
-      {existingDocuments.length > 0 && (
-        <div className="mt-3 space-y-2">
-          {existingDocuments.map((document) => {
-            const FileIcon = getFileIcon(document.mimeType, document.filename);
+              return (
+                <div
+                  key={document.id}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-border bg-muted px-4 py-3"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <FileIcon
+                      size={24}
+                      className="shrink-0 text-muted-foreground"
+                    />
 
-            return (
-              <div
-                key={document.id}
-                className="flex items-center justify-between gap-3 rounded-xl border border-border bg-muted px-4 py-3"
-              >
-                <div className="flex min-w-0 items-center gap-3">
-                  <FileIcon
-                    size={24}
-                    className="shrink-0 text-muted-foreground"
-                  />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-foreground">
+                        {document.filename}
+                      </p>
 
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold text-foreground">
-                      {document.filename}
-                    </p>
-
-                    <p className="text-xs font-medium text-success">
-                      {getFileType(document.mimeType, document.filename)} •{" "}
-                      {formatFileSize(document.size)} • Uploaded
-                    </p>
+                      <p className="text-xs font-medium text-success">
+                        {getFileType(document.mimeType, document.filename)} •{" "}
+                        {formatFileSize(document.size)} • Uploaded
+                      </p>
+                    </div>
                   </div>
+
+                  {!disabled && onRequestDeleteDocument && (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon-sm"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onRequestDeleteDocument(document);
+                      }}
+                      onKeyDown={(event) => event.stopPropagation()}
+                      aria-label={`Remove ${document.filename}`}
+                    >
+                      <LuX size={18} animated />
+                    </Button>
+                  )}
                 </div>
+              );
+            })}
+          </div>
+        )}
 
-                {!disabled && onRequestDeleteDocument && (
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon-sm"
-                    onClick={() => onRequestDeleteDocument(document)}
-                    aria-label={`Remove ${document.filename}`}
-                  >
-                    <LuX size={18} animated />
-                  </Button>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
+        {files.length > 0 && (
+          <div className="mt-4 space-y-2 border-t border-border pt-4">
+            {files.map((file, index) => {
+              const FileIcon = getFileIcon(file.type, file.name);
+              const isUploading = uploadingFiles.includes(file);
+              const percentage = uploadProgress.get(file) ?? 0;
 
-      {files.length > 0 && (
-        <div className="mt-3 space-y-2">
-          {files.map((file, index) => {
-            const FileIcon = getFileIcon(file.type, file.name);
-            const isUploading = uploadingFiles.includes(file);
-            const percentage = uploadProgress.get(file) ?? 0;
+              return (
+                <div
+                  key={`${file.name}-${file.lastModified}-${index}`}
+                  className="flex items-center justify-between gap-3 rounded-xl border border-border bg-muted px-4 py-3"
+                >
+                  <div className="flex min-w-0 items-center gap-3">
+                    <FileIcon
+                      size={24}
+                      className="shrink-0 text-muted-foreground"
+                    />
 
-            return (
-              <div
-                key={`${file.name}-${file.lastModified}-${index}`}
-                className="flex items-center justify-between gap-3 rounded-xl border border-border bg-muted px-4 py-3"
-              >
-                <div className="flex min-w-0 items-center gap-3">
-                  <FileIcon
-                    size={24}
-                    className="shrink-0 text-muted-foreground"
-                  />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-foreground">
+                        {file.name}
+                      </p>
 
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-foreground">
-                      {file.name}
-                    </p>
-
-                    <p className="text-xs text-muted-foreground">
-                      {getFileType(file.type, file.name)} •{" "}
-                      {formatFileSize(file.size)} •{" "}
-                      {isUploading
-                        ? percentage < 100
-                          ? `Uploading ${percentage}%`
-                          : "Upload complete. Verifying..."
-                        : "Ready to upload"}
-                    </p>
-                    {isUploading && (
-                      <div
-                        role="progressbar"
-                        aria-label={`Uploading ${file.name}`}
-                        aria-valuemin={0}
-                        aria-valuemax={100}
-                        aria-valuenow={percentage}
-                        className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-secondary"
-                      >
+                      <p className="text-xs text-muted-foreground">
+                        {getFileType(file.type, file.name)} •{" "}
+                        {formatFileSize(file.size)} •{" "}
+                        {isUploading
+                          ? percentage < 100
+                            ? `Uploading ${percentage}%`
+                            : "Upload complete. Verifying..."
+                          : "Ready to upload"}
+                      </p>
+                      {isUploading && (
                         <div
-                          className="h-full rounded-full bg-primary transition-[width] duration-150 ease-out"
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
-                    )}
+                          role="progressbar"
+                          aria-label={`Uploading ${file.name}`}
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-valuenow={percentage}
+                          className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-secondary"
+                        >
+                          <div
+                            className="h-full rounded-full bg-primary transition-[width] duration-150 ease-out animate-pulse"
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
+
+                  {!disabled && (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon-sm"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        removeFile(index);
+                      }}
+                      onKeyDown={(event) => event.stopPropagation()}
+                      aria-label={`Remove ${file.name}`}
+                    >
+                      <LuX size={18} animated />
+                    </Button>
+                  )}
                 </div>
+              );
+            })}
+          </div>
+        )}
 
-                {!disabled && (
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon-sm"
-                    onClick={() => removeFile(index)}
-                    aria-label={`Remove ${file.name}`}
-                  >
-                    <LuX size={18} animated />
-                  </Button>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      )}
-
-      <p className="mt-2 text-xs text-muted-foreground">
-        Maximum file size: {MAX_FILE_SIZE_LABEL}
-        {accept && ` • Accepted file types: ${accept}`}
-      </p>
+        <p
+          id={`${id}-requirements`}
+          className="pointer-events-none mt-4 border-t border-border pt-3 text-xs text-muted-foreground"
+        >
+          {totalFiles}/{maxFiles} files selected • Maximum file size:{" "}
+          {MAX_FILE_SIZE_LABEL}
+          {accept && ` • Accepted file types: ${accept}`}
+        </p>
+      </div>
     </div>
   );
 }

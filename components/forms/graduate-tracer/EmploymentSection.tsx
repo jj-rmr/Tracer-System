@@ -257,7 +257,7 @@ export function EmploymentSection({
             <SelectField
               disabled={readOnly}
               id="businessIndustry"
-              label="17. What is the major line of business of the company or organization where you are presently employed? Select one only. *"
+              label="17. What is the major line of business of the company or organization where you are presently employed? *"
               value={form.businessIndustry}
               onChange={(val) =>
                 updateField(

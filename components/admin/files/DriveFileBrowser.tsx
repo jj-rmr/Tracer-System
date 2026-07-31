@@ -1070,6 +1070,7 @@ export default function DriveFileBrowser() {
           <form onSubmit={uploadAdminFiles} className="space-y-5">
             <FileUploadField
               id="admin-directory-files"
+              variant="small"
               label="Files"
               files={uploadFiles}
               onChange={setUploadFiles}

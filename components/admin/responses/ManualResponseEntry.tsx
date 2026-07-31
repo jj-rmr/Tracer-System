@@ -18,6 +18,7 @@ import GraduateTracerForm, {
 import { surveyToAnswers } from "@/lib/forms/graduate-tracer-adapter";
 import { defaultSurvey } from "@/lib/surveys/defaults";
 import { uploadFormResponseDocument } from "@/lib/api/form-response-documents";
+import { readApiJson } from "@/lib/api/client-errors";
 import {
   StudyPeriod,
   Survey,
@@ -150,12 +151,12 @@ const ManualResponseEntry = forwardRef<
           }),
         },
       );
-      const result = await saveResponse.json();
+      const result = await readApiJson<{
+        data?: { id?: string; importToken?: string; updatedAt?: string };
+      }>(saveResponse, "The manual response draft could not be saved.");
 
-      if (!saveResponse.ok || typeof result.data?.id !== "string") {
-        throw new Error(
-          result.message ?? "Failed to save the manual response.",
-        );
+      if (typeof result.data?.id !== "string") {
+        throw new Error("The manual response draft could not be saved.");
       }
 
       responseIdRef.current = result.data.id;

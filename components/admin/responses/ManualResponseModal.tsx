@@ -9,6 +9,10 @@ import ManualResponseEntry, {
 import FormModal from "@/components/ui/FormModal";
 import LoadingState from "@/components/ui/LoadingState";
 import { useToast } from "@/components/ui/Toast";
+import {
+  friendlyRequestMessage,
+  readApiJson,
+} from "@/lib/api/client-errors";
 import { PublishedFormVersion, StudyPeriod, StudyPeriodSummary } from "@/types";
 
 interface StudiesPayload {
@@ -54,18 +58,15 @@ export default function ManualResponseModal({
           }),
         ]);
         const [studiesResult, draftResult] = await Promise.all([
-          studiesResponse.json(),
-          draftResponse.json(),
+          readApiJson<{ data: StudiesPayload }>(
+            studiesResponse,
+            "The available studies could not be loaded.",
+          ),
+          readApiJson<{ data: ManualResponseDraft | null }>(
+            draftResponse,
+            "The saved manual response draft could not be loaded.",
+          ),
         ]);
-
-        if (!studiesResponse.ok) {
-          throw new Error(studiesResult.message ?? "Failed to load studies.");
-        }
-        if (!draftResponse.ok) {
-          throw new Error(
-            draftResult.message ?? "Failed to load the manual response draft.",
-          );
-        }
 
         const data = studiesResult.data as StudiesPayload;
         const eligibleVersionIds = new Set(
@@ -88,9 +89,10 @@ export default function ManualResponseModal({
       } catch (loadError) {
         if (!controller.signal.aborted) {
           setError(
-            loadError instanceof Error
-              ? loadError.message
-              : "Failed to load manual response details.",
+            friendlyRequestMessage(
+              loadError,
+              "The manual response form could not be loaded. Please close it and try again.",
+            ),
           );
         }
       } finally {
@@ -117,10 +119,10 @@ export default function ManualResponseModal({
       onClose();
     } catch (actionError) {
       showToast({
-        message:
-          actionError instanceof Error
-            ? actionError.message
-            : "Failed to save the manual response draft.",
+        message: friendlyRequestMessage(
+          actionError,
+          "The manual response draft could not be saved. The form will remain open so you can try again.",
+        ),
         type: "error",
       });
     } finally {

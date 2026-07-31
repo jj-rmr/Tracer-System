@@ -25,6 +25,10 @@ import {
   deleteFormResponseDocument,
   uploadFormResponseDocument,
 } from "@/lib/api/form-response-documents";
+import {
+  friendlyRequestMessage,
+  readApiJson,
+} from "@/lib/api/client-errors";
 
 interface Props {
   survey: Survey;
@@ -93,10 +97,12 @@ export default function ResponseWorkspace({
           expectedUpdatedAt: updatedAtRef.current,
         }),
       });
-      const result = await saveResponse.json();
+      const result = await readApiJson<{
+        data?: { id?: string; updatedAt?: string };
+      }>(saveResponse, "Your draft could not be saved.");
 
-      if (!saveResponse.ok || typeof result.data?.id !== "string") {
-        throw new Error(result.message ?? "Failed to save the response.");
+      if (typeof result.data?.id !== "string") {
+        throw new Error("Your draft could not be saved.");
       }
 
       responseIdRef.current = result.data.id;
@@ -200,8 +206,10 @@ export default function ResponseWorkspace({
       router.refresh();
     } catch (error) {
       showToast({
-        message:
-          error instanceof Error ? error.message : "Failed to save draft.",
+        message: friendlyRequestMessage(
+          error,
+          "Your draft could not be saved. The response form will remain open so you can try again.",
+        ),
         type: "error",
       });
     } finally {
@@ -223,11 +231,7 @@ export default function ResponseWorkspace({
       const response = await fetch(`/api/studies/${studyId}/response`, {
         method: "DELETE",
       });
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message ?? "Failed to discard draft.");
-      }
+      await readApiJson(response, "Your draft could not be discarded.");
 
       responseIdRef.current = undefined;
       const clearedSurvey = {
@@ -248,8 +252,10 @@ export default function ResponseWorkspace({
       router.refresh();
     } catch (error) {
       showToast({
-        message:
-          error instanceof Error ? error.message : "Failed to discard draft.",
+        message: friendlyRequestMessage(
+          error,
+          "Your draft could not be discarded. It has been kept so you can try again.",
+        ),
         type: "error",
       });
     } finally {

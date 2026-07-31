@@ -6,6 +6,15 @@ import { InMemoryRateLimiter } from "@/lib/security/rate-limit";
 import { classifyRateLimitedRequest } from "@/lib/security/rate-limit-policy";
 
 const AUTH_ROUTES = ["/signin"];
+const SESSION_OPTIONAL_API_ROUTES = new Set([
+  "/api/auth/google",
+  "/api/auth/google/callback",
+  "/api/auth/google-drive",
+  "/api/auth/google-drive/callback",
+  "/api/auth/logout",
+  "/api/auth/refresh",
+  "/api/auth/session-expired",
+]);
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 const rateLimiter = new InMemoryRateLimiter();
 
@@ -51,6 +60,16 @@ function rateLimit(request: NextRequest) {
 function protectApiRequest(request: NextRequest) {
   const limited = rateLimit(request);
   if (limited) return limited;
+
+  if (
+    !SESSION_OPTIONAL_API_ROUTES.has(request.nextUrl.pathname) &&
+    !request.cookies.get(AUTH_COOKIE)?.value
+  ) {
+    return NextResponse.json(
+      { success: false, message: "Authentication is required." },
+      { status: 401 },
+    );
+  }
 
   const contentLength = Number(request.headers.get("content-length") ?? 0);
   const isMultipart = request.headers
