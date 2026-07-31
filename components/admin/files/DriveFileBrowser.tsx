@@ -17,6 +17,9 @@ import {
   LuSettings2 as AnimatedFolderSettingsIcon,
   LuTrash2 as AnimatedTrashIcon,
   LuUpload as AnimatedUploadIcon,
+  LuArrowUpDown,
+  LuChevronDown,
+  LuChevronUp,
 } from "@/components/ui/icons";
 
 import { Button } from "@/components/ui/button";
@@ -34,6 +37,47 @@ import { SearchInput } from "@/components/ui/search-input";
 import { useToast } from "@/components/ui/Toast";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
 import type { DriveBreadcrumb, DriveBrowserItem } from "@/types";
+import type { SortDirection } from "@/components/ui/sortable-table-head";
+
+type FileSortKey = "name" | "size" | "type" | "modified";
+
+function FileSortHeader({
+  children,
+  active,
+  direction,
+  onSort,
+}: {
+  children: string;
+  active: boolean;
+  direction: SortDirection;
+  onSort: () => void;
+}) {
+  return (
+    <span
+      aria-sort={
+        active ? (direction === "asc" ? "ascending" : "descending") : "none"
+      }
+      role="columnheader"
+    >
+      <button
+        type="button"
+        onClick={onSort}
+        className="flex items-center gap-1.5 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      >
+        {children}
+        {active ? (
+          direction === "asc" ? (
+            <LuChevronUp aria-hidden="true" size={14} />
+          ) : (
+            <LuChevronDown aria-hidden="true" size={14} />
+          )
+        ) : (
+          <LuArrowUpDown aria-hidden="true" size={14} className="opacity-50" />
+        )}
+      </button>
+    </span>
+  );
+}
 
 interface FolderPayload {
   folderId: string;
@@ -186,13 +230,19 @@ export default function DriveFileBrowser() {
   const [newFolderName, setNewFolderName] = useState("");
   const [creatingFolder, setCreatingFolder] = useState(false);
   const [showSyncInfo, setShowSyncInfo] = useState(false);
+  const [sortKey, setSortKey] = useState<FileSortKey>("name");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   useEffect(() => {
     const requestId = ++latestRequestIdRef.current;
 
     async function loadInitialFolder() {
       try {
-        const response = await fetch("/api/admin/files", {
+        const query = new URLSearchParams({
+          sort: "name",
+          direction: "asc",
+        });
+        const response = await fetch(`/api/admin/files?${query}`, {
           cache: "no-store",
           credentials: "include",
         });
@@ -245,11 +295,15 @@ export default function DriveFileBrowser() {
       searchQuery,
       pageToken,
       append = false,
+      requestedSort = sortKey,
+      requestedDirection = sortDirection,
     }: {
       folderId?: string;
       searchQuery?: string;
       pageToken?: string;
       append?: boolean;
+      requestedSort?: FileSortKey;
+      requestedDirection?: SortDirection;
     } = {}) => {
       const requestId = ++latestRequestIdRef.current;
 
@@ -261,6 +315,8 @@ export default function DriveFileBrowser() {
         if (folderId) query.set("folder", folderId);
         if (searchQuery) query.set("search", searchQuery);
         if (pageToken) query.set("pageToken", pageToken);
+        query.set("sort", requestedSort);
+        query.set("direction", requestedDirection);
 
         const response = await fetch(`/api/admin/files?${query}`, {
           cache: "no-store",
@@ -295,8 +351,22 @@ export default function DriveFileBrowser() {
         }
       }
     },
-    [showToast],
+    [showToast, sortDirection, sortKey],
   );
+
+  const handleSort = (key: FileSortKey) => {
+    const direction =
+      sortKey === key && sortDirection === "asc" ? "desc" : "asc";
+    setSortKey(key);
+    setSortDirection(direction);
+    setSelectedItemIds(new Set());
+    void loadFiles({
+      folderId: folderIdRef.current,
+      searchQuery: searchQuery || undefined,
+      requestedSort: key,
+      requestedDirection: direction,
+    });
+  };
 
   const handleSearch = useCallback(
     (query: string) => {
@@ -825,10 +895,34 @@ export default function DriveFileBrowser() {
                 <span />
               )}
               <span aria-hidden="true" className="w-5" />
-              <span>Name</span>
-              <span>Size</span>
-              <span>File type</span>
-              <span>Modified</span>
+              <FileSortHeader
+                active={sortKey === "name"}
+                direction={sortDirection}
+                onSort={() => handleSort("name")}
+              >
+                Name
+              </FileSortHeader>
+              <FileSortHeader
+                active={sortKey === "size"}
+                direction={sortDirection}
+                onSort={() => handleSort("size")}
+              >
+                Size
+              </FileSortHeader>
+              <FileSortHeader
+                active={sortKey === "type"}
+                direction={sortDirection}
+                onSort={() => handleSort("type")}
+              >
+                File type
+              </FileSortHeader>
+              <FileSortHeader
+                active={sortKey === "modified"}
+                direction={sortDirection}
+                onSort={() => handleSort("modified")}
+              >
+                Modified
+              </FileSortHeader>
               {canUpload && <span className="w-9 text-center">Menu</span>}
             </div>
             <div className="divide-y divide-border">

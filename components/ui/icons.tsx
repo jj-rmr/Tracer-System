@@ -58,6 +58,7 @@ import {
   XIcon,
 } from "@animateicons/react/lucide";
 import {
+  ArrowUpDown,
   BriefcaseBusiness,
   CalendarDays,
   CircleHelp,
@@ -66,6 +67,8 @@ import {
   FileType2,
   GraduationCap,
   History,
+  ChevronUp,
+  Copy,
   Palette,
 } from "lucide-react";
 
@@ -171,6 +174,7 @@ function staticIcon(Icon: StaticIconComponent) {
 }
 
 export const LuAccessibility = animatedIcon(AccessibilityIcon);
+export const LuArrowUpDown = staticIcon(ArrowUpDown);
 export const LuBookOpen = animatedIcon(BookOpenIcon);
 export const LuBriefcaseBusiness = staticIcon(BriefcaseBusiness);
 export const LuCalendarClock = animatedIcon(CalendarIcon);
@@ -178,6 +182,8 @@ export const LuCalendarDays = staticIcon(CalendarDays);
 export const LuChartNoAxesCombined = animatedIcon(ChartNoAxesCombinedIcon);
 export const LuCheck = animatedIcon(CheckIcon);
 export const LuChevronDown = animatedIcon(ChevronDownIcon);
+export const LuChevronUp = staticIcon(ChevronUp);
+export const LuCopy = staticIcon(Copy);
 export const LuChevronRight = animatedIcon(ChevronRightIcon);
 export const LuCircleAlert = animatedIcon(TriangleAlertIcon);
 export const LuCircleCheck = animatedIcon(CircleCheckIcon);

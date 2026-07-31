@@ -27,9 +27,13 @@ function getConfiguredRootId() {
 export async function listIndexedFolder({
   folderId = getConfiguredRootId(),
   pageToken,
+  sort,
+  direction,
 }: {
   folderId?: string;
   pageToken?: string;
+  sort?: "name" | "size" | "type" | "modified";
+  direction?: "asc" | "desc";
 }) {
   const rootId = getConfiguredRootId();
   const folder = await requireIndexedDriveBrowserItem(folderId, rootId);
@@ -40,7 +44,7 @@ export async function listIndexedFolder({
 
   const offset = Math.max(0, Number.parseInt(pageToken ?? "0", 10) || 0);
   const [listing, breadcrumbs] = await Promise.all([
-    listIndexedDriveFolder({ rootId, folderId, offset }),
+    listIndexedDriveFolder({ rootId, folderId, offset, sort, direction }),
     getIndexedDriveBreadcrumbs(rootId, folderId),
   ]);
 
@@ -56,9 +60,13 @@ export async function listIndexedFolder({
 export async function searchIndexedDriveFolder({
   folderId = getConfiguredRootId(),
   query,
+  sort,
+  direction,
 }: {
   folderId?: string;
   query: string;
+  sort?: "name" | "size" | "type" | "modified";
+  direction?: "asc" | "desc";
 }) {
   const normalizedQuery = query.trim().slice(0, 100);
 
@@ -71,7 +79,13 @@ export async function searchIndexedDriveFolder({
     throw new Error("The requested Drive item is not a folder.");
   }
 
-  return searchIndexedDriveItems(rootId, folderId, normalizedQuery);
+  return searchIndexedDriveItems(
+    rootId,
+    folderId,
+    normalizedQuery,
+    sort,
+    direction,
+  );
 }
 
 const googleExportMimeTypes: Record<string, string> = {

@@ -147,17 +147,35 @@ export async function listAdminResponseSummaries({
   filters,
   page,
   limit,
+  sort = "createdAt",
+  direction = "desc",
 }: {
   filters: AdminResponseFilters;
   page: number;
   limit: number;
+  sort?:
+    | "name"
+    | "academicYear"
+    | "program"
+    | "employmentStatus"
+    | "createdAt"
+    | "driveStatus";
+  direction?: "asc" | "desc";
 }) {
   const from = (page - 1) * limit;
+  const sortColumns = {
+    name: "sort_name",
+    academicYear: "academic_year",
+    program: "program",
+    employmentStatus: "employment_status",
+    createdAt: "created_at",
+    driveStatus: "drive_organization_status",
+  } as const;
   const { data, error, count } = await applyFilters(
     createSummaryQuery(),
     filters,
   )
-    .order("created_at", { ascending: false })
+    .order(sortColumns[sort], { ascending: direction === "asc" })
     .order("id", { ascending: false })
     .range(from, from + limit - 1);
 

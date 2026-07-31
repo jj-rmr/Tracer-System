@@ -20,15 +20,44 @@ export async function GET(request: NextRequest) {
 
     const search = request.nextUrl.searchParams.get("search")?.trim() ?? "";
     const folderId = request.nextUrl.searchParams.get("folder") || undefined;
+    const rawSort = request.nextUrl.searchParams.get("sort") ?? "name";
+    const rawDirection = request.nextUrl.searchParams.get("direction") ?? "asc";
+    const sortFields = new Set(["name", "size", "type", "modified"]);
+
+    if (!sortFields.has(rawSort)) {
+      return NextResponse.json(
+        { success: false, message: "Invalid sort field." },
+        { status: 400 },
+      );
+    }
+    if (rawDirection !== "asc" && rawDirection !== "desc") {
+      return NextResponse.json(
+        { success: false, message: "Invalid sort direction." },
+        { status: 400 },
+      );
+    }
+
+    const sort = rawSort as "name" | "size" | "type" | "modified";
+    const direction = rawDirection as "asc" | "desc";
 
     if (search) {
-      const items = await searchIndexedDriveFolder({ folderId, query: search });
+      const items = await searchIndexedDriveFolder({
+        folderId,
+        query: search,
+        sort,
+        direction,
+      });
       return NextResponse.json({ success: true, data: { items, search } });
     }
 
     const pageToken =
       request.nextUrl.searchParams.get("pageToken") || undefined;
-    const data = await listIndexedFolder({ folderId, pageToken });
+    const data = await listIndexedFolder({
+      folderId,
+      pageToken,
+      sort,
+      direction,
+    });
     const adminRoot = await getRegisteredDriveFolder(
       getAdminFilesHierarchyKey(getDriveRootId()),
     );

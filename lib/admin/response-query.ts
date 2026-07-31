@@ -11,6 +11,14 @@ const SOURCES = new Set<FormResponseSource>(["alumni", "admin_import"]);
 const STATUSES = new Set<FormResponseStatus>(["draft", "submitted"]);
 const PROGRAM_VALUES = new Set(PROGRAMS.map((program) => program.value));
 const EMPLOYMENT_STATUSES = new Set(["Yes", "No", "Never Employed"]);
+const SORT_FIELDS = new Set([
+  "name",
+  "academicYear",
+  "program",
+  "employmentStatus",
+  "createdAt",
+  "driveStatus",
+]);
 
 export class InvalidResponseQueryError extends Error {}
 
@@ -29,6 +37,8 @@ export function parseAdminResponseQuery(searchParams: URLSearchParams) {
   const source = optionalValue(searchParams, "source");
   const status = optionalValue(searchParams, "status");
   const employmentStatus = optionalValue(searchParams, "employmentStatus");
+  const sort = optionalValue(searchParams, "sort") ?? "createdAt";
+  const direction = optionalValue(searchParams, "direction") ?? "desc";
 
   if (!Number.isInteger(page) || page < 1) {
     throw new InvalidResponseQueryError("Page must be a positive integer.");
@@ -64,6 +74,14 @@ export function parseAdminResponseQuery(searchParams: URLSearchParams) {
     throw new InvalidResponseQueryError("Invalid employment status filter.");
   }
 
+  if (!SORT_FIELDS.has(sort)) {
+    throw new InvalidResponseQueryError("Invalid sort field.");
+  }
+
+  if (direction !== "asc" && direction !== "desc") {
+    throw new InvalidResponseQueryError("Invalid sort direction.");
+  }
+
   const filters: AdminResponseFilters = {
     search,
     studyPeriodId,
@@ -73,5 +91,17 @@ export function parseAdminResponseQuery(searchParams: URLSearchParams) {
     employmentStatus,
   };
 
-  return { page, limit, filters };
+  return {
+    page,
+    limit,
+    filters,
+    sort: sort as
+      | "name"
+      | "academicYear"
+      | "program"
+      | "employmentStatus"
+      | "createdAt"
+      | "driveStatus",
+    direction: direction as "asc" | "desc",
+  };
 }

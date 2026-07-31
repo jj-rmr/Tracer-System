@@ -121,18 +121,32 @@ export async function listIndexedDriveFolder({
   folderId,
   offset = 0,
   limit = 100,
+  sort = "name",
+  direction = "asc",
 }: {
   rootId: string;
   folderId: string;
   offset?: number;
   limit?: number;
+  sort?: "name" | "size" | "type" | "modified";
+  direction?: "asc" | "desc";
 }) {
+  const sortColumns = {
+    name: "name",
+    size: "size",
+    type: "mime_type",
+    modified: "modified_at",
+  } as const;
   const { data, error } = await supabase
     .from("google_drive_items")
     .select(selectFields)
     .eq("root_google_drive_folder_id", rootId)
     .eq("parent_google_drive_folder_id", folderId)
     .order("is_folder", { ascending: false })
+    .order(sortColumns[sort], {
+      ascending: direction === "asc",
+      nullsFirst: false,
+    })
     .order("name", { ascending: true })
     .range(offset, offset + limit);
 
@@ -149,8 +163,16 @@ export async function searchIndexedDriveItems(
   rootId: string,
   folderId: string,
   search: string,
+  sort: "name" | "size" | "type" | "modified" = "name",
+  direction: "asc" | "desc" = "asc",
 ) {
   const escaped = search.replace(/[\\%_]/g, "\\$&");
+  const sortColumns = {
+    name: "name",
+    size: "size",
+    type: "mime_type",
+    modified: "modified_at",
+  } as const;
   const [matchesResult, foldersResult] = await Promise.all([
     supabase
       .from("google_drive_items")
@@ -158,6 +180,10 @@ export async function searchIndexedDriveItems(
       .eq("root_google_drive_folder_id", rootId)
       .ilike("name", `%${escaped}%`)
       .order("is_folder", { ascending: false })
+      .order(sortColumns[sort], {
+        ascending: direction === "asc",
+        nullsFirst: false,
+      })
       .order("name", { ascending: true })
       .limit(10000),
     supabase

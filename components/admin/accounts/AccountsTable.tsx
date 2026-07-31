@@ -8,8 +8,6 @@ import { useRouter } from "next/navigation";
 import { LuEye, LuShieldCheck, LuTrash2 } from "@/components/ui/icons";
 import { Role } from "@/types";
 import { useToast } from "@/components/ui/Toast";
-import LoadingState from "@/components/ui/LoadingState";
-import ErrorState from "@/components/ui/ErrorState";
 import { friendlyRequestMessage } from "@/lib/api/client-errors";
 import {
   Table,
@@ -22,6 +20,12 @@ import {
 import Modal from "@/components/ui/Modal";
 import { Input } from "@/components/ui/input";
 import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
+import {
+  SortableTableHead,
+  type SortDirection,
+} from "@/components/ui/sortable-table-head";
+import { TableContentState } from "@/components/ui/table-content-state";
+import { CopyButton } from "@/components/ui/copy-button";
 
 interface Account {
   id: string;
@@ -47,6 +51,9 @@ interface AccountsTableProps {
   roleFilter: Role | "";
 }
 
+type AccountSortKey =
+  "name" | "email" | "role" | "verified" | "createdAt" | "updatedAt";
+
 export default function AccountsTable({
   currentPage,
   searchQuery,
@@ -69,6 +76,8 @@ export default function AccountsTable({
   } | null>(null);
   const [roleConfirmation, setRoleConfirmation] = useState("");
   const [changingRole, setChangingRole] = useState(false);
+  const [sortKey, setSortKey] = useState<AccountSortKey>("createdAt");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
   const router = useRouter();
   const { showToast } = useToast();
@@ -110,6 +119,20 @@ export default function AccountsTable({
           filtered = filtered.filter((account) => account.role === roleFilter);
         }
 
+        filtered.sort((left, right) => {
+          const leftValue = left[sortKey];
+          const rightValue = right[sortKey];
+          const comparison =
+            typeof leftValue === "boolean" && typeof rightValue === "boolean"
+              ? Number(leftValue) - Number(rightValue)
+              : String(leftValue).localeCompare(String(rightValue), undefined, {
+                  numeric: true,
+                  sensitivity: "base",
+                });
+
+          return sortDirection === "asc" ? comparison : -comparison;
+        });
+
         if (cancelled) return;
 
         setTotalRows(filtered.length);
@@ -139,7 +162,27 @@ export default function AccountsTable({
     return () => {
       cancelled = true;
     };
-  }, [currentPage, reloadKey, roleFilter, searchQuery]);
+  }, [currentPage, reloadKey, roleFilter, searchQuery, sortDirection, sortKey]);
+
+  const handleSort = (key: AccountSortKey) => {
+    setSortDirection((current) =>
+      sortKey === key ? (current === "asc" ? "desc" : "asc") : "asc",
+    );
+    setSortKey(key);
+    onPageChange(1);
+  };
+
+  const openAccount = (account: Account) => {
+    setAccountToView(account);
+  };
+
+  const isInteractiveTarget = (target: EventTarget | null) =>
+    target instanceof Element &&
+    Boolean(
+      target.closest(
+        "button,a,input,select,textarea,[role='menuitem'],[data-row-action]",
+      ),
+    );
 
   const requiredRoleConfirmation =
     roleChange?.role === "admin" ? "PROMOTE TO ADMIN" : "DEMOTE TO ALUMNI";
@@ -243,28 +286,6 @@ export default function AccountsTable({
     }
   };
 
-  if (loading) {
-    return <LoadingState className="min-h-72" message="Loading accounts..." />;
-  }
-
-  if (error) {
-    return (
-      <ErrorState
-        message={error}
-        retryLabel="Refresh accounts"
-        onRetry={() => setReloadKey((current) => current + 1)}
-      />
-    );
-  }
-
-  if (totalRows === 0) {
-    return (
-      <div className="text-center w-full p-12 text-muted-foreground bg-muted rounded-2xl border border-dashed border-border">
-        No accounts found.
-      </div>
-    );
-  }
-
   const totalPages = Math.max(1, Math.ceil(totalRows / itemsPerPage));
 
   return (
@@ -272,133 +293,223 @@ export default function AccountsTable({
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead>Full Name</TableHead>
-
-            <TableHead>Email</TableHead>
-            <TableHead className="text-center">Role</TableHead>
-
-            <TableHead className="text-center">Verified</TableHead>
-
-            <TableHead>Created</TableHead>
-
-            <TableHead>Updated</TableHead>
+            <SortableTableHead
+              direction={sortKey === "name" ? sortDirection : undefined}
+              onSort={() => handleSort("name")}
+            >
+              Full Name
+            </SortableTableHead>
+            <SortableTableHead
+              direction={sortKey === "email" ? sortDirection : undefined}
+              onSort={() => handleSort("email")}
+            >
+              Email
+            </SortableTableHead>
+            <SortableTableHead
+              align="center"
+              direction={sortKey === "role" ? sortDirection : undefined}
+              onSort={() => handleSort("role")}
+            >
+              Role
+            </SortableTableHead>
+            <SortableTableHead
+              align="center"
+              direction={sortKey === "verified" ? sortDirection : undefined}
+              onSort={() => handleSort("verified")}
+            >
+              Verified
+            </SortableTableHead>
+            <SortableTableHead
+              direction={sortKey === "createdAt" ? sortDirection : undefined}
+              onSort={() => handleSort("createdAt")}
+            >
+              Created
+            </SortableTableHead>
+            <SortableTableHead
+              direction={sortKey === "updatedAt" ? sortDirection : undefined}
+              onSort={() => handleSort("updatedAt")}
+            >
+              Updated
+            </SortableTableHead>
 
             <TableHead className="text-center">Menu</TableHead>
           </TableRow>
         </TableHeader>
 
-        <TableBody>
-          {accounts.map((account) => (
-            <TableRow key={account.id}>
-              <TableCell className="font-semibold whitespace-nowrap text-foreground">
-                <div className="flex items-center gap-3">
-                  <ProfileAvatar
-                    name={account.name}
-                    pictureUrl={account.pictureUrl}
-                    size={36}
-                  />
-                  {account.name || (
-                    <span className="italic text-muted-foreground">
-                      Unnamed User
+        <TableBody aria-busy={loading}>
+          {loading ? (
+            <TableContentState
+              colSpan={7}
+              loadingMessage="Loading accounts..."
+            />
+          ) : error ? (
+            <TableContentState
+              colSpan={7}
+              error={error}
+              retryLabel="Refresh accounts"
+              onRetry={() => setReloadKey((current) => current + 1)}
+            />
+          ) : totalRows === 0 ? (
+            <TableContentState colSpan={7}>
+              <div className="text-center text-muted-foreground">
+                No accounts found.
+              </div>
+            </TableContentState>
+          ) : (
+            accounts.map((account) => (
+              <TableRow
+                key={account.id}
+                tabIndex={0}
+                aria-label={`View account for ${account.name || account.email}`}
+                onPointerUp={(event) => {
+                  if (
+                    event.pointerType === "mouse" ||
+                    isInteractiveTarget(event.target)
+                  ) {
+                    return;
+                  }
+                  openAccount(account);
+                }}
+                onDoubleClick={(event) => {
+                  if (isInteractiveTarget(event.target)) return;
+                  openAccount(account);
+                }}
+                onKeyDown={(event) => {
+                  if (
+                    (event.key !== "Enter" && event.key !== " ") ||
+                    isInteractiveTarget(event.target)
+                  ) {
+                    return;
+                  }
+                  event.preventDefault();
+                  openAccount(account);
+                }}
+                className="cursor-pointer select-none [-webkit-tap-highlight-color:transparent] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset [&_*]:[-webkit-tap-highlight-color:transparent]"
+              >
+                <TableCell className="font-semibold whitespace-nowrap text-foreground">
+                  <div className="flex items-center gap-3">
+                    <ProfileAvatar
+                      name={account.name}
+                      pictureUrl={account.pictureUrl}
+                      size={36}
+                    />
+                    <div className="flex items-center gap-1.5">
+                      {account.name ? (
+                        `${account.name}${account.id === currentUserId ? " (You)" : ""}`
+                      ) : (
+                        <span className="italic text-muted-foreground">
+                          Unnamed User
+                          {account.id === currentUserId ? " (You)" : ""}
+                        </span>
+                      )}
+                      <CopyButton
+                        value={account.name || "Unnamed User"}
+                        label={`Copy ${account.name || "Unnamed User"}`}
+                      />
+                    </div>
+                  </div>
+                </TableCell>
+
+                <TableCell className="text-muted-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <span>{account.email}</span>
+                    <CopyButton
+                      value={account.email}
+                      label={`Copy ${account.email}`}
+                    />
+                  </div>
+                </TableCell>
+
+                <TableCell>
+                  <div className="flex items-center justify-center">
+                    <span
+                      className={`inline-flex rounded-md px-2.5 py-1 text-xs font-medium ${
+                        account.role === "admin"
+                          ? "bg-secondary text-secondary-foreground border border-border"
+                          : "bg-muted text-muted-foreground border border-border"
+                      }`}
+                    >
+                      {account.role}
                     </span>
-                  )}
-                </div>
-              </TableCell>
+                  </div>
+                </TableCell>
 
-              <TableCell className="text-muted-foreground">
-                {account.email}
-              </TableCell>
+                <TableCell>
+                  <div className="flex items-center justify-center">
+                    <span
+                      className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium ${
+                        account.verified
+                          ? "bg-success/10 text-success border border-success/20"
+                          : "bg-destructive/10 text-destructive border border-destructive/20"
+                      }`}
+                    >
+                      {account.verified ? "Verified" : "Pending"}
+                    </span>
+                  </div>
+                </TableCell>
 
-              <TableCell>
-                <div className="flex items-center justify-center">
-                  <span
-                    className={`inline-flex rounded-md px-2.5 py-1 text-xs font-medium ${
-                      account.role === "admin"
-                        ? "bg-secondary text-secondary-foreground border border-border"
-                        : "bg-muted text-muted-foreground border border-border"
-                    }`}
-                  >
-                    {account.role}
-                  </span>
-                </div>
-              </TableCell>
+                <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
+                  {new Date(account.createdAt).toLocaleDateString("en-PH", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </TableCell>
 
-              <TableCell>
-                <div className="flex items-center justify-center">
-                  <span
-                    className={`inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium ${
-                      account.verified
-                        ? "bg-success/10 text-success border border-success/20"
-                        : "bg-destructive/10 text-destructive border border-destructive/20"
-                    }`}
-                  >
-                    {account.verified ? "Verified" : "Pending"}
-                  </span>
-                </div>
-              </TableCell>
+                <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
+                  {new Date(account.updatedAt).toLocaleDateString("en-PH", {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })}
+                </TableCell>
 
-              <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
-                {new Date(account.createdAt).toLocaleDateString("en-PH", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </TableCell>
-
-              <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
-                {new Date(account.updatedAt).toLocaleDateString("en-PH", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </TableCell>
-
-              <TableCell>
-                <div className="flex justify-center">
-                  <TableActionMenu
-                    label={`Actions for ${account.name}`}
-                    items={[
-                      {
-                        label: "View Account",
-                        icon: <LuEye aria-hidden="true" size={16} animated />,
-                        onSelect: () => setAccountToView(account),
-                      },
-                      ...(account.id !== currentUserId
-                        ? [
-                            {
-                              label:
-                                account.role === "alumni"
-                                  ? "Promote to Admin"
-                                  : "Demote to Alumni",
-                              icon: (
-                                <LuShieldCheck aria-hidden="true" size={16} />
-                              ),
-                              onSelect: () => {
-                                setRoleConfirmation("");
-                                setRoleChange({
-                                  account,
-                                  role:
-                                    account.role === "alumni"
-                                      ? "admin"
-                                      : "alumni",
-                                });
+                <TableCell>
+                  <div className="flex justify-center">
+                    <TableActionMenu
+                      label={`Actions for ${account.name}`}
+                      items={[
+                        {
+                          label: "View Account",
+                          icon: <LuEye aria-hidden="true" size={16} animated />,
+                          onSelect: () => openAccount(account),
+                        },
+                        ...(account.id !== currentUserId
+                          ? [
+                              {
+                                label:
+                                  account.role === "alumni"
+                                    ? "Promote to Admin"
+                                    : "Demote to Alumni",
+                                icon: (
+                                  <LuShieldCheck aria-hidden="true" size={16} />
+                                ),
+                                onSelect: () => {
+                                  setRoleConfirmation("");
+                                  setRoleChange({
+                                    account,
+                                    role:
+                                      account.role === "alumni"
+                                        ? "admin"
+                                        : "alumni",
+                                  });
+                                },
                               },
-                            },
-                          ]
-                        : []),
-                    ]}
-                  />
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
+                            ]
+                          : []),
+                      ]}
+                    />
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
         </TableBody>
       </Table>
       <Modal
         open={accountToView !== null}
         onClose={() => setAccountToView(null)}
         title="Account details"
-        description={accountToView?.email}
         width="md"
         fitContent
       >
@@ -415,9 +526,15 @@ export default function AccountsTable({
                   <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     Full name
                   </p>
-                  <p className="mt-1 text-xl font-semibold text-foreground">
-                    {accountToView.name || "Unnamed User"}
-                  </p>
+                  <div className="mt-1 flex items-center gap-1.5">
+                    <p className="text-xl font-semibold text-foreground">
+                      {accountToView.name || "Unnamed User"}
+                    </p>
+                    <CopyButton
+                      value={accountToView.name || "Unnamed User"}
+                      label="Copy full name"
+                    />
+                  </div>
                 </div>
               </div>
               <span
@@ -429,6 +546,21 @@ export default function AccountsTable({
               >
                 {accountToView.verified ? "Verified" : "Pending"}
               </span>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-muted p-4">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Email
+              </p>
+              <div className="mt-1 flex items-center gap-1.5">
+                <p className="break-all text-sm text-foreground">
+                  {accountToView.email}
+                </p>
+                <CopyButton
+                  value={accountToView.email}
+                  label="Copy email address"
+                />
+              </div>
             </div>
 
             <dl className="grid gap-4 rounded-2xl border border-border bg-muted p-4 sm:grid-cols-2">
@@ -690,40 +822,42 @@ export default function AccountsTable({
           </div>
         </div>
       </Modal>
-      <div className="flex flex-wrap gap-3 border-t border-border bg-muted/40 p-4 text-sm sm:px-6">
-        {totalRows > 1 ? (
-          <span className="w-full rounded-lg bg-muted/60 px-4 py-2 font-semibold whitespace-nowrap text-muted-foreground sm:w-fit">
-            Showing <span>{accounts.length}</span> of{" "}
-            <span>{totalRows} Entries</span>
-          </span>
-        ) : (
-          <span className="w-full rounded-lg bg-muted/60 px-4 py-2 font-semibold whitespace-nowrap text-muted-foreground sm:w-fit">
-            Showing 1 Entry
-          </span>
-        )}
+      {totalRows > 0 && (
+        <div className="flex flex-wrap gap-3 border-t border-border bg-muted/40 p-4 text-sm sm:px-6">
+          {totalRows > 1 ? (
+            <span className="w-full rounded-lg bg-muted/60 px-4 py-2 font-semibold whitespace-nowrap text-muted-foreground sm:w-fit">
+              Showing <span>{accounts.length}</span> of{" "}
+              <span>{totalRows} Entries</span>
+            </span>
+          ) : (
+            <span className="w-full rounded-lg bg-muted/60 px-4 py-2 font-semibold whitespace-nowrap text-muted-foreground sm:w-fit">
+              Showing 1 Entry
+            </span>
+          )}
 
-        <div className="flex w-full gap-2 sm:ml-auto sm:w-fit">
-          <Button
-            className="flex-1 sm:flex-none"
-            onClick={() => onPageChange(currentPage - 1)}
-            disabled={currentPage <= 1}
-            variant="outline"
-            size="sm"
-          >
-            Previous
-          </Button>
+          <div className="flex w-full gap-2 sm:ml-auto sm:w-fit">
+            <Button
+              className="flex-1 sm:flex-none"
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={loading || currentPage <= 1}
+              variant="outline"
+              size="sm"
+            >
+              Previous
+            </Button>
 
-          <Button
-            className="flex-1 sm:flex-none"
-            onClick={() => onPageChange(currentPage + 1)}
-            disabled={currentPage >= totalPages}
-            variant="default"
-            size="sm"
-          >
-            Next
-          </Button>
+            <Button
+              className="flex-1 sm:flex-none"
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={loading || currentPage >= totalPages}
+              variant="default"
+              size="sm"
+            >
+              Next
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

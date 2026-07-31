@@ -13,7 +13,6 @@ import { useToast } from "@/components/ui/Toast";
 import Modal from "@/components/ui/Modal";
 import ConfirmationDialog from "@/components/ui/ConfirmationDialog";
 import LoadingState from "@/components/ui/LoadingState";
-import ErrorState from "@/components/ui/ErrorState";
 import { friendlyRequestMessage } from "@/lib/api/client-errors";
 import { TableActionMenu } from "@/components/ui/table-action-menu";
 import {
@@ -26,6 +25,32 @@ import {
 } from "@/components/ui/table";
 import { useRouter } from "next/navigation";
 import { PROGRAMS } from "@/lib/programs/catalog";
+import {
+  SortableTableHead,
+  type SortDirection,
+} from "@/components/ui/sortable-table-head";
+import { TableContentState } from "@/components/ui/table-content-state";
+import { CopyButton } from "@/components/ui/copy-button";
+
+type ResponseSortKey =
+  | "name"
+  | "academicYear"
+  | "program"
+  | "employmentStatus"
+  | "createdAt"
+  | "driveStatus";
+
+const employmentStatusLabels: Record<string, string> = {
+  Yes: "Currently Employed",
+  No: "Not Employed",
+  "Never Employed": "Never Employed",
+};
+
+const employmentStatusStyles: Record<string, string> = {
+  Yes: "border-success/20 bg-success/10 text-success",
+  No: "border-warning/30 bg-warning/15 text-warning",
+  "Never Employed": "border-border bg-muted text-muted-foreground",
+};
 
 interface ServerDataResponse {
   success: boolean;
@@ -60,6 +85,8 @@ export default function ResponseTable({
     studyStatus: "open" | "closed";
   } | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
+  const [sortKey, setSortKey] = useState<ResponseSortKey>("createdAt");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
 
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [surveyToDelete, setSurveyToDelete] = useState<string | null>(null);
@@ -127,6 +154,8 @@ export default function ResponseTable({
         const searchParams = new URLSearchParams({
           page: String(currentPage),
           limit: String(itemsPerPage),
+          sort: sortKey,
+          direction: sortDirection,
         });
 
         if (filters.search) searchParams.set("search", filters.search);
@@ -178,7 +207,15 @@ export default function ResponseTable({
     return () => {
       controller.abort();
     };
-  }, [currentPage, filters, reloadKey]);
+  }, [currentPage, filters, reloadKey, sortDirection, sortKey]);
+
+  const handleSort = (key: ResponseSortKey) => {
+    setSortDirection((current) =>
+      sortKey === key ? (current === "asc" ? "desc" : "asc") : "asc",
+    );
+    setSortKey(key);
+    onPageChange(1);
+  };
 
   const confirmDelete = async (id: string) => {
     setIsDeleting(true);
@@ -259,194 +296,296 @@ export default function ResponseTable({
     }
   };
 
-  if (loading) {
-    return <LoadingState className="min-h-72" message="Loading responses..." />;
-  }
-
-  if (error) {
-    return (
-      <ErrorState
-        message={error}
-        retryLabel="Refresh responses"
-        onRetry={() => setReloadKey((current) => current + 1)}
-      />
-    );
-  }
-
   const totalPages = Math.ceil(totalRows / itemsPerPage) || 1;
   const hasNextPage = currentPage < totalPages;
   const hasPrevPage = currentPage > 1;
 
-  if (totalRows === 0) {
-    return (
-      <div className="text-center w-full p-12 text-muted-foreground bg-muted/50 rounded-2xl border border-dashed border-border">
-        {Object.values(filters).some(Boolean) ? (
-          <>
-            <h3 className="text-base font-semibold text-muted-foreground">
-              No matching responses found
-            </h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Try adjusting your search terms or clear the search to view all
-              response records.
-            </p>
-          </>
-        ) : (
-          <>
-            <h3 className="text-base font-semibold text-muted-foreground">
-              No response records yet
-            </h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Responses will appear here once alumni complete the tracer form.
-            </p>
-          </>
-        )}
-      </div>
-    );
-  }
-
   const formatFullName = (response: AdminResponseSummary) => {
-    if (response.respondentName?.trim()) return response.respondentName;
-
-    const parts = [
+    const surname = response.lastName?.trim();
+    const givenNames = [
       response.firstName,
       response.middleName,
-      response.lastName,
       response.extensionName,
     ]
       .map((p) => p?.trim())
       .filter(Boolean);
-    return parts.length > 0 ? parts.join(" ") : "Unnamed Respondent";
+
+    if (surname && givenNames.length > 0) {
+      return `${surname}, ${givenNames.join(" ")}`;
+    }
+
+    if (surname) return surname;
+    if (givenNames.length > 0) return givenNames.join(" ");
+    return response.respondentName?.trim() || "Unnamed Respondent";
   };
 
   const programLabels = new Map(
     PROGRAMS.map((program) => [program.value, program.label]),
   );
 
+  const openResponse = (response: AdminResponseSummary) => {
+    setSelectedSurveyId(response.id);
+  };
+
+  const isInteractiveTarget = (target: EventTarget | null) =>
+    target instanceof Element &&
+    Boolean(
+      target.closest(
+        "button,a,input,select,textarea,[role='menuitem'],[data-row-action]",
+      ),
+    );
+
   return (
     <div className="w-full overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
       <Table className="min-w-280 table-auto">
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead>Full Name</TableHead>
-            <TableHead>Academic Year</TableHead>
-            <TableHead>Program</TableHead>
-            <TableHead>Employment Status</TableHead>
-            <TableHead>Created</TableHead>
-            <TableHead>Drive</TableHead>
+            <SortableTableHead
+              direction={sortKey === "name" ? sortDirection : undefined}
+              onSort={() => handleSort("name")}
+            >
+              Full Name
+            </SortableTableHead>
+            <SortableTableHead
+              direction={sortKey === "academicYear" ? sortDirection : undefined}
+              onSort={() => handleSort("academicYear")}
+            >
+              Academic Year
+            </SortableTableHead>
+            <SortableTableHead
+              direction={sortKey === "program" ? sortDirection : undefined}
+              onSort={() => handleSort("program")}
+            >
+              Program
+            </SortableTableHead>
+            <SortableTableHead
+              direction={
+                sortKey === "employmentStatus" ? sortDirection : undefined
+              }
+              onSort={() => handleSort("employmentStatus")}
+            >
+              Employment Status
+            </SortableTableHead>
+            <SortableTableHead
+              direction={sortKey === "createdAt" ? sortDirection : undefined}
+              onSort={() => handleSort("createdAt")}
+            >
+              Created
+            </SortableTableHead>
+            <SortableTableHead
+              direction={sortKey === "driveStatus" ? sortDirection : undefined}
+              onSort={() => handleSort("driveStatus")}
+            >
+              Drive
+            </SortableTableHead>
             <TableHead className="text-center">Menu</TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody>
-          {responses.map((response) => (
-            <TableRow key={response.id} className="group">
-              <TableCell className="font-semibold text-foreground">
-                {formatFullName(response)}
-              </TableCell>
-              <TableCell className="font-medium text-muted-foreground">
-                {response.academicYear}
-              </TableCell>
-              <TableCell className="max-w-xs text-muted-foreground">
-                <span className="line-clamp-2">
-                  {programLabels.get(response.program) ||
-                    response.program ||
-                    "Unspecified"}
-                </span>
-              </TableCell>
-              <TableCell className="font-medium text-muted-foreground">
-                <span className="capitalize">
-                  {response.employmentStatus || "unspecified"}
-                </span>
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                {response.createdAt
-                  ? new Date(response.createdAt).toLocaleDateString()
-                  : "N/A"}
-              </TableCell>
+        <TableBody aria-busy={loading}>
+          {loading ? (
+            <TableContentState
+              colSpan={7}
+              loadingMessage="Loading responses..."
+            />
+          ) : error ? (
+            <TableContentState
+              colSpan={7}
+              error={error}
+              retryLabel="Refresh responses"
+              onRetry={() => setReloadKey((current) => current + 1)}
+            />
+          ) : totalRows === 0 ? (
+            <TableContentState colSpan={7}>
+              <div className="text-center text-muted-foreground">
+                {Object.values(filters).some(Boolean) ? (
+                  <>
+                    <h3 className="font-semibold">
+                      No matching responses found
+                    </h3>
+                    <p className="mt-2 text-sm">
+                      Try adjusting your filters to view response records.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="font-semibold">No response records yet</h3>
+                    <p className="mt-2 text-sm">
+                      Responses will appear after alumni complete the tracer
+                      form.
+                    </p>
+                  </>
+                )}
+              </div>
+            </TableContentState>
+          ) : (
+            responses.map((response) => (
+              <TableRow
+                key={response.id}
+                tabIndex={0}
+                aria-label={`${response.source === "admin_import" ? "Edit" : "View"} response from ${formatFullName(response)}`}
+                onPointerUp={(event) => {
+                  if (
+                    event.pointerType === "mouse" ||
+                    isInteractiveTarget(event.target)
+                  ) {
+                    return;
+                  }
+                  openResponse(response);
+                }}
+                onDoubleClick={(event) => {
+                  if (isInteractiveTarget(event.target)) return;
+                  openResponse(response);
+                }}
+                onKeyDown={(event) => {
+                  if (
+                    (event.key !== "Enter" && event.key !== " ") ||
+                    isInteractiveTarget(event.target)
+                  ) {
+                    return;
+                  }
+                  event.preventDefault();
+                  openResponse(response);
+                }}
+                className="group cursor-pointer select-none [-webkit-tap-highlight-color:transparent] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset [&_*]:[-webkit-tap-highlight-color:transparent]"
+              >
+                <TableCell className="font-semibold text-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <span>{formatFullName(response)}</span>
+                    <CopyButton
+                      value={formatFullName(response)}
+                      label={`Copy ${formatFullName(response)}`}
+                    />
+                  </div>
+                </TableCell>
+                <TableCell className="font-medium text-muted-foreground">
+                  {response.academicYear}
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  <span
+                    tabIndex={0}
+                    aria-label={
+                      programLabels.get(response.program) ||
+                      response.program ||
+                      "Unspecified program"
+                    }
+                    title={
+                      programLabels.get(response.program) ||
+                      response.program ||
+                      "Unspecified program"
+                    }
+                    className="inline-flex rounded-md border border-border bg-muted/50 px-2.5 py-1 text-xs font-semibold tracking-wide text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    {response.program?.toUpperCase() || "UNSPECIFIED"}
+                  </span>
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  <span
+                    aria-label={
+                      employmentStatusLabels[response.employmentStatus] ||
+                      "Unspecified employment status"
+                    }
+                    className={`inline-flex rounded-md border px-2.5 py-1 text-xs font-semibold tracking-wide ${
+                      employmentStatusStyles[response.employmentStatus] ||
+                      "border-border bg-muted/50 text-muted-foreground"
+                    }`}
+                  >
+                    {(
+                      employmentStatusLabels[response.employmentStatus] ||
+                      "Unspecified"
+                    ).toUpperCase()}
+                  </span>
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {response.createdAt
+                    ? new Date(response.createdAt).toLocaleDateString()
+                    : "N/A"}
+                </TableCell>
 
-              <TableCell>
-                <span
-                  title={response.driveOrganizationError ?? undefined}
-                  className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${
-                    response.driveOrganizationStatus === "organized"
-                      ? "bg-success/15 text-success"
-                      : response.driveOrganizationStatus === "failed"
-                        ? "bg-destructive/10 text-destructive"
-                        : "bg-warning/15 text-warning"
-                  }`}
-                >
-                  {response.driveOrganizationStatus}
-                </span>
-              </TableCell>
+                <TableCell>
+                  <span
+                    title={response.driveOrganizationError ?? undefined}
+                    className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${
+                      response.driveOrganizationStatus === "organized"
+                        ? "bg-success/15 text-success"
+                        : response.driveOrganizationStatus === "failed"
+                          ? "bg-destructive/10 text-destructive"
+                          : "bg-warning/15 text-warning"
+                    }`}
+                  >
+                    {response.driveOrganizationStatus}
+                  </span>
+                </TableCell>
 
-              <TableCell>
-                <div className="flex justify-center">
-                  <TableActionMenu
-                    label={`Actions for ${formatFullName(response)}`}
-                    items={[
-                      ...(response.driveOrganizationStatus !== "organized"
-                        ? [
-                            {
-                              label: "Retry Drive Organization",
-                              variant: "secondary" as const,
-                              disabled: organizingResponseId !== null,
-                              icon: (
-                                <LuRefreshCw
-                                  aria-hidden="true"
-                                  size={16}
-                                  animated={
-                                    organizingResponseId !== response.id
-                                  }
-                                  className={
-                                    organizingResponseId === response.id
-                                      ? "animate-spin"
-                                      : undefined
-                                  }
-                                />
-                              ),
-                              onSelect: () =>
-                                void retryDriveOrganization(response.id),
-                            },
-                          ]
-                        : []),
-                      {
-                        label:
-                          response.source === "admin_import"
-                            ? "Edit Response"
-                            : "View Response",
-                        icon:
-                          response.source === "admin_import" ? (
-                            <LuPencil aria-hidden="true" size={16} animated />
-                          ) : (
-                            <LuEye aria-hidden="true" size={16} animated />
-                          ),
-                        onSelect: () => setSelectedSurveyId(response.id),
-                      },
-                      ...(response.studyStatus === "open"
-                        ? [
-                            {
-                              label: "Delete Response",
-                              variant: "destructive" as const,
-                              disabled: isDeleting,
-                              icon: (
-                                <LuTrash2
-                                  aria-hidden="true"
-                                  size={16}
-                                  animated
-                                />
-                              ),
-                              onSelect: () => {
-                                setSurveyToDelete(response.id);
-                                setShowDeleteModal(true);
+                <TableCell>
+                  <div className="flex justify-center">
+                    <TableActionMenu
+                      label={`Actions for ${formatFullName(response)}`}
+                      items={[
+                        ...(response.driveOrganizationStatus !== "organized"
+                          ? [
+                              {
+                                label: "Retry Drive Organization",
+                                variant: "secondary" as const,
+                                disabled: organizingResponseId !== null,
+                                icon: (
+                                  <LuRefreshCw
+                                    aria-hidden="true"
+                                    size={16}
+                                    animated={
+                                      organizingResponseId !== response.id
+                                    }
+                                    className={
+                                      organizingResponseId === response.id
+                                        ? "animate-spin"
+                                        : undefined
+                                    }
+                                  />
+                                ),
+                                onSelect: () =>
+                                  void retryDriveOrganization(response.id),
                               },
-                            },
-                          ]
-                        : []),
-                    ]}
-                  />
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
+                            ]
+                          : []),
+                        {
+                          label:
+                            response.source === "admin_import"
+                              ? "Edit Response"
+                              : "View Response",
+                          icon:
+                            response.source === "admin_import" ? (
+                              <LuPencil aria-hidden="true" size={16} animated />
+                            ) : (
+                              <LuEye aria-hidden="true" size={16} animated />
+                            ),
+                          onSelect: () => setSelectedSurveyId(response.id),
+                        },
+                        ...(response.studyStatus === "open"
+                          ? [
+                              {
+                                label: "Delete Response",
+                                variant: "destructive" as const,
+                                disabled: isDeleting,
+                                icon: (
+                                  <LuTrash2
+                                    aria-hidden="true"
+                                    size={16}
+                                    animated
+                                  />
+                                ),
+                                onSelect: () => {
+                                  setSurveyToDelete(response.id);
+                                  setShowDeleteModal(true);
+                                },
+                              },
+                            ]
+                          : []),
+                      ]}
+                    />
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
         </TableBody>
       </Table>
       <Modal
@@ -501,40 +640,42 @@ export default function ResponseTable({
         )}
       </Modal>
 
-      <div className="flex flex-wrap gap-3 border-t border-border bg-muted/40 p-4 text-sm sm:px-6">
-        {totalRows > 1 ? (
-          <span className="w-full rounded-lg bg-muted/60 px-4 py-2 font-semibold whitespace-nowrap text-muted-foreground sm:w-fit">
-            Showing <span>{responses.length}</span> of{" "}
-            <span>{totalRows} Entries</span>
-          </span>
-        ) : (
-          <span className="w-full rounded-lg bg-muted/60 px-4 py-2 font-semibold whitespace-nowrap text-muted-foreground sm:w-fit">
-            Showing 1 Entry
-          </span>
-        )}
+      {totalRows > 0 && (
+        <div className="flex flex-wrap gap-3 border-t border-border bg-muted/40 p-4 text-sm sm:px-6">
+          {totalRows > 1 ? (
+            <span className="w-full rounded-lg bg-muted/60 px-4 py-2 font-semibold whitespace-nowrap text-muted-foreground sm:w-fit">
+              Showing <span>{responses.length}</span> of{" "}
+              <span>{totalRows} Entries</span>
+            </span>
+          ) : (
+            <span className="w-full rounded-lg bg-muted/60 px-4 py-2 font-semibold whitespace-nowrap text-muted-foreground sm:w-fit">
+              Showing 1 Entry
+            </span>
+          )}
 
-        <div className="flex w-full gap-2 sm:ml-auto sm:w-fit">
-          <Button
-            onClick={() => onPageChange(currentPage - 1)}
-            disabled={!hasPrevPage}
-            variant="outline"
-            size="sm"
-            className="flex-1 sm:flex-none"
-          >
-            Previous
-          </Button>
+          <div className="flex w-full gap-2 sm:ml-auto sm:w-fit">
+            <Button
+              onClick={() => onPageChange(currentPage - 1)}
+              disabled={loading || !hasPrevPage}
+              variant="outline"
+              size="sm"
+              className="flex-1 sm:flex-none"
+            >
+              Previous
+            </Button>
 
-          <Button
-            onClick={() => onPageChange(currentPage + 1)}
-            disabled={!hasNextPage}
-            variant="default"
-            size="sm"
-            className="flex-1 sm:flex-none"
-          >
-            Next
-          </Button>
+            <Button
+              onClick={() => onPageChange(currentPage + 1)}
+              disabled={loading || !hasNextPage}
+              variant="default"
+              size="sm"
+              className="flex-1 sm:flex-none"
+            >
+              Next
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
       <ConfirmationDialog
         open={showDeleteModal}
         onClose={() => {
