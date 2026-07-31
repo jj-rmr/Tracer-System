@@ -22,6 +22,10 @@ interface FormVersionRow {
   definition: FormDefinition;
 }
 
+interface StudyContextRow extends StudyPeriodRow {
+  definition: FormDefinition;
+}
+
 function mapStudyPeriod(row: StudyPeriodRow): StudyPeriod {
   return {
     id: row.id,
@@ -84,7 +88,7 @@ export async function getStudyContext(
   studyPeriodId: string,
 ): Promise<StudyContext | null> {
   const { data: study, error } = await supabase
-    .from("study_periods_with_status")
+    .from("study_contexts")
     .select("*")
     .eq("id", studyPeriodId)
     .maybeSingle();
@@ -92,11 +96,11 @@ export async function getStudyContext(
   if (error) throw error;
   if (!study) return null;
 
-  const studyRow = study as StudyPeriodRow;
+  const studyRow = study as StudyContextRow;
 
   return {
     study: mapStudyPeriod(studyRow),
-    definition: await getDefinitionForStudy(studyRow),
+    definition: studyRow.definition,
   };
 }
 

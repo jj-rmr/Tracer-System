@@ -25,10 +25,7 @@ import {
   deleteFormResponseDocument,
   uploadFormResponseDocument,
 } from "@/lib/api/form-response-documents";
-import {
-  friendlyRequestMessage,
-  readApiJson,
-} from "@/lib/api/client-errors";
+import { friendlyRequestMessage, readApiJson } from "@/lib/api/client-errors";
 
 interface Props {
   survey: Survey;
@@ -58,6 +55,14 @@ export default function ResponseWorkspace({
   const [currentSurvey, setCurrentSurvey] = useState(survey);
   const latestSurveyRef = useRef(survey);
   const saveQueueRef = useRef<Promise<void>>(Promise.resolve());
+  const pendingDraftRef = useRef<{
+    survey: Survey;
+    waiters: Array<{
+      resolve: (value: { id: string; updatedAt?: string }) => void;
+      reject: (reason?: unknown) => void;
+    }>;
+  } | null>(null);
+  const draftDrainScheduledRef = useRef(false);
   const documentOperationsRef = useRef(new Set<Promise<unknown>>());
   const responseIdRef = useRef(responseId);
   const updatedAtRef = useRef(updatedAt);
@@ -80,35 +85,38 @@ export default function ResponseWorkspace({
     return tracked;
   }
 
-  function enqueueStudySave(
+  async function sendStudySave(
     nextSurvey: Survey,
     status: FormResponseStatus,
   ): Promise<{ id: string; updatedAt?: string }> {
     if (!studyId) throw new Error("No active study is available.");
     const answers = surveyToAnswers(nextSurvey);
-
-    const operation = saveQueueRef.current.then(async () => {
-      const saveResponse = await fetch(`/api/studies/${studyId}/response`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          status,
-          answers,
-          expectedUpdatedAt: updatedAtRef.current,
-        }),
-      });
-      const result = await readApiJson<{
-        data?: { id?: string; updatedAt?: string };
-      }>(saveResponse, "Your draft could not be saved.");
-
-      if (typeof result.data?.id !== "string") {
-        throw new Error("Your draft could not be saved.");
-      }
-
-      responseIdRef.current = result.data.id;
-      updatedAtRef.current = result.data.updatedAt;
-      return result.data as { id: string; updatedAt?: string };
+    const saveResponse = await fetch(`/api/studies/${studyId}/response`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        status,
+        answers,
+        expectedUpdatedAt: updatedAtRef.current,
+      }),
     });
+    const result = await readApiJson<{
+      data?: { id?: string; updatedAt?: string };
+    }>(saveResponse, "Your draft could not be saved.");
+
+    if (typeof result.data?.id !== "string") {
+      throw new Error("Your draft could not be saved.");
+    }
+
+    responseIdRef.current = result.data.id;
+    updatedAtRef.current = result.data.updatedAt;
+    return result.data as { id: string; updatedAt?: string };
+  }
+
+  function queueSerializedSave(nextSurvey: Survey, status: FormResponseStatus) {
+    const operation = saveQueueRef.current.then(() =>
+      sendStudySave(nextSurvey, status),
+    );
 
     saveQueueRef.current = operation.then(
       () => undefined,
@@ -116,6 +124,48 @@ export default function ResponseWorkspace({
     );
 
     return operation;
+  }
+
+  function drainLatestDraft() {
+    draftDrainScheduledRef.current = false;
+    const pending = pendingDraftRef.current;
+    pendingDraftRef.current = null;
+    if (!pending) return;
+
+    void queueSerializedSave(pending.survey, "draft").then(
+      (result) => pending.waiters.forEach(({ resolve }) => resolve(result)),
+      (error) => pending.waiters.forEach(({ reject }) => reject(error)),
+    );
+  }
+
+  function enqueueStudySave(
+    nextSurvey: Survey,
+    status: FormResponseStatus,
+  ): Promise<{ id: string; updatedAt?: string }> {
+    if (status === "submitted") {
+      const pending = pendingDraftRef.current;
+      pendingDraftRef.current = null;
+      const submission = queueSerializedSave(nextSurvey, status);
+      if (pending) {
+        void submission.then(
+          (result) => pending.waiters.forEach(({ resolve }) => resolve(result)),
+          (error) => pending.waiters.forEach(({ reject }) => reject(error)),
+        );
+      }
+      return submission;
+    }
+
+    return new Promise((resolve, reject) => {
+      const pending = pendingDraftRef.current;
+      pendingDraftRef.current = {
+        survey: structuredClone(nextSurvey),
+        waiters: [...(pending?.waiters ?? []), { resolve, reject }],
+      };
+      if (!draftDrainScheduledRef.current) {
+        draftDrainScheduledRef.current = true;
+        void saveQueueRef.current.then(drainLatestDraft);
+      }
+    });
   }
 
   async function saveStudyDraft(nextSurvey: Survey) {
@@ -132,15 +182,31 @@ export default function ResponseWorkspace({
     const uploadedDocuments: SurveyDocument[] = [];
 
     try {
-      for (const file of documents.employment) {
-        uploadedDocuments.push(
-          await uploadFormResponseDocument(response.id, file, "employment"),
+      const uploads = [
+        ...documents.employment.map((file) => ({
+          file,
+          type: "employment" as const,
+        })),
+        ...documents.awards.map((file) => ({ file, type: "awards" as const })),
+      ];
+      for (let index = 0; index < uploads.length; index += 2) {
+        const batch = await Promise.allSettled(
+          uploads
+            .slice(index, index + 2)
+            .map(({ file, type }) =>
+              uploadFormResponseDocument(response.id, file, type),
+            ),
         );
-      }
-      for (const file of documents.awards) {
         uploadedDocuments.push(
-          await uploadFormResponseDocument(response.id, file, "awards"),
+          ...batch.flatMap((result) =>
+            result.status === "fulfilled" ? [result.value] : [],
+          ),
         );
+        const failed = batch.find(
+          (result): result is PromiseRejectedResult =>
+            result.status === "rejected",
+        );
+        if (failed) throw failed.reason;
       }
     } catch (error) {
       await Promise.allSettled(

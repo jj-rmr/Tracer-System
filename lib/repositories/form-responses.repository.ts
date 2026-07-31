@@ -369,62 +369,35 @@ export async function saveFormResponse({
   userId,
   status,
   answers,
-  resetDriveOrganization = false,
   expectedUpdatedAt,
 }: {
   studyPeriodId: string;
   userId: string;
   status: FormResponseStatus;
   answers: Record<string, unknown>;
-  resetDriveOrganization?: boolean;
   expectedUpdatedAt?: string;
-}): Promise<FormResponse> {
-  const values = {
-    status,
-    answers,
-    submitted_at: status === "submitted" ? new Date().toISOString() : null,
-    ...(resetDriveOrganization
-      ? {
-          drive_organization_status: "pending" as const,
-          drive_organization_error: null,
-        }
-      : {}),
-  };
+}): Promise<{ response: FormResponse; shouldOrganize: boolean }> {
+  const { data, error } = await supabase.rpc("save_alumni_form_response", {
+    target_study_period_id: studyPeriodId,
+    target_user_id: userId,
+    next_status: status,
+    next_answers: answers,
+    expected_content_updated_at: expectedUpdatedAt ?? null,
+  });
 
-  if (expectedUpdatedAt) {
-    const { data, error } = await supabase
-      .from("form_responses")
-      .update(values)
-      .eq("study_period_id", studyPeriodId)
-      .eq("user_id", userId)
-      .eq("updated_at", expectedUpdatedAt)
-      .eq("deletion_status", "active")
-      .select()
-      .maybeSingle();
-
-    if (error) throw error;
-    if (!data) throw new StaleFormResponseError();
-    return mapFormResponse(data as FormResponseRow);
+  if (error?.message.includes("STALE_FORM_RESPONSE")) {
+    throw new StaleFormResponseError();
   }
-
-  const { data, error } = await supabase
-    .from("form_responses")
-    .upsert(
-      {
-        study_period_id: studyPeriodId,
-        user_id: userId,
-        ...values,
-      },
-      {
-        onConflict: "study_period_id,user_id",
-      },
-    )
-    .select()
-    .single();
-
   if (error) throw error;
 
-  return mapFormResponse(data as FormResponseRow);
+  const result = data as {
+    response: FormResponseRow;
+    shouldOrganize: boolean;
+  };
+  return {
+    response: mapFormResponse(result.response),
+    shouldOrganize: result.shouldOrganize,
+  };
 }
 
 export class StaleFormResponseError extends Error {

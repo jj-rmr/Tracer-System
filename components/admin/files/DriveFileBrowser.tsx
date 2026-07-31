@@ -375,19 +375,24 @@ export default function DriveFileBrowser() {
     setUploading(true);
 
     try {
-      for (const file of uploadFiles) {
-        const formData = new FormData();
-        formData.set("file", file);
-        formData.set("folderId", folderIdRef.current);
+      const targetFolderId = folderIdRef.current;
+      for (let index = 0; index < uploadFiles.length; index += 3) {
+        await Promise.all(
+          uploadFiles.slice(index, index + 3).map(async (file) => {
+            const formData = new FormData();
+            formData.set("file", file);
+            formData.set("folderId", targetFolderId);
 
-        const response = await fetch("/api/admin/files/upload", {
-          method: "POST",
-          credentials: "include",
-          body: formData,
-        });
-        const result = await response.json();
+            const response = await fetch("/api/admin/files/upload", {
+              method: "POST",
+              credentials: "include",
+              body: formData,
+            });
+            const result = await response.json();
 
-        if (!response.ok) throw new Error(result.message);
+            if (!response.ok) throw new Error(result.message);
+          }),
+        );
       }
 
       showToast({

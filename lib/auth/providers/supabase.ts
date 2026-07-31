@@ -79,6 +79,16 @@ async function linkAccount(providerUser: User) {
   if (linkedError) throw linkedError;
 
   if (linked) {
+    if (
+      linked.name === profile.name &&
+      linked.picture_url === profile.pictureUrl &&
+      linked.email_verified === profile.emailVerified
+    ) {
+      if (!linked.enabled)
+        throw new AccountDisabledError("Account is disabled");
+      return formatUser(linked);
+    }
+
     const { data, error } = await supabase
       .from("auth_accounts")
       .update({

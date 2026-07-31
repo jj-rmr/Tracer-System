@@ -2,7 +2,6 @@ import { after, NextRequest, NextResponse } from "next/server";
 
 import { requireRole, requireUser } from "@/lib/auth";
 import { validateGraduateTracerSurvey } from "@/lib/forms/graduate-tracer-validation";
-import { hasResponseOrganizationChanged } from "@/lib/forms/response-organization-change";
 import { organizeResponseDriveFolder } from "@/lib/google-drive/organize-response";
 import { deleteResponseDriveData } from "@/lib/google-drive/response-cleanup";
 import {
@@ -161,17 +160,11 @@ export async function PUT(
       }
     }
 
-    const existingResponse = await getFormResponse(studyId, user.id);
-    const shouldOrganize = hasResponseOrganizationChanged(
-      existingResponse?.answers ?? null,
-      body.answers,
-    );
-    const response = await saveFormResponse({
+    const { response, shouldOrganize } = await saveFormResponse({
       studyPeriodId: studyId,
       userId: user.id,
       status: body.status,
       answers: body.answers,
-      resetDriveOrganization: shouldOrganize,
       expectedUpdatedAt: body.expectedUpdatedAt,
     });
 
