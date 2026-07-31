@@ -680,6 +680,31 @@ export async function listManualDraftsForAdmin(enteredByUserId: string) {
   );
 }
 
+export async function getLatestOpenManualDraftForAdmin(
+  enteredByUserId: string,
+) {
+  const { data, error } = await supabase
+    .from("form_responses")
+    .select("*, study_periods!inner(lifecycle_status)")
+    .eq("source", "admin_import")
+    .eq("entered_by_user_id", enteredByUserId)
+    .eq("status", "draft")
+    .eq("import_status", "processing")
+    .eq("deletion_status", "active")
+    .eq("study_periods.lifecycle_status", "open")
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+  const row = data as unknown as FormResponseRow & { import_token: string };
+  return {
+    response: mapFormResponse(row),
+    importToken: row.import_token,
+  };
+}
+
 async function getManualFormResponseByImportToken(importToken: string) {
   const { data, error } = await supabase
     .from("form_responses")

@@ -3,24 +3,14 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { formResponseToSurvey } from "@/lib/forms/graduate-tracer-adapter";
 import {
+  getLatestOpenManualDraftForAdmin,
   getFormResponseDocuments,
-  listManualDraftsForAdmin,
 } from "@/lib/repositories/form-responses.repository";
-import { getStudyContext } from "@/lib/repositories/forms.repository";
 
 export async function GET() {
   try {
     const admin = await requireAdmin();
-    const drafts = await listManualDraftsForAdmin(admin.id);
-    let draft = null;
-
-    for (const candidate of drafts) {
-      const context = await getStudyContext(candidate.response.studyPeriodId);
-      if (context?.study.status === "open") {
-        draft = candidate;
-        break;
-      }
-    }
+    const draft = await getLatestOpenManualDraftForAdmin(admin.id);
 
     if (!draft) {
       return NextResponse.json({ success: true, data: null });

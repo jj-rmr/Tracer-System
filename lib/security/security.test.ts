@@ -65,7 +65,25 @@ test("limits requests until their window expires", () => {
   const rejected = limiter.consume("client", 2, 1_000, 2);
   assert.equal(rejected.limited, true);
   assert.equal(rejected.retryAfterSeconds, 1);
+  assert.equal(rejected.remaining, 0);
+  assert.equal(rejected.limit, 2);
+  assert.equal(rejected.resetAt, 1_000);
   assert.equal(limiter.consume("client", 2, 1_000, 1_000).limited, false);
+});
+
+test("reports remaining capacity and rejects invalid limits", () => {
+  const limiter = new InMemoryRateLimiter();
+  const first = limiter.consume("client", 3, 2_000, 100);
+
+  assert.deepEqual(first, {
+    limited: false,
+    retryAfterSeconds: 0,
+    limit: 3,
+    remaining: 2,
+    resetAt: 2_100,
+  });
+  assert.throws(() => limiter.consume("bad", 0, 1_000), /positive integers/);
+  assert.throws(() => limiter.consume("bad", 1, 0), /positive integers/);
 });
 
 test("only rate limits authentication, exports, and mutations", () => {

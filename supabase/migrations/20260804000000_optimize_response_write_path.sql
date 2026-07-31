@@ -5,12 +5,7 @@
 CREATE OR REPLACE VIEW study_contexts AS
 SELECT
     study.*,
-    CASE
-        WHEN study.archived_at IS NOT NULL THEN 'archived'
-        WHEN NOW() < study.opens_at THEN 'upcoming'
-        WHEN NOW() < study.closes_at THEN 'open'
-        ELSE 'closed'
-    END AS status,
+    study.lifecycle_status AS status,
     version.definition
 FROM study_periods AS study
 JOIN form_versions AS version

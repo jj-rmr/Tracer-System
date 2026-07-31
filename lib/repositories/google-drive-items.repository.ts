@@ -13,6 +13,10 @@ interface DriveItemRow {
   web_view_link: string | null;
 }
 
+interface DriveAncestryRow extends DriveItemRow {
+  depth: number;
+}
+
 export interface DriveIndexInput {
   id: string;
   rootId: string;
@@ -200,46 +204,37 @@ export async function getIndexedDriveBreadcrumbs(
   rootId: string,
   folderId: string,
 ): Promise<DriveBreadcrumb[]> {
-  const breadcrumbs: DriveBreadcrumb[] = [];
-  const visited = new Set<string>();
-  let currentId: string | null = folderId;
+  const { data, error } = await supabase.rpc("indexed_drive_ancestry", {
+    target_file_id: folderId,
+    target_root_id: rootId,
+  });
+  if (error) throw error;
 
-  while (currentId && !visited.has(currentId)) {
-    visited.add(currentId);
-    const row = await getIndexedDriveItem(currentId);
-
-    if (!row || row.root_google_drive_folder_id !== rootId || !row.is_folder) {
-      throw new Error("The requested folder is outside the managed root.");
-    }
-
-    breadcrumbs.unshift({
-      id: row.google_drive_file_id,
-      name: row.google_drive_file_id === rootId ? "Drive Root" : row.name,
-    });
-
-    if (row.google_drive_file_id === rootId) return breadcrumbs;
-    currentId = row.parent_google_drive_folder_id;
+  const rows = data as DriveAncestryRow[];
+  if (
+    rows.length === 0 ||
+    rows[0]?.google_drive_file_id !== rootId ||
+    rows.some((row) => !row.is_folder)
+  ) {
+    throw new Error("The requested folder is outside the managed root.");
   }
 
-  throw new Error("The requested folder is outside the managed root.");
+  return rows.map((row) => ({
+    id: row.google_drive_file_id,
+    name: row.google_drive_file_id === rootId ? "Drive Root" : row.name,
+  }));
 }
 
 export async function isIndexedDriveDescendant(
   fileId: string,
   ancestorId: string,
 ) {
-  const visited = new Set<string>();
-  let currentId: string | null = fileId;
-
-  while (currentId && !visited.has(currentId)) {
-    if (currentId === ancestorId) return true;
-
-    visited.add(currentId);
-    const row = await getIndexedDriveItem(currentId);
-    currentId = row?.parent_google_drive_folder_id ?? null;
-  }
-
-  return false;
+  const { data, error } = await supabase.rpc("is_indexed_drive_descendant", {
+    target_file_id: fileId,
+    target_ancestor_id: ancestorId,
+  });
+  if (error) throw error;
+  return data === true;
 }
 
 export async function updateIndexedDriveItem({

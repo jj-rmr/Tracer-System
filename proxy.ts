@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createHash } from "node:crypto";
 import { isIP } from "node:net";
 
 import { AUTH_COOKIE } from "@/lib/auth";
@@ -18,20 +19,39 @@ const SESSION_OPTIONAL_API_ROUTES = new Set([
 const MUTATING_METHODS = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 const rateLimiter = new InMemoryRateLimiter();
 
-function clientAddress(request: NextRequest) {
+function rateLimitClient(request: NextRequest) {
   const trustProxyHeaders =
     process.env.VERCEL === "1" || process.env.TRUST_PROXY_HEADERS === "true";
 
-  if (!trustProxyHeaders) return "untrusted-proxy";
+  if (!trustProxyHeaders) {
+    const session = request.cookies.get(AUTH_COOKIE)?.value;
+    return session
+      ? `session:${createHash("sha256").update(session).digest("base64url").slice(0, 22)}`
+      : "untrusted-anonymous";
+  }
 
   const candidates = [
     request.headers.get("x-forwarded-for")?.split(",")[0]?.trim(),
     request.headers.get("x-real-ip")?.trim(),
   ];
 
-  return (
-    candidates.find((candidate) => candidate && isIP(candidate)) ?? "unknown"
-  );
+  const address = candidates.find((candidate) => candidate && isIP(candidate));
+  if (address) return `ip:${address}`;
+
+  const session = request.cookies.get(AUTH_COOKIE)?.value;
+  return session
+    ? `session:${createHash("sha256").update(session).digest("base64url").slice(0, 22)}`
+    : "unknown-anonymous";
+}
+
+function rateLimitHeaders(result: ReturnType<InMemoryRateLimiter["consume"]>) {
+  return {
+    "RateLimit-Limit": String(result.limit),
+    "RateLimit-Remaining": String(result.remaining),
+    "RateLimit-Reset": String(
+      Math.max(1, Math.ceil((result.resetAt - Date.now()) / 1000)),
+    ),
+  };
 }
 
 function rateLimit(request: NextRequest) {
@@ -42,24 +62,30 @@ function rateLimit(request: NextRequest) {
   const windowMs = requestClass === "auth" ? 10 * 60_000 : 60_000;
   const maximum =
     requestClass === "export" ? 10 : requestClass === "auth" ? 30 : 120;
-  const key = `${clientAddress(request)}:${requestClass}`;
+  const key = `${rateLimitClient(request)}:${requestClass}`;
   const result = rateLimiter.consume(key, maximum, windowMs);
-  if (!result.limited) return null;
+  const headers = rateLimitHeaders(result);
+  if (!result.limited) return { response: null, headers };
 
-  return NextResponse.json(
-    { success: false, message: "Too many requests. Please try again later." },
-    {
-      status: 429,
-      headers: {
-        "Retry-After": String(result.retryAfterSeconds),
+  return {
+    response: NextResponse.json(
+      { success: false, message: "Too many requests. Please try again later." },
+      {
+        status: 429,
+        headers: {
+          ...headers,
+          "Retry-After": String(result.retryAfterSeconds),
+          "Cache-Control": "private, no-store",
+        },
       },
-    },
-  );
+    ),
+    headers,
+  };
 }
 
 function protectApiRequest(request: NextRequest) {
-  const limited = rateLimit(request);
-  if (limited) return limited;
+  const rateLimitResult = rateLimit(request);
+  if (rateLimitResult?.response) return rateLimitResult.response;
 
   if (
     !SESSION_OPTIONAL_API_ROUTES.has(request.nextUrl.pathname) &&
@@ -93,7 +119,13 @@ function protectApiRequest(request: NextRequest) {
     }
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+  if (rateLimitResult) {
+    for (const [name, value] of Object.entries(rateLimitResult.headers)) {
+      response.headers.set(name, value);
+    }
+  }
+  return response;
 }
 
 export function proxy(request: NextRequest) {

@@ -36,11 +36,11 @@ export async function GET(
       );
     }
 
-    const responseView = formResponseToSurvey(
-      response,
-      await getFormResponseDocuments(response.id),
-    );
-    const context = await getStudyContext(response.studyPeriodId);
+    const [documents, context] = await Promise.all([
+      getFormResponseDocuments(response.id),
+      getStudyContext(response.studyPeriodId),
+    ]);
+    const responseView = formResponseToSurvey(response, documents);
     return NextResponse.json({
       success: true,
       response: responseView,

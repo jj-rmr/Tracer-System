@@ -17,6 +17,11 @@ interface StudyRow {
   status: StudyPeriodStatus;
 }
 
+interface StudySummaryRow extends StudyRow {
+  response_count: number | string;
+  submitted_response_count: number | string;
+}
+
 interface FormVersionRow {
   id: string;
   form_id: string;
@@ -51,48 +56,25 @@ export async function listStudyPeriodSummaries(): Promise<
   StudyPeriodSummary[]
 > {
   const { data, error } = await supabase
-    .from("study_periods_with_status")
+    .from("study_period_summaries")
     .select("*")
     .order("academic_year", { ascending: false });
 
   if (error) throw error;
 
-  const studies = await Promise.all(
-    (data as StudyRow[]).map(async (study) => {
-      const [allResponses, submittedResponses] = await Promise.all([
-        supabase
-          .from("form_responses")
-          .select("id", { count: "exact", head: true })
-          .eq("study_period_id", study.id)
-          .eq("import_status", "completed")
-          .eq("deletion_status", "active"),
-        supabase
-          .from("form_responses")
-          .select("id", { count: "exact", head: true })
-          .eq("study_period_id", study.id)
-          .eq("import_status", "completed")
-          .eq("deletion_status", "active")
-          .eq("status", "submitted"),
-      ]);
-
-      if (allResponses.error) throw allResponses.error;
-      if (submittedResponses.error) throw submittedResponses.error;
-
-      return {
-        id: study.id,
-        formId: study.form_id,
-        formVersionId: study.form_version_id,
-        academicYear: study.academic_year,
-        title: study.title,
-        opensAt: study.opens_at,
-        closesAt: study.closes_at,
-        archivedAt: study.archived_at,
-        status: study.status,
-        responseCount: allResponses.count ?? 0,
-        submittedResponseCount: submittedResponses.count ?? 0,
-      };
-    }),
-  );
+  const studies = (data as StudySummaryRow[]).map((study) => ({
+    id: study.id,
+    formId: study.form_id,
+    formVersionId: study.form_version_id,
+    academicYear: study.academic_year,
+    title: study.title,
+    opensAt: study.opens_at,
+    closesAt: study.closes_at,
+    archivedAt: study.archived_at,
+    status: study.status,
+    responseCount: Number(study.response_count),
+    submittedResponseCount: Number(study.submitted_response_count),
+  }));
 
   return studies.sort((left, right) => {
     const statusOrder =

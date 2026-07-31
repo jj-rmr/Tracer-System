@@ -1,6 +1,9 @@
 export interface RateLimitResult {
   limited: boolean;
   retryAfterSeconds: number;
+  limit: number;
+  remaining: number;
+  resetAt: number;
 }
 
 interface RateBucket {
@@ -29,23 +32,48 @@ export class InMemoryRateLimiter {
     windowMs: number,
     now = Date.now(),
   ): RateLimitResult {
+    if (
+      !Number.isSafeInteger(maximumRequests) ||
+      maximumRequests < 1 ||
+      !Number.isSafeInteger(windowMs) ||
+      windowMs < 1
+    ) {
+      throw new Error("Rate limit and window must be positive integers.");
+    }
+
     this.cleanupIfNeeded(now);
 
     const current = this.buckets.get(key);
     if (!current || current.resetAt <= now) {
       if (!current) this.makeRoom();
-      this.buckets.set(key, { count: 1, resetAt: now + windowMs });
-      return { limited: false, retryAfterSeconds: 0 };
+      const resetAt = now + windowMs;
+      this.buckets.set(key, { count: 1, resetAt });
+      return {
+        limited: false,
+        retryAfterSeconds: 0,
+        limit: maximumRequests,
+        remaining: maximumRequests - 1,
+        resetAt,
+      };
     }
 
-    current.count += 1;
+    current.count = Math.min(current.count + 1, maximumRequests + 1);
     if (current.count <= maximumRequests) {
-      return { limited: false, retryAfterSeconds: 0 };
+      return {
+        limited: false,
+        retryAfterSeconds: 0,
+        limit: maximumRequests,
+        remaining: maximumRequests - current.count,
+        resetAt: current.resetAt,
+      };
     }
 
     return {
       limited: true,
       retryAfterSeconds: Math.max(1, Math.ceil((current.resetAt - now) / 1000)),
+      limit: maximumRequests,
+      remaining: 0,
+      resetAt: current.resetAt,
     };
   }
 
@@ -63,7 +91,14 @@ export class InMemoryRateLimiter {
   private makeRoom() {
     if (this.buckets.size < this.maximumBuckets) return;
 
-    const oldestKey = this.buckets.keys().next().value;
-    if (oldestKey !== undefined) this.buckets.delete(oldestKey);
+    let earliestKey: string | undefined;
+    let earliestReset = Number.POSITIVE_INFINITY;
+    for (const [key, bucket] of this.buckets) {
+      if (bucket.resetAt < earliestReset) {
+        earliestKey = key;
+        earliestReset = bucket.resetAt;
+      }
+    }
+    if (earliestKey !== undefined) this.buckets.delete(earliestKey);
   }
 }

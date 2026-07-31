@@ -10,6 +10,12 @@ import { deleteUnseenRegisteredDriveFolders } from "@/lib/repositories/google-dr
 import { DRIVE_FOLDER_MIME_TYPE, getDriveRootId } from "./browser";
 import { drive } from "./client";
 
+const INDEX_READINESS_TTL_MS = 30_000;
+let indexReadyUntil = 0;
+let ensureIndexPromise: Promise<Awaited<
+  ReturnType<typeof syncGoogleDriveIndex>
+> | null> | null = null;
+
 function toIndexItem(
   file: {
     id?: string | null;
@@ -81,10 +87,9 @@ export async function syncGoogleDriveIndex() {
         pageToken,
         spaces: "drive",
       });
+      const pageSyncedAt = new Date().toISOString();
       const items = (response.data.files ?? [])
-        .map((file) =>
-          toIndexItem(file, rootId, parentId, new Date().toISOString()),
-        )
+        .map((file) => toIndexItem(file, rootId, parentId, pageSyncedAt))
         .filter((item): item is DriveIndexInput => item !== null);
 
       for (const item of items) {
@@ -95,9 +100,11 @@ export async function syncGoogleDriveIndex() {
         }
       }
 
-      for (let batchStart = 0; batchStart < items.length; batchStart += 500) {
-        await upsertDriveIndexItems(items.slice(batchStart, batchStart + 500));
-      }
+      await Promise.all(
+        Array.from({ length: Math.ceil(items.length / 500) }, (_, batch) =>
+          upsertDriveIndexItems(items.slice(batch * 500, batch * 500 + 500)),
+        ),
+      );
 
       pageToken = response.data.nextPageToken ?? undefined;
     } while (pageToken);
@@ -119,9 +126,20 @@ export async function syncGoogleDriveIndex() {
 }
 
 export async function ensureGoogleDriveIndex() {
-  const rootId = getDriveRootId();
-  const indexedRoot = await getIndexedDriveItem(rootId);
+  if (Date.now() < indexReadyUntil) return null;
+  if (ensureIndexPromise) return ensureIndexPromise;
 
-  if (!indexedRoot) return syncGoogleDriveIndex();
-  return null;
+  ensureIndexPromise = (async () => {
+    const rootId = getDriveRootId();
+    const indexedRoot = await getIndexedDriveItem(rootId);
+    const result = indexedRoot ? null : await syncGoogleDriveIndex();
+    indexReadyUntil = Date.now() + INDEX_READINESS_TTL_MS;
+    return result;
+  })();
+
+  try {
+    return await ensureIndexPromise;
+  } finally {
+    ensureIndexPromise = null;
+  }
 }
