@@ -7,7 +7,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "migrate:accounts": "node --env-file=.env.local --experimental-strip-types scripts/migrate-appwrite-accounts.ts",
+    "migrate:accounts": "node --experimental-strip-types scripts/migrate-appwrite-accounts.ts",
     "lint": "eslint",
     "test": "node --experimental-strip-types --test --test-isolation=none lib/**/*.test.ts",
     "test:forms": "npm test",

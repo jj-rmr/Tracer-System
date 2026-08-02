@@ -1,3 +1,5 @@
+import { createInterface } from "node:readline/promises";
+
 type AppwriteUser = {
   $id: string;
   $createdAt: string;
@@ -17,17 +19,88 @@ type AppwriteUserList = {
 const apply = process.argv.includes("--apply");
 const pageSize = 100;
 
-function required(name: string) {
-  const value = process.env[name]?.trim();
-  if (!value) throw new Error(`Missing environment variable: ${name}`);
-  return value.replace(/\/$/, "");
+async function promptValue(label: string) {
+  if (!process.stdin.isTTY) {
+    throw new Error(`${label} must be supplied in a non-interactive terminal`);
+  }
+
+  const input = createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+  try {
+    return (await input.question(`${label}: `)).trim();
+  } finally {
+    input.close();
+  }
 }
 
-const appwriteEndpoint = required("APPWRITE_ENDPOINT");
-const appwriteProjectId = required("APPWRITE_PROJECT_ID");
-const appwriteApiKey = required("APPWRITE_API_KEY");
-const supabaseUrl = required("SUPABASE_URL");
-const supabaseSecretKey = required("SUPABASE_SECRET_KEY");
+async function promptSecret(label: string) {
+  if (!process.stdin.isTTY || !process.stdin.setRawMode) {
+    throw new Error(`${label} must be supplied in a non-interactive terminal`);
+  }
+
+  process.stdout.write(`${label}: `);
+  process.stdin.setRawMode(true);
+  process.stdin.resume();
+
+  return await new Promise<string>((resolve, reject) => {
+    let value = "";
+
+    const finish = (error?: Error) => {
+      process.stdin.off("data", onData);
+      process.stdin.setRawMode(false);
+      process.stdin.pause();
+      process.stdout.write("\n");
+      if (error) reject(error);
+      else resolve(value.trim());
+    };
+
+    const onData = (data: Buffer) => {
+      const key = data.toString("utf8");
+      if (key === "\u0003") return finish(new Error("Cancelled"));
+      if (key === "\r" || key === "\n") return finish();
+      if (key === "\u007f" || key === "\b") {
+        value = value.slice(0, -1);
+        return;
+      }
+      value += key;
+    };
+
+    process.stdin.on("data", onData);
+  });
+}
+
+async function setting(name: string, label: string, secret = false) {
+  const value = process.env[name]?.trim();
+  if (value) return value;
+
+  const entered = secret ? await promptSecret(label) : await promptValue(label);
+  if (!entered) throw new Error(`${label} is required`);
+  return entered;
+}
+
+const appwriteEndpoint = (
+  await setting("APPWRITE_ENDPOINT", "Appwrite endpoint")
+).replace(/\/$/, "");
+const appwriteProjectId = await setting(
+  "APPWRITE_PROJECT_ID",
+  "Appwrite project ID",
+);
+const appwriteApiKey = await setting(
+  "APPWRITE_API_KEY",
+  "Appwrite API key",
+  true,
+);
+const supabaseUrl = (await setting("SUPABASE_URL", "Supabase URL")).replace(
+  /\/$/,
+  "",
+);
+const supabaseSecretKey = await setting(
+  "SUPABASE_SECRET_KEY",
+  "Supabase secret key",
+  true,
+);
 
 async function listUsers(offset: number) {
   const url = new URL(`${appwriteEndpoint}/users`);
@@ -109,7 +182,9 @@ async function upsertAccounts(accounts: ReturnType<typeof mapUser>[]) {
       );
     }
 
-    console.log(`Imported ${Math.min(offset + pageSize, accounts.length)}/${accounts.length}`);
+    console.log(
+      `Imported ${Math.min(offset + pageSize, accounts.length)}/${accounts.length}`,
+    );
   }
 }
 
