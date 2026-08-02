@@ -36,16 +36,6 @@ export async function POST(
       );
     }
 
-    if (context.study.status !== "open") {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Open the study before adding manual responses.",
-        },
-        { status: 423 },
-      );
-    }
-
     const body = (await request.json()) as ManualResponseBody;
     const respondentName =
       typeof body.respondentName === "string" ? body.respondentName.trim() : "";
@@ -61,6 +51,16 @@ export async function POST(
       return NextResponse.json(
         { success: false, message: "A valid manual import token is required." },
         { status: 400 },
+      );
+    }
+
+    if (context.study.status !== "open" && mode === "submitted") {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "Open the study before adding manual responses.",
+        },
+        { status: 423 },
       );
     }
 
@@ -92,6 +92,13 @@ export async function POST(
       );
     }
 
+    if (respondentName.length > 300 || (respondentEmail?.length ?? 0) > 254) {
+      return NextResponse.json(
+        { success: false, message: "Manual response identity is too long." },
+        { status: 400 },
+      );
+    }
+
     const saved = await createManualFormResponse({
       studyPeriodId: studyId,
       enteredByUserId: admin.id,
@@ -110,13 +117,6 @@ export async function POST(
           console.error("Failed to organize the manual response:", error);
         }
       });
-    }
-
-    if (respondentName.length > 300 || (respondentEmail?.length ?? 0) > 254) {
-      return NextResponse.json(
-        { success: false, message: "Manual response identity is too long." },
-        { status: 400 },
-      );
     }
 
     return NextResponse.json(

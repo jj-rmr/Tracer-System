@@ -97,6 +97,35 @@ export async function listRegisteredResponseFolders(responseId: string) {
   return (data as GoogleDriveFolderRow[]).map(mapFolder);
 }
 
+export async function listRegisteredDriveFolderDescendants(
+  rootFolderId: string,
+) {
+  const { data, error } = await supabase
+    .from("google_drive_folders")
+    .select(
+      "folder_key, google_drive_folder_id, name, parent_google_drive_folder_id",
+    );
+
+  if (error) throw error;
+  const rows = (data as GoogleDriveFolderRow[]).map(mapFolder);
+  const descendantIds = new Set([rootFolderId]);
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const folder of rows) {
+      if (
+        descendantIds.has(folder.parentGoogleDriveFolderId) &&
+        !descendantIds.has(folder.googleDriveFolderId)
+      ) {
+        descendantIds.add(folder.googleDriveFolderId);
+        changed = true;
+      }
+    }
+  }
+
+  return rows.filter((folder) => descendantIds.has(folder.googleDriveFolderId));
+}
+
 export async function deleteRegisteredDriveFolders(folderKeys: string[]) {
   if (folderKeys.length === 0) return;
 

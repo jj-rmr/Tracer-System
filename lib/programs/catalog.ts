@@ -289,3 +289,27 @@ export const PROGRAM_FOLDER_MAP: Record<string, ProgramFolderInfo> = {
     college: "College of Environmental Sciences",
   },
 };
+
+export const CAMPUSES: ProgramOption[] = Array.from(
+  new Set(Object.values(PROGRAM_FOLDER_MAP).map(({ campus }) => campus)),
+).map((campus) => ({ value: campus, label: campus }));
+
+export function getCollegesForCampus(campus: string): ProgramOption[] {
+  return Array.from(
+    new Set(
+      Object.values(PROGRAM_FOLDER_MAP)
+        .filter((organization) => organization.campus === campus)
+        .map(({ college }) => college),
+    ),
+  ).map((college) => ({ value: college, label: college }));
+}
+
+export function getProgramsForCollege(
+  campus: string,
+  college: string,
+): ProgramOption[] {
+  return PROGRAMS.filter((program) => {
+    const organization = PROGRAM_FOLDER_MAP[program.value];
+    return organization?.campus === campus && organization.college === college;
+  });
+}

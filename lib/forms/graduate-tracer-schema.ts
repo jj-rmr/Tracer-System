@@ -1,7 +1,15 @@
 import { z } from "zod";
+import { PROGRAMS } from "../programs/catalog.ts";
 
 const requiredText = (message: string) =>
   z.string({ error: message }).trim().min(1, message);
+
+const PROGRAM_VALUES = new Set(PROGRAMS.map(({ value }) => value));
+const validProgram = requiredText(
+  "Please select the degree program you graduated from.",
+).refine((program) => PROGRAM_VALUES.has(program), {
+  message: "Please select a valid degree program.",
+});
 
 export const graduateTracerPersonalSchema = z.object({
   firstName: requiredText("Please enter your first name."),
@@ -21,9 +29,7 @@ export const graduateTracerPersonalSchema = z.object({
 
 export const graduateTracerEducationSchema = z
   .object({
-    program: requiredText(
-      "Please select the degree program you graduated from.",
-    ),
+    program: validProgram,
     yearGraduated: z
       .number({ error: "Please enter your year of graduation." })
       .int("Please enter a valid graduation year.")

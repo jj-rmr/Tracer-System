@@ -17,7 +17,7 @@ function validAnswers() {
     civilStatus: "Single",
     sex: "Male",
     contactNumbers: ["09123456789"],
-    program: "BSIT",
+    program: "bsit",
     yearGraduated: 2025,
     advancedStudyDegree: "",
     advancedStudyReasons: "",
@@ -48,6 +48,14 @@ function validAnswers() {
 
 test("accepts a complete employed and related first-job response", () => {
   assert.equal(validateGraduateTracerSurvey(validAnswers()).valid, true);
+});
+
+test("rejects a program that is not in the official catalog", () => {
+  const answers = { ...validAnswers(), program: "not-a-real-program" };
+
+  const result = validateGraduateTracerStep(answers, 2);
+
+  assert.equal(typeof result.program, "string");
 });
 
 test("requires accepting reasons only for a related first job", () => {

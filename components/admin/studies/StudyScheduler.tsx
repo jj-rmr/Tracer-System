@@ -2,10 +2,10 @@
 
 import { Input } from "@/components/ui/input";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 
 import { useCallback, useState } from "react";
-import { LuLock, LuPlay, LuPlus } from "@/components/ui/icons";
+import { LuLock, LuPlay, LuPlus, LuTrash2 } from "@/components/ui/icons";
 import { useRouter } from "next/navigation";
 
 import { SelectField } from "@/components/forms/SelectField";
@@ -15,6 +15,9 @@ import ConfirmationDialog from "@/components/ui/ConfirmationDialog";
 import { useToast } from "@/components/ui/Toast";
 import { PublishedFormVersion, StudyPeriodSummary } from "@/types";
 import ExportButton from "@/components/admin/ExportButton";
+import Modal from "@/components/ui/Modal";
+import { Checkbox } from "@/components/ui/checkbox";
+import { createConfirmationCode } from "@/lib/confirmation-code";
 
 export interface StudiesPayload {
   studies: StudyPeriodSummary[];
@@ -30,8 +33,18 @@ interface ScheduleDraft {
 const emptyDraft: ScheduleDraft = {
   formVersionId: "",
   academicYear: "",
-  title: "Graduate Tracer Study",
+  title: "",
 };
+
+const currentYear = new Date().getFullYear();
+const academicYearOptions = Array.from(
+  { length: currentYear - 2000 },
+  (_, index) => {
+    const startYear = 2000 + index;
+    const academicYear = `${startYear}-${startYear + 1}`;
+    return { value: academicYear, label: academicYear };
+  },
+);
 
 const statusStyles = {
   upcoming: "bg-warning/15 text-warning",
@@ -55,7 +68,17 @@ export default function StudyScheduler({
     study: StudyPeriodSummary;
     status: "open" | "closed";
   } | null>(null);
+  const [pendingDeleteStudy, setPendingDeleteStudy] =
+    useState<StudyPeriodSummary | null>(null);
+  const [deletingStudyId, setDeletingStudyId] = useState<string | null>(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [deleteConfirmationCode, setDeleteConfirmationCode] = useState("");
+  const [moveFilesToAdmin, setMoveFilesToAdmin] = useState(false);
   const [draft, setDraft] = useState<ScheduleDraft>(emptyDraft);
+  const createFormDirty =
+    draft.formVersionId !== (data.formVersions[0]?.id ?? "") ||
+    draft.academicYear !== "" ||
+    draft.title !== "";
 
   const loadStudies = useCallback(async () => {
     try {
@@ -139,13 +162,21 @@ export default function StudyScheduler({
 
       if (!response.ok) throw new Error(result.message);
 
+      setData((current) => ({
+        ...current,
+        studies: current.studies.map((currentStudy) =>
+          currentStudy.id === study.id
+            ? { ...currentStudy, status }
+            : currentStudy,
+        ),
+      }));
+      setPendingStatusChange(null);
+
       showToast({
         message: status === "open" ? "Study opened." : "Study closed.",
         type: "success",
       });
-      await loadStudies();
       router.refresh();
-      setPendingStatusChange(null);
     } catch (error) {
       showToast({
         message:
@@ -157,6 +188,45 @@ export default function StudyScheduler({
     } finally {
       setChangingStudyId(null);
     }
+  }
+
+  async function deleteStudy(study: StudyPeriodSummary) {
+    setDeletingStudyId(study.id);
+    try {
+      const response = await fetch(`/api/admin/studies/${study.id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ moveFilesToAdmin }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.message);
+
+      setData((current) => ({
+        ...current,
+        studies: current.studies.filter((item) => item.id !== study.id),
+      }));
+      setPendingDeleteStudy(null);
+      setDeleteConfirmation("");
+      setDeleteConfirmationCode("");
+      setMoveFilesToAdmin(false);
+      showToast({ message: "Study deleted.", type: "success" });
+      router.refresh();
+    } catch (error) {
+      showToast({
+        message:
+          error instanceof Error ? error.message : "Failed to delete study.",
+        type: "error",
+      });
+    } finally {
+      setDeletingStudyId(null);
+    }
+  }
+
+  function openDeleteStudy(study: StudyPeriodSummary) {
+    setDeleteConfirmation("");
+    setDeleteConfirmationCode(createConfirmationCode());
+    setMoveFilesToAdmin(false);
+    setPendingDeleteStudy(study);
   }
 
   return (
@@ -184,6 +254,7 @@ export default function StudyScheduler({
         width="lg"
         fitContent
         showCloseButton={false}
+        shouldConfirmClose={createFormDirty}
         confirmationTitle="Discard study schedule changes?"
         confirmationDescription="Any unsaved changes to this study schedule will be lost."
       >
@@ -207,22 +278,17 @@ export default function StudyScheduler({
               required
             />
 
-            <label className="min-w-0">
-              <span className={styles.label}>Academic year</span>
-              <Input
-                value={draft.academicYear}
-                onChange={(event) =>
-                  setDraft((current) => ({
-                    ...current,
-                    academicYear: event.target.value,
-                  }))
-                }
-                placeholder="2026-2027"
-                pattern="[0-9]{4}-[0-9]{4}"
-                className={styles.input(false, false)}
-                required
-              />
-            </label>
+            <SelectField
+              id="academicYear"
+              label="Academic year *"
+              value={draft.academicYear}
+              onChange={(academicYear) =>
+                setDraft((current) => ({ ...current, academicYear }))
+              }
+              options={academicYearOptions}
+              placeholder="Select an academic year"
+              required
+            />
 
             <label className="min-w-0 md:col-span-2">
               <span className={styles.label}>Study title</span>
@@ -273,7 +339,7 @@ export default function StudyScheduler({
           pendingStatusChange?.status === "open"
             ? `This will allow responses to be created and changed for ${pendingStatusChange.study.academicYear} — ${pendingStatusChange.study.title}.`
             : pendingStatusChange
-              ? `This will prevent responses from being edited or deleted for ${pendingStatusChange.study.academicYear} — ${pendingStatusChange.study.title}.`
+              ? `This will prevent new alumni responses and final manual submissions for ${pendingStatusChange.study.academicYear} — ${pendingStatusChange.study.title}.`
               : ""
         }
         confirmLabel={
@@ -287,6 +353,121 @@ export default function StudyScheduler({
         tone={pendingStatusChange?.status === "closed" ? "danger" : "primary"}
         showCloseButton={false}
       />
+
+      <Modal
+        open={pendingDeleteStudy !== null}
+        onClose={() => {
+          if (deletingStudyId) return;
+          setPendingDeleteStudy(null);
+          setDeleteConfirmation("");
+          setDeleteConfirmationCode("");
+          setMoveFilesToAdmin(false);
+        }}
+        title="Permanently delete study?"
+        description={
+          pendingDeleteStudy
+            ? `${pendingDeleteStudy.academicYear} — ${pendingDeleteStudy.title}`
+            : undefined
+        }
+        width="md"
+        fitContent
+        showCloseButton={!deletingStudyId}
+      >
+        {pendingDeleteStudy && (
+          <div className="space-y-5">
+            <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm leading-6 text-destructive">
+              <p className="font-semibold">This action cannot be undone</p>
+              <p className="mt-1">
+                The study and all associated responses will be permanently
+                deleted. Download a backup first if these records may be needed
+                later.
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm font-semibold text-foreground">
+                Download response backup
+              </p>
+              <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                <a
+                  className={buttonVariants({ variant: "success" })}
+                  href={`/api/admin/responses/export?study=${encodeURIComponent(pendingDeleteStudy.id)}&format=xlsx`}
+                >
+                  Export to Excel
+                </a>
+                <a
+                  className={buttonVariants({ variant: "success" })}
+                  href={`/api/admin/responses/export?study=${encodeURIComponent(pendingDeleteStudy.id)}&format=csv`}
+                >
+                  Export to CSV
+                </a>
+              </div>
+            </div>
+
+            <label className="flex items-start gap-3 rounded-2xl border border-border bg-muted/40 p-4">
+              <Checkbox
+                className="mt-1"
+                checked={moveFilesToAdmin}
+                disabled={deletingStudyId !== null}
+                onCheckedChange={setMoveFilesToAdmin}
+              />
+              <span>
+                <span className="block text-sm font-semibold text-foreground">
+                  Move the study folder to Admin Files
+                </span>
+                <span className="mt-1 block text-sm leading-5 text-muted-foreground">
+                  Preserve the study&apos;s Google Drive files under Admin Files
+                  instead of deleting them.
+                </span>
+              </span>
+            </label>
+
+            <label className="block">
+              <span className="text-sm font-medium text-foreground">
+                Type the confirmation phrase below to continue
+              </span>
+              <span className="mt-2 block select-none rounded-xl border border-border bg-muted px-4 py-3 text-center font-mono text-base font-semibold tracking-widest text-foreground">
+                DELETE {deleteConfirmationCode}
+              </span>
+              <Input
+                className="mt-2"
+                value={deleteConfirmation}
+                disabled={deletingStudyId !== null}
+                autoComplete="off"
+                spellCheck={false}
+                onChange={(event) => setDeleteConfirmation(event.target.value)}
+              />
+            </label>
+
+            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={deletingStudyId !== null}
+                onClick={() => {
+                  setPendingDeleteStudy(null);
+                  setDeleteConfirmation("");
+                  setDeleteConfirmationCode("");
+                  setMoveFilesToAdmin(false);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                disabled={
+                  deletingStudyId !== null ||
+                  deleteConfirmation !== `DELETE ${deleteConfirmationCode}`
+                }
+                onClick={() => void deleteStudy(pendingDeleteStudy)}
+              >
+                {deletingStudyId ? "Deleting study..." : "Delete Study"}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {data.studies.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-input bg-card p-10 text-center text-muted-foreground">
@@ -334,6 +515,19 @@ export default function StudyScheduler({
                 <ExportButton
                   baseUrl={`/api/admin/responses/export?study=${encodeURIComponent(study.id)}`}
                 />
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  disabled={
+                    changingStudyId !== null || deletingStudyId !== null
+                  }
+                  onClick={() => openDeleteStudy(study)}
+                  aria-label="Delete study"
+                  title="Delete study"
+                >
+                  <LuTrash2 animated />
+                </Button>
                 {study.status === "closed" ? (
                   <Button
                     type="button"

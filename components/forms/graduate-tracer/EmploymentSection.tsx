@@ -129,7 +129,7 @@ export function EmploymentSection({
       <SelectField
         disabled={readOnly}
         id="employmentStatus"
-        label="12. Are you presently employed? *"
+        label="Are you presently employed? *"
         value={form.employmentStatus}
         onChange={(val) => {
           const employmentStatus = val as Survey["employmentStatus"];
@@ -184,7 +184,7 @@ export function EmploymentSection({
             <SelectField
               disabled={readOnly}
               id="currentEmploymentStatus"
-              label="14. What is your present employment status? *"
+              label="What is your present employment status? *"
               value={form.currentEmploymentStatus}
               onChange={(val) =>
                 updateField(
@@ -207,7 +207,7 @@ export function EmploymentSection({
             />
             <div>
               <label className={styles.label}>
-                15. What is your present occupation or job title? *
+                What is your present occupation or job title? *
               </label>
               <Input
                 disabled={readOnly}
@@ -257,7 +257,7 @@ export function EmploymentSection({
             <SelectField
               disabled={readOnly}
               id="businessIndustry"
-              label="17. What is the major line of business of the company or organization where you are presently employed? *"
+              label="What is the major line of business of the company or organization where you are presently employed? *"
               value={form.businessIndustry}
               onChange={(val) =>
                 updateField(
@@ -295,7 +295,7 @@ export function EmploymentSection({
             <SelectField
               disabled={readOnly}
               id="placeOfWork"
-              label="18. Is your present place of work located locally or abroad? *"
+              label="Is your present place of work located locally or abroad? *"
               value={form.placeOfWork}
               onChange={(val) =>
                 updateField("placeOfWork", val as Survey["placeOfWork"])
@@ -311,7 +311,7 @@ export function EmploymentSection({
               <FileUploadField
                 id="employmentDocuments"
                 name="employmentDocuments"
-                label="19. To verify your employment status, upload supporting documentation such as your company ID or employment contract."
+                label="To verify your employment status, upload supporting documentation such as your company ID or employment contract."
                 files={employmentDocuments}
                 onChange={setEmploymentDocuments}
                 existingDocuments={existingDocuments.filter(
@@ -330,7 +330,7 @@ export function EmploymentSection({
               <FileUploadField
                 id="awardsDocuments"
                 name="awardsDocuments"
-                label="20. Upload copies of any awards, recognition, or feedback you have received from employers."
+                label="Upload copies of any awards, recognition, or feedback you have received from employers."
                 files={awardsDocuments}
                 onChange={setAwardsDocuments}
                 existingDocuments={existingDocuments.filter(
@@ -354,8 +354,8 @@ export function EmploymentSection({
         {conditions.showUnemploymentReasons && (
           <div className="space-y-2 border-t border-border pt-4">
             <label className={styles.label}>
-              13. Why are you not presently employed? Select all reasons that
-              apply. *
+              Why are you not presently employed? Select all reasons that apply.
+              *
             </label>
 
             <div

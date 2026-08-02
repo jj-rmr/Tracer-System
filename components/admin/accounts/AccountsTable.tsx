@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/sortable-table-head";
 import { TableContentState } from "@/components/ui/table-content-state";
 import { CopyButton } from "@/components/ui/copy-button";
+import { createConfirmationCode } from "@/lib/confirmation-code";
 
 interface Account {
   id: string;
@@ -68,6 +69,7 @@ export default function AccountsTable({
   const [reloadKey, setReloadKey] = useState(0);
   const [accountToDelete, setAccountToDelete] = useState<Account | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [deleteConfirmationCode, setDeleteConfirmationCode] = useState("");
   const [deleting, setDeleting] = useState(false);
   const [accountToView, setAccountToView] = useState<Account | null>(null);
   const [roleChange, setRoleChange] = useState<{
@@ -75,6 +77,7 @@ export default function AccountsTable({
     role: Role;
   } | null>(null);
   const [roleConfirmation, setRoleConfirmation] = useState("");
+  const [roleConfirmationCode, setRoleConfirmationCode] = useState("");
   const [changingRole, setChangingRole] = useState(false);
   const [sortKey, setSortKey] = useState<AccountSortKey>("createdAt");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -184,13 +187,28 @@ export default function AccountsTable({
       ),
     );
 
-  const requiredRoleConfirmation =
+  const roleConfirmationAction =
     roleChange?.role === "admin" ? "PROMOTE TO ADMIN" : "DEMOTE TO ALUMNI";
+  const requiredRoleConfirmation = `${roleConfirmationAction} ${roleConfirmationCode}`;
+  const requiredDeleteConfirmation = `DELETE ${deleteConfirmationCode}`;
+
+  function openDeleteConfirmation(account: Account) {
+    setDeleteConfirmation("");
+    setDeleteConfirmationCode(createConfirmationCode());
+    setAccountToDelete(account);
+  }
+
+  function openRoleConfirmation(account: Account, role: Role) {
+    setRoleConfirmation("");
+    setRoleConfirmationCode(createConfirmationCode());
+    setRoleChange({ account, role });
+  }
 
   const closeRoleChange = () => {
     if (changingRole) return;
     setRoleChange(null);
     setRoleConfirmation("");
+    setRoleConfirmationCode("");
   };
 
   const confirmRoleChange = async () => {
@@ -228,6 +246,7 @@ export default function AccountsTable({
       showToast({ message: data.message, type: "success" });
       setRoleChange(null);
       setRoleConfirmation("");
+      setRoleConfirmationCode("");
       router.refresh();
     } catch (error) {
       showToast({
@@ -243,7 +262,8 @@ export default function AccountsTable({
   };
 
   const confirmDelete = async () => {
-    if (!accountToDelete || deleteConfirmation !== "DELETE ACCOUNT") return;
+    if (!accountToDelete || deleteConfirmation !== requiredDeleteConfirmation)
+      return;
     setDeleting(true);
     try {
       const res = await fetch(`/api/admin/accounts/${accountToDelete.id}`, {
@@ -265,6 +285,7 @@ export default function AccountsTable({
       setTotalRows((prev) => Math.max(0, prev - 1));
       setAccountToDelete(null);
       setDeleteConfirmation("");
+      setDeleteConfirmationCode("");
 
       showToast({
         message: "Account deleted successfully.",
@@ -281,6 +302,7 @@ export default function AccountsTable({
 
       setAccountToDelete(null);
       setDeleteConfirmation("");
+      setDeleteConfirmationCode("");
     } finally {
       setDeleting(false);
     }
@@ -484,16 +506,13 @@ export default function AccountsTable({
                                 icon: (
                                   <LuShieldCheck aria-hidden="true" size={16} />
                                 ),
-                                onSelect: () => {
-                                  setRoleConfirmation("");
-                                  setRoleChange({
+                                onSelect: () =>
+                                  openRoleConfirmation(
                                     account,
-                                    role:
-                                      account.role === "alumni"
-                                        ? "admin"
-                                        : "alumni",
-                                  });
-                                },
+                                    account.role === "alumni"
+                                      ? "admin"
+                                      : "alumni",
+                                  ),
                               },
                             ]
                           : []),
@@ -607,8 +626,7 @@ export default function AccountsTable({
                     onClick={() => {
                       const account = accountToView;
                       setAccountToView(null);
-                      setDeleteConfirmation("");
-                      setAccountToDelete(account);
+                      openDeleteConfirmation(account);
                     }}
                   >
                     <LuTrash2 aria-hidden="true" animated />
@@ -623,11 +641,10 @@ export default function AccountsTable({
                   onClick={() => {
                     const account = accountToView;
                     setAccountToView(null);
-                    setRoleConfirmation("");
-                    setRoleChange({
+                    openRoleConfirmation(
                       account,
-                      role: account.role === "alumni" ? "admin" : "alumni",
-                    });
+                      account.role === "alumni" ? "admin" : "alumni",
+                    );
                   }}
                 >
                   <LuShieldCheck aria-hidden="true" />
@@ -646,6 +663,7 @@ export default function AccountsTable({
           if (deleting) return;
           setAccountToDelete(null);
           setDeleteConfirmation("");
+          setDeleteConfirmationCode("");
         }}
         title="Permanently delete account?"
         description={accountToDelete?.email}
@@ -682,7 +700,10 @@ export default function AccountsTable({
 
           <label className="block">
             <span className="text-sm font-medium text-foreground">
-              Type <strong>DELETE ACCOUNT</strong> to continue
+              Type the confirmation phrase below to continue
+            </span>
+            <span className="mt-2 block select-none rounded-xl border border-border bg-muted px-4 py-3 text-center font-mono text-base font-semibold tracking-widest text-foreground">
+              {requiredDeleteConfirmation}
             </span>
             <Input
               className="mt-2"
@@ -702,6 +723,7 @@ export default function AccountsTable({
               onClick={() => {
                 setAccountToDelete(null);
                 setDeleteConfirmation("");
+                setDeleteConfirmationCode("");
               }}
             >
               Cancel
@@ -709,7 +731,9 @@ export default function AccountsTable({
             <Button
               type="button"
               variant="destructive"
-              disabled={deleting || deleteConfirmation !== "DELETE ACCOUNT"}
+              disabled={
+                deleting || deleteConfirmation !== requiredDeleteConfirmation
+              }
               onClick={() => void confirmDelete()}
             >
               {deleting ? "Deleting account..." : "Delete Account"}
@@ -725,8 +749,7 @@ export default function AccountsTable({
             ? "Promote account to administrator?"
             : "Demote administrator to alumni?"
         }
-        description={roleChange?.account.email}
-        width="md"
+        width="xl"
         fitContent
         showCloseButton={!changingRole}
       >
@@ -782,9 +805,54 @@ export default function AccountsTable({
             </div>
           )}
 
+          {roleChange && (
+            <div className="rounded-2xl border border-border bg-muted/60 p-5">
+              <div className="flex items-center gap-4">
+                <ProfileAvatar
+                  name={roleChange.account.name}
+                  pictureUrl={roleChange.account.pictureUrl}
+                  size={72}
+                />
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="truncate text-xl font-semibold text-foreground">
+                      {roleChange.account.name || "Unnamed User"}
+                    </p>
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
+                        roleChange.account.verified
+                          ? "bg-success/15 text-success"
+                          : "bg-warning/15 text-warning"
+                      }`}
+                    >
+                      {roleChange.account.verified ? "Verified" : "Pending"}
+                    </span>
+                  </div>
+                  <p className="mt-1 break-all text-sm text-muted-foreground">
+                    {roleChange.account.email}
+                  </p>
+                  <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+                    <span className="rounded-lg border border-border bg-background px-3 py-1.5 font-medium capitalize text-foreground">
+                      {roleChange.account.role}
+                    </span>
+                    <span aria-hidden="true" className="text-muted-foreground">
+                      →
+                    </span>
+                    <span className="rounded-lg bg-primary/10 px-3 py-1.5 font-semibold capitalize text-primary">
+                      {roleChange.role}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <label className="block">
             <span className="text-sm font-medium text-foreground">
-              Type <strong>{requiredRoleConfirmation}</strong> to continue
+              Type the confirmation phrase below to continue
+            </span>
+            <span className="mt-2 block select-none rounded-xl border border-border bg-muted px-4 py-3 text-center font-mono text-base font-semibold tracking-widest text-foreground">
+              {requiredRoleConfirmation}
             </span>
             <Input
               className="mt-2"

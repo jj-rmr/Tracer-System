@@ -197,3 +197,12 @@ export async function archiveStudyPeriod(studyPeriodId: string) {
 
   return data;
 }
+
+export async function deleteStudyPeriod(studyPeriodId: string) {
+  const { data, error } = await supabase.rpc("delete_study_period", {
+    target_study_period_id: studyPeriodId,
+  });
+
+  if (error) throw error;
+  return data === null ? null : Number(data);
+}

@@ -1,10 +1,16 @@
 import { Input } from "@/components/ui/input";
 
+import { useState } from "react";
 import { Controller, useWatch } from "react-hook-form";
 
 import { SelectField } from "@/components/forms/SelectField";
 import { StringListField } from "@/components/forms/StringListField";
-import { PROGRAMS } from "@/lib/programs/catalog";
+import {
+  CAMPUSES,
+  getCollegesForCampus,
+  getProgramsForCollege,
+  PROGRAM_FOLDER_MAP,
+} from "@/lib/programs/catalog";
 import {
   ErrorMessage,
   fieldStyles as styles,
@@ -35,6 +41,15 @@ export function EducationSection({
     control,
     name: "advancedStudyReasons",
   });
+  const selectedProgram = useWatch({ control, name: "program" });
+  const selectedOrganization = PROGRAM_FOLDER_MAP[selectedProgram];
+  const [campusOverride, setCampusOverride] = useState<string | null>(null);
+  const [collegeOverride, setCollegeOverride] = useState<string | null>(null);
+  const campus = campusOverride ?? selectedOrganization?.campus ?? "";
+  const college = collegeOverride ?? selectedOrganization?.college ?? "";
+
+  const collegeOptions = getCollegesForCampus(campus);
+  const programOptions = getProgramsForCollege(campus, college);
 
   return (
     <div className="space-y-6">
@@ -42,32 +57,69 @@ export function EducationSection({
         Academic Background
       </h3>
 
-      <div className="grid grid-cols-1 gap-6 border-b border-border pb-4 md:grid-cols-2">
-        <div>
+      <div className="space-y-6 border-b border-border pb-4">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
           <Controller
             name="program"
             control={control}
             render={({ field }) => (
-              <SelectField
-                id="program"
-                disabled={readOnly}
-                label="Program *"
-                value={field.value}
-                onChange={(value) => {
-                  field.onChange(value);
-                  clearFieldError("program");
-                }}
-                options={PROGRAMS}
-                hasError={!!errors.program}
-                required
-                placeholder="Select your program of study"
-              />
+              <>
+                <SelectField
+                  id="campus"
+                  disabled={readOnly}
+                  label="Campus *"
+                  value={campus}
+                  onChange={(value) => {
+                    setCampusOverride(value);
+                    setCollegeOverride("");
+                    field.onChange("");
+                  }}
+                  options={CAMPUSES}
+                  hasError={!!errors.program && !campus}
+                  required
+                  placeholder="Select your campus"
+                />
+
+                {campus && (
+                  <SelectField
+                    id="college"
+                    disabled={readOnly}
+                    label="College *"
+                    value={college}
+                    onChange={(value) => {
+                      setCollegeOverride(value);
+                      field.onChange("");
+                    }}
+                    options={collegeOptions}
+                    hasError={!!errors.program && !college}
+                    required
+                    placeholder="Select your college"
+                  />
+                )}
+
+                {campus && college && (
+                  <SelectField
+                    id="program"
+                    disabled={readOnly}
+                    label="Program *"
+                    value={field.value}
+                    onChange={(value) => {
+                      field.onChange(value);
+                      if (value) clearFieldError("program");
+                    }}
+                    options={programOptions}
+                    hasError={!!errors.program}
+                    required
+                    placeholder="Select your program of study"
+                  />
+                )}
+              </>
             )}
           />
           <ErrorMessage message={errors.program} />
         </div>
 
-        <div>
+        <div className="max-w-md">
           <Controller
             name="yearGraduated"
             control={control}

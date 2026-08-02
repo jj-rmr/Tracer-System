@@ -10,6 +10,7 @@ import {
 } from "@/lib/repositories/accounts.repository";
 import { deleteAccountDraftResponses } from "@/lib/forms/account-role-change";
 import { recordSecurityAuditEventSafely } from "@/lib/repositories/audit.repository";
+import { isValidConfirmationPhrase } from "@/lib/confirmation-code";
 
 async function authorize(): Promise<AuthUser | NextResponse> {
   const { user } = await requireUser();
@@ -84,7 +85,7 @@ export async function PATCH(
       const expectedConfirmation =
         targetRole === "admin" ? "PROMOTE TO ADMIN" : "DEMOTE TO ALUMNI";
 
-      if (body.confirmation !== expectedConfirmation) {
+      if (!isValidConfirmationPhrase(body.confirmation, expectedConfirmation)) {
         return NextResponse.json(
           {
             success: false,
@@ -178,7 +179,7 @@ export async function DELETE(
       confirmation?: unknown;
     } | null;
 
-    if (body?.confirmation !== "DELETE ACCOUNT") {
+    if (!isValidConfirmationPhrase(body?.confirmation, "DELETE")) {
       return NextResponse.json(
         { success: false, message: "The deletion confirmation is invalid." },
         { status: 400 },

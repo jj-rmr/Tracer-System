@@ -181,17 +181,6 @@ export async function DELETE(
       );
     }
 
-    const context = await getStudyContext(existingResponse.studyPeriodId);
-    if (!context || context.study.status !== "open") {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Closed study responses cannot be deleted.",
-        },
-        { status: 423 },
-      );
-    }
-
     let response =
       existingResponse.deletionStatus === "deleting"
         ? existingResponse

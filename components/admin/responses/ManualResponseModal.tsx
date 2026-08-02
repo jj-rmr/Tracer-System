@@ -6,6 +6,7 @@ import ManualResponseEntry, {
   type ManualResponseDraft,
   type ManualResponseEntryHandle,
 } from "@/components/admin/responses/ManualResponseEntry";
+import ConfirmationDialog from "@/components/ui/ConfirmationDialog";
 import FormModal from "@/components/ui/FormModal";
 import LoadingState from "@/components/ui/LoadingState";
 import { useToast } from "@/components/ui/Toast";
@@ -39,6 +40,7 @@ export default function ManualResponseModal({
   const [error, setError] = useState<string | null>(null);
   const [savingDraft, setSavingDraft] = useState(false);
   const [formDirty, setFormDirty] = useState(false);
+  const [confirmingClose, setConfirmingClose] = useState(false);
   const entryRef = useRef<ManualResponseEntryHandle>(null);
   const { showToast } = useToast();
 
@@ -116,6 +118,7 @@ export default function ManualResponseModal({
       if (!saved) return;
       showToast({ message: "Manual response draft saved.", type: "success" });
       onDraftSaved(saved.id);
+      setConfirmingClose(false);
       onClose();
     } catch (actionError) {
       showToast({
@@ -130,16 +133,25 @@ export default function ManualResponseModal({
     }
   }
 
+  function requestClose() {
+    if (formDirty) {
+      setConfirmingClose(true);
+      return;
+    }
+
+    onClose();
+  }
+
   return (
     <>
       <FormModal
         open
         onClose={onClose}
-        onCloseRequest={() => void saveDraftAndClose()}
+        onCloseRequest={requestClose}
         title={initialDraft ? "Edit Draft Response" : "Add Manual Response"}
         description="Transcribe a historical tracer study response."
         width="xl"
-        showCloseButton={!formDirty}
+        showCloseButton
       >
         {loading ? (
           <LoadingState className="min-h-72" message="Loading studies..." />
@@ -153,11 +165,23 @@ export default function ManualResponseModal({
             studies={studies}
             initialDraft={initialDraft}
             onComplete={onComplete}
+            onDraftSaved={onDraftSaved}
             onDirtyChange={setFormDirty}
-            onRequestClose={() => void saveDraftAndClose()}
+            onRequestClose={requestClose}
           />
         )}
       </FormModal>
+
+      <ConfirmationDialog
+        open={confirmingClose}
+        onClose={() => setConfirmingClose(false)}
+        onConfirm={() => void saveDraftAndClose()}
+        title="Save draft before closing?"
+        description="Your latest manual response changes have not been saved yet. Save them as a draft before closing the form."
+        cancelLabel="Keep Editing"
+        confirmLabel="Save Draft and Close"
+        busy={savingDraft}
+      />
     </>
   );
 }

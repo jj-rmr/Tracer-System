@@ -49,6 +49,7 @@ export default function ResponseWorkspace({
   const [open, setOpen] = useState(false);
   const [formDirty, setFormDirty] = useState(false);
   const [showDeleteResponseModal, setShowDeleteResponseModal] = useState(false);
+  const [confirmingDraftClose, setConfirmingDraftClose] = useState(false);
   const [draftCloseAction, setDraftCloseAction] = useState<
     "saving" | "discarding" | null
   >(null);
@@ -254,7 +255,7 @@ export default function ResponseWorkspace({
       setOpen(false);
       return;
     }
-    if (draftCloseAction === null) void saveDraftAndClose();
+    setConfirmingDraftClose(true);
   }
 
   function openForm() {
@@ -267,6 +268,7 @@ export default function ResponseWorkspace({
     try {
       await saveStudyDraft(latestSurveyRef.current);
       await Promise.allSettled([...documentOperationsRef.current]);
+      setConfirmingDraftClose(false);
       setOpen(false);
       showToast({ message: "Draft saved.", type: "success" });
       router.refresh();
@@ -352,7 +354,7 @@ export default function ResponseWorkspace({
           onCloseRequest={requestDraftClose}
           title="New Tracer Response"
           width="xl"
-          showCloseButton={!formDirty || responseStatus !== "draft"}
+          showCloseButton
           confirmationDescription="Your response answers and selected documents will be discarded."
         >
           <GraduateTracerForm
@@ -462,7 +464,7 @@ export default function ResponseWorkspace({
           shouldConfirmClose={formDirty}
           title="Edit Tracer Response"
           width="xl"
-          showCloseButton={!formDirty || responseStatus !== "draft"}
+          showCloseButton
           confirmationDescription="Any modifications to this response and newly selected documents will be discarded."
         >
           <GraduateTracerForm
@@ -489,6 +491,16 @@ export default function ResponseWorkspace({
           />
         </FormModal>
       )}
+      <ConfirmationDialog
+        open={open && confirmingDraftClose}
+        onClose={() => setConfirmingDraftClose(false)}
+        onConfirm={() => void saveDraftAndClose()}
+        title="Save draft before closing?"
+        description="Your latest response changes have not been saved yet. Save them as a draft before closing the form."
+        cancelLabel="Keep Editing"
+        confirmLabel="Save Draft and Close"
+        busy={draftCloseAction === "saving"}
+      />
       <ConfirmationDialog
         open={showDeleteResponseModal}
         onClose={() => setShowDeleteResponseModal(false)}

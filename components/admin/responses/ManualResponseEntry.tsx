@@ -44,6 +44,7 @@ interface ManualResponseEntryProps {
   studies: StudyPeriod[];
   initialDraft?: ManualResponseDraft | null;
   onComplete?: () => void;
+  onDraftSaved?: (responseId: string) => void;
   onRequestClose?: () => void;
   onDirtyChange?: (isDirty: boolean) => void;
 }
@@ -52,7 +53,14 @@ const ManualResponseEntry = forwardRef<
   ManualResponseEntryHandle,
   ManualResponseEntryProps
 >(function ManualResponseEntry(
-  { studies, initialDraft, onComplete, onRequestClose, onDirtyChange },
+  {
+    studies,
+    initialDraft,
+    onComplete,
+    onDraftSaved,
+    onRequestClose,
+    onDirtyChange,
+  },
   ref,
 ) {
   const router = useRouter();
@@ -166,6 +174,7 @@ const ManualResponseEntry = forwardRef<
       latestResponseRef.current = structuredClone(response);
       lastPersistedSignatureRef.current = signature;
       initialMetadataRef.current = { studyId, respondentEmail };
+      if (mode === "draft") onDraftSaved?.(result.data.id);
       return result.data as { id: string; updatedAt?: string };
     })();
 

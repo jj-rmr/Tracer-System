@@ -122,7 +122,7 @@ export function JobHistorySection({
         <SelectField
           disabled={readOnly}
           id="isFirstJob"
-          label="21. Is your present job your first job after college? *"
+          label="Is your present job your first job after college? *"
           value={
             form.isFirstJob === true
               ? "true"
@@ -157,7 +157,7 @@ export function JobHistorySection({
           <SelectField
             disabled={readOnly}
             id="isFirstJobRelated"
-            label="23. Is your first job related to the course or program you completed in college? *"
+            label="Is your first job related to the course or program you completed in college? *"
             value={
               form.isFirstJobRelated === true
                 ? "true"
@@ -189,8 +189,8 @@ export function JobHistorySection({
         <>
           <div className="space-y-2 border-t border-border pt-4">
             <label className={styles.label}>
-              22. What are your reasons for staying in your present job? Select
-              all that apply. *
+              What are your reasons for staying in your present job? Select all
+              that apply. *
             </label>
             <div
               data-input-surface
@@ -240,8 +240,8 @@ export function JobHistorySection({
           {conditions.showAcceptingReasons && (
             <div>
               <label className={styles.label}>
-                24. What were your reasons for accepting your first job? Select
-                all that apply. *
+                What were your reasons for accepting your first job? Select all
+                that apply. *
               </label>
               <div
                 data-input-surface
@@ -310,8 +310,8 @@ export function JobHistorySection({
         <div className="space-y-4 border-t border-border pt-4">
           <div>
             <label className={styles.label}>
-              25. What were your reasons for changing from your first job?
-              Select all that apply. *
+              What were your reasons for changing from your first job? Select
+              all that apply. *
             </label>
             <div
               data-input-surface
@@ -377,7 +377,7 @@ export function JobHistorySection({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 border-t border-border pt-4">
         <div>
           <label className={styles.label}>
-            29. What was the job title of your first job after college? *
+            What was the job title of your first job after college? *
           </label>
           <Input
             disabled={readOnly}
@@ -392,7 +392,7 @@ export function JobHistorySection({
           <SelectField
             disabled={readOnly}
             id="firstJobSearchDuration"
-            label="28. How long did it take you to land your first job after college? *"
+            label="How long did it take you to land your first job after college? *"
             value={form.firstJobSearchDuration}
             onChange={(val) =>
               updateField(
@@ -432,7 +432,7 @@ export function JobHistorySection({
           <SelectField
             disabled={readOnly}
             id="firstJobDuration"
-            label="26. How long did you stay in your first job? *"
+            label="How long did you stay in your first job? *"
             value={form.firstJobDuration}
             onChange={(val) =>
               updateField("firstJobDuration", val as Survey["firstJobDuration"])
@@ -466,7 +466,7 @@ export function JobHistorySection({
           <SelectField
             disabled={readOnly}
             id="firstJobSource"
-            label="27. How did you find your first job after college? *"
+            label="How did you find your first job after college? *"
             value={form.firstJobSource}
             onChange={(val) =>
               updateField("firstJobSource", val as Survey["firstJobSource"])
@@ -503,7 +503,7 @@ export function JobHistorySection({
           <SelectField
             disabled={readOnly}
             id="firstJobLevel"
-            label="30. What was your position level in your first job? *"
+            label="What was your position level in your first job? *"
             value={form.firstJobLevel}
             onChange={(val) =>
               updateField("firstJobLevel", val as Survey["firstJobLevel"])
@@ -522,7 +522,7 @@ export function JobHistorySection({
           <SelectField
             disabled={readOnly}
             id="currentJobLevel"
-            label="31. What is your position level in your current or present job? *"
+            label="What is your position level in your current or present job? *"
             value={form.currentJobLevel}
             onChange={(val) =>
               updateField("currentJobLevel", val as Survey["currentJobLevel"])
@@ -541,7 +541,7 @@ export function JobHistorySection({
           <SelectField
             disabled={readOnly}
             id="initialMonthlyIncome"
-            label="32. What was your initial monthly earning in your first job after college? *"
+            label="What was your initial monthly earning in your first job after college? *"
             value={form.initialMonthlyIncome}
             onChange={(val) =>
               updateField(
@@ -564,7 +564,7 @@ export function JobHistorySection({
         <SelectField
           disabled={readOnly}
           id="curriculumRelevant"
-          label="33. Was the curriculum you completed in college relevant to your first job? *"
+          label="Was the curriculum you completed in college relevant to your first job? *"
           value={
             form.curriculumRelevant === true
               ? "true"
@@ -590,8 +590,8 @@ export function JobHistorySection({
         {conditions.showUsefulCompetencies && (
           <div>
             <label className={styles.label}>
-              34. Which competencies learned in college did you find most useful
-              in your first job? Select all that apply. *
+              Which competencies learned in college did you find most useful in
+              your first job? Select all that apply. *
             </label>
             <div
               data-input-surface
