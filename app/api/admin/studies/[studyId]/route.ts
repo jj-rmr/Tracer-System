@@ -6,7 +6,7 @@ import {
   deleteStudyPeriod,
   updateStudyPeriodSchedule,
 } from "@/lib/repositories/study-admin.repository";
-import { recordSecurityAuditEventSafely } from "@/lib/repositories/audit.repository";
+import { recordUserAuditEventSafely } from "@/lib/repositories/audit.repository";
 import {
   deleteStudyDriveFolder,
   moveStudyDriveFolderToAdminFiles,
@@ -17,7 +17,7 @@ export async function PATCH(
   { params }: { params: Promise<{ studyId: string }> },
 ) {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin();
 
     const { studyId } = await params;
     const context = await getStudyContext(studyId);
@@ -81,6 +81,20 @@ export async function PATCH(
       closesAt: new Date(closingTime).toISOString(),
     });
 
+    await recordUserAuditEventSafely(admin, {
+      action: "study.schedule_changed",
+      targetType: "study_period",
+      targetId: studyId,
+      metadata: {
+        previousTitle: context.study.title,
+        title: study.title,
+        previousOpensAt: context.study.opensAt,
+        opensAt: study.opensAt,
+        previousClosesAt: context.study.closesAt,
+        closesAt: study.closesAt,
+      },
+    });
+
     return NextResponse.json({ success: true, data: study });
   } catch (error) {
     console.error("Failed to update study period:", error);
@@ -123,8 +137,7 @@ export async function DELETE(
       );
     }
 
-    await recordSecurityAuditEventSafely({
-      actorUserId: admin.id,
+    await recordUserAuditEventSafely(admin, {
       action: "study.deleted",
       targetType: "study_period",
       targetId: studyId,

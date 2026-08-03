@@ -32,7 +32,7 @@ import { useReducedMotionPreference } from "@/lib/hooks/use-reduced-motion-prefe
 import ConfirmationDialog from "@/components/ui/ConfirmationDialog";
 import FormModal from "@/components/ui/FormModal";
 import LoadingState from "@/components/ui/LoadingState";
-import Modal from "@/components/ui/Modal";
+import Modal, { ModalActions } from "@/components/ui/Modal";
 import { SearchInput } from "@/components/ui/search-input";
 import { useToast } from "@/components/ui/Toast";
 import { useDebouncedValue } from "@/lib/hooks/use-debounced-value";
@@ -716,32 +716,34 @@ export default function DriveFileBrowser() {
 
   return (
     <div className="space-y-6 pb-16">
-      <header className="flex flex-col gap-4 rounded-3xl border border-border bg-card/80 p-5 shadow-lg  md:flex-row md:items-center md:justify-between">
-        <div>
+      <header className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-border bg-card/80 p-5 shadow-lg">
+        <div className="min-w-0 flex-1 basis-72">
           <h1 className="text-3xl font-semibold tracking-tight text-foreground">
             Files
           </h1>
-          <p className="text-muted-foreground">
+          <p className="mt-1 text-sm leading-6 text-muted-foreground sm:text-base">
             Browse and preview files stored in the Placement Tracer System
             Drive.
           </p>
         </div>
         <Button
           type="button"
+          variant="outline"
+          size="icon"
           onClick={() => setShowSyncInfo(true)}
           aria-label="About Drive synchronization"
-          className="inline-flex items-center justify-center self-start rounded-xl border border-border bg-card p-2.5 text-muted-foreground shadow-sm transition-[color,background-color,border-color,box-shadow,transform] duration-200 hover:bg-data-hover hover:text-muted-foreground md:self-auto"
+          className="text-muted-foreground"
         >
           <AnimatedInfoIcon size={19} />
         </Button>
       </header>
       <section className="rounded-3xl border border-border bg-card shadow-sm">
         <div className={loading ? "p-5" : "border-b border-border p-5"}>
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
-            <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="min-w-56 flex-1">
               <FileSearchField key={searchInputKey} onSearch={handleSearch} />
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="flex flex-wrap gap-2">
               <Button
                 type="button"
                 variant="outline"
@@ -851,21 +853,24 @@ export default function DriveFileBrowser() {
                 <Button
                   type="button"
                   onClick={() => void openMoveDialog(selectedItems)}
-                  className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2 text-sm font-semibold text-muted-foreground hover:bg-data-hover"
+                  variant="outline"
+                  size="sm"
                 >
                   <AnimatedChevronRightIcon size={15} /> Move
                 </Button>
                 <Button
                   type="button"
                   onClick={() => setDeletingItems(selectedItems)}
-                  className="inline-flex items-center gap-2 rounded-xl border border-destructive/30 bg-card px-3 py-2 text-sm font-semibold text-destructive hover:bg-destructive/10"
+                  variant="destructive"
+                  size="sm"
                 >
                   <AnimatedTrashIcon size={15} /> Delete
                 </Button>
                 <Button
                   type="button"
                   onClick={() => setSelectedItemIds(new Set())}
-                  className="rounded-xl px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-card"
+                  variant="ghost"
+                  size="sm"
                 >
                   Clear Selection
                 </Button>
@@ -1055,6 +1060,8 @@ export default function DriveFileBrowser() {
                     >
                       <Button
                         type="button"
+                        variant="ghost"
+                        size="icon-sm"
                         onClick={() =>
                           setActiveMenuId((current) =>
                             current === item.id ? null : item.id,
@@ -1062,12 +1069,12 @@ export default function DriveFileBrowser() {
                         }
                         aria-label={`Open menu for ${item.name}`}
                         aria-expanded={activeMenuId === item.id}
-                        className="rounded-lg p-2 text-muted-foreground hover:bg-card hover:text-muted-foreground"
+                        className="text-muted-foreground hover:bg-card hover:text-foreground aria-expanded:bg-card aria-expanded:text-foreground"
                       >
                         <AnimatedEllipsisVerticalIcon size={18} />
                       </Button>
                       {activeMenuId === item.id && (
-                        <div className="absolute top-[calc(100%+0.25rem)] right-0 z-50 w-40 overflow-hidden rounded-xl border border-border bg-card p-1.5 shadow-xl">
+                        <div className="absolute top-[calc(100%+0.25rem)] right-0 z-50 w-44 overflow-hidden rounded-xl border border-border bg-card p-2 shadow-xl">
                           <Button
                             type="button"
                             variant="ghost"
@@ -1131,6 +1138,7 @@ export default function DriveFileBrowser() {
           <div className="border-t border-border p-4 text-center">
             <Button
               type="button"
+              variant="outline"
               disabled={loadingMore}
               onClick={() =>
                 void loadFiles({
@@ -1139,7 +1147,6 @@ export default function DriveFileBrowser() {
                   append: true,
                 })
               }
-              className="inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-muted-foreground hover:bg-data-hover disabled:opacity-50"
             >
               <AnimatedRefreshIcon
                 animated={!loadingMore}
@@ -1178,23 +1185,23 @@ export default function DriveFileBrowser() {
               disabled={uploading}
               onError={(message) => showToast({ message, type: "error" })}
             />
-            <div className="flex justify-end gap-3">
+            <ModalActions>
               <Button
                 type="button"
                 disabled={uploading}
                 onClick={requestClose}
-                className="rounded-xl px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-secondary disabled:opacity-50"
+                variant="outline"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={uploading || uploadFiles.length === 0}
-                className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
+                variant="default"
               >
                 {uploading ? "Uploading..." : "Upload files"}
               </Button>
-            </div>
+            </ModalActions>
           </form>
         )}
       </FormModal>
@@ -1223,23 +1230,23 @@ export default function DriveFileBrowser() {
                 required
               />
             </label>
-            <div className="flex justify-end gap-3">
+            <ModalActions>
               <Button
                 type="button"
                 disabled={mutating}
                 onClick={requestClose}
-                className="rounded-xl px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-secondary disabled:opacity-50"
+                variant="outline"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={mutating || !renameValue.trim()}
-                className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
+                variant="default"
               >
                 {mutating ? "Renaming..." : "Rename"}
               </Button>
-            </div>
+            </ModalActions>
           </form>
         )}
       </FormModal>
@@ -1343,23 +1350,23 @@ export default function DriveFileBrowser() {
                 </div>
               ) : null}
             </div>
-            <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row">
+            <ModalActions>
               <Button
                 type="button"
                 disabled={mutating}
                 onClick={requestClose}
-                className="rounded-xl px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-secondary disabled:opacity-50"
+                variant="outline"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={mutating || loadingDestinations || !moveBrowser}
-                className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
+                variant="default"
               >
                 {mutating ? "Moving..." : "Move here"}
               </Button>
-            </div>
+            </ModalActions>
           </form>
         )}
       </FormModal>
@@ -1392,23 +1399,23 @@ export default function DriveFileBrowser() {
                 required
               />
             </label>
-            <div className="flex flex-col-reverse justify-end gap-3 sm:flex-row">
+            <ModalActions>
               <Button
                 type="button"
                 disabled={creatingFolder}
                 onClick={requestClose}
-                className="rounded-xl px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-secondary disabled:opacity-50"
+                variant="outline"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={creatingFolder || !newFolderName.trim()}
-                className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
+                variant="default"
               >
                 {creatingFolder ? "Creating..." : "Create folder"}
               </Button>
-            </div>
+            </ModalActions>
           </form>
         )}
       </FormModal>
@@ -1418,7 +1425,6 @@ export default function DriveFileBrowser() {
         onClose={() => setShowSyncInfo(false)}
         title="About Drive synchronization"
         width="sm"
-        bodyClassName="p-5"
       >
         <div className="space-y-5">
           <p className="text-sm leading-6 text-muted-foreground">
@@ -1426,7 +1432,7 @@ export default function DriveFileBrowser() {
             make changes directly in Google Drive, sync it to update the tracer
             system.
           </p>
-          <div className="flex justify-end">
+          <ModalActions>
             <Button
               type="button"
               variant="default"
@@ -1441,7 +1447,7 @@ export default function DriveFileBrowser() {
               />
               {preparing ? "Syncing Drive..." : "Sync Drive"}
             </Button>
-          </div>
+          </ModalActions>
         </div>
       </Modal>
 
@@ -1450,7 +1456,6 @@ export default function DriveFileBrowser() {
         onClose={() => setInfoItem(null)}
         title={infoItem?.name ?? "Item information"}
         width="sm"
-        bodyClassName="p-5"
       >
         {infoItem && (
           <dl className="divide-y divide-border text-sm">
@@ -1547,7 +1552,7 @@ export default function DriveFileBrowser() {
               </div>
             )}
 
-            <div className="flex justify-end">
+            <ModalActions>
               <Button
                 variant="default"
                 render={
@@ -1560,7 +1565,7 @@ export default function DriveFileBrowser() {
               >
                 <AnimatedExternalLinkIcon size={16} /> Open in new tab
               </Button>
-            </div>
+            </ModalActions>
           </div>
         )}
       </Modal>

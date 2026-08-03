@@ -13,10 +13,11 @@ import {
   requireIndexedDriveBrowserItem,
 } from "@/lib/repositories/google-drive-items.repository";
 import { UploadValidationError } from "@/lib/security/uploads";
+import { recordUserAuditEventSafely } from "@/lib/repositories/audit.repository";
 
 export async function POST(request: NextRequest) {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin();
 
     const formData = await request.formData();
     const file = formData.get("file");
@@ -54,6 +55,13 @@ export async function POST(request: NextRequest) {
     }
 
     const uploaded = await uploadFileToDrive(file, folderId, "admin");
+
+    await recordUserAuditEventSafely(admin, {
+      action: "file.uploaded",
+      targetType: "admin_file",
+      targetId: uploaded.googleDriveFileId,
+      metadata: { folderId, size: uploaded.size },
+    });
 
     return NextResponse.json(
       { success: true, data: uploaded },

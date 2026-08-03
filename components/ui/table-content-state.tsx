@@ -3,7 +3,6 @@
 import type { ReactNode } from "react";
 
 import ErrorState from "@/components/ui/ErrorState";
-import LoadingState from "@/components/ui/LoadingState";
 import { TableCell, TableRow } from "@/components/ui/table";
 
 interface TableContentStateProps {
@@ -33,11 +32,13 @@ export function TableContentState({
             onRetry={onRetry}
           />
         ) : loadingMessage ? (
-          <LoadingState
-            delayMs={0}
-            className="min-h-64"
-            message={loadingMessage}
-          />
+          <div
+            role="status"
+            aria-live="polite"
+            className="flex min-h-64 items-center justify-center text-center text-sm font-medium text-muted-foreground"
+          >
+            {loadingMessage}
+          </div>
         ) : (
           children
         )}

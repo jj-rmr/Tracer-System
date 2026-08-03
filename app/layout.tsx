@@ -28,7 +28,7 @@ const themeScript = `
     const root = document.documentElement;
     root.classList.toggle("dark", isDark);
     root.style.colorScheme = isDark ? "dark" : "light";
-    root.style.backgroundColor = isDark ? "#020617" : "#f8fafc";
+    root.style.removeProperty("background-color");
     document.querySelector('meta[name="theme-color"]')?.setAttribute(
       "content",
       isDark ? "#020617" : "#f8fafc"

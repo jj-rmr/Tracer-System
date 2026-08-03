@@ -122,7 +122,7 @@ export function TracerResponseModalHeader({ response }: { response: Survey }) {
 
   return (
     <div className="pr-2">
-      <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-primary-foreground/70">
+      <p className="text-xs font-semibold uppercase tracking-wider text-primary-foreground/70">
         Tracer response
       </p>
       <h3 className="mt-0.5 break-words text-lg font-semibold tracking-tight text-primary-foreground sm:text-xl">
@@ -136,25 +136,19 @@ export function TracerResponseModalHeader({ response }: { response: Survey }) {
       </p>
       <dl className="mt-3 grid gap-3 border-t border-primary-foreground/20 pt-3 sm:grid-cols-3 sm:gap-6">
         <div>
-          <dt className="text-[0.6875rem] text-primary-foreground/65">
-            Employment
-          </dt>
+          <dt className="text-xs text-primary-foreground/65">Employment</dt>
           <dd className="text-xs font-semibold text-primary-foreground sm:text-sm">
             {normalizeValue(response.employmentStatus) ?? "Not provided"}
           </dd>
         </div>
         <div>
-          <dt className="text-[0.6875rem] text-primary-foreground/65">
-            Current role
-          </dt>
+          <dt className="text-xs text-primary-foreground/65">Current role</dt>
           <dd className="text-xs font-semibold text-primary-foreground sm:text-sm">
             {normalizeValue(response.currentOccupation) ?? "Not provided"}
           </dd>
         </div>
         <div>
-          <dt className="text-[0.6875rem] text-primary-foreground/65">
-            Employer
-          </dt>
+          <dt className="text-xs text-primary-foreground/65">Employer</dt>
           <dd className="text-xs font-semibold text-primary-foreground sm:text-sm">
             {normalizeValue(response.companyName) ?? "Not provided"}
           </dd>

@@ -2,7 +2,8 @@
 
 import { Input } from "@/components/ui/input";
 
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { Button } from "@/components/ui/button";
 
 import { useCallback, useState } from "react";
 import { LuLock, LuPlay, LuPlus, LuTrash2 } from "@/components/ui/icons";
@@ -15,7 +16,7 @@ import ConfirmationDialog from "@/components/ui/ConfirmationDialog";
 import { useToast } from "@/components/ui/Toast";
 import { PublishedFormVersion, StudyPeriodSummary } from "@/types";
 import ExportButton from "@/components/admin/ExportButton";
-import Modal from "@/components/ui/Modal";
+import Modal, { ModalActions, ModalNotice } from "@/components/ui/Modal";
 import { Checkbox } from "@/components/ui/checkbox";
 import { createConfirmationCode } from "@/lib/confirmation-code";
 
@@ -231,12 +232,12 @@ export default function StudyScheduler({
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col gap-4 rounded-3xl border border-border bg-card/80 p-5 shadow-lg  md:flex-row md:items-center md:justify-between">
-        <div>
+      <header className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-border bg-card/80 p-5 shadow-lg">
+        <div className="min-w-0 flex-1 basis-72">
           <h1 className="text-3xl font-semibold tracking-tight text-foreground">
             Tracer Studies
           </h1>
-          <p className="text-muted-foreground">
+          <p className="mt-1 text-sm leading-6 text-muted-foreground sm:text-base">
             Create studies, manually control access, and export responses.
           </p>
         </div>
@@ -305,14 +306,14 @@ export default function StudyScheduler({
               />
             </label>
 
-            <div className="flex justify-end gap-3 md:col-span-2">
+            <ModalActions className="md:col-span-2">
               <Button type="button" variant="ghost" onClick={requestClose}>
                 Cancel
               </Button>
               <Button type="submit" variant="default" disabled={saving}>
                 {saving ? "Creating..." : "Create Study"}
               </Button>
-            </div>
+            </ModalActions>
           </form>
         )}
       </FormModal>
@@ -375,14 +376,13 @@ export default function StudyScheduler({
       >
         {pendingDeleteStudy && (
           <div className="space-y-5">
-            <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm leading-6 text-destructive">
-              <p className="font-semibold">This action cannot be undone</p>
-              <p className="mt-1">
+            <ModalNotice title="This action cannot be undone" tone="danger">
+              <p>
                 The study and all associated responses will be permanently
                 deleted. Download a backup first if these records may be needed
                 later.
               </p>
-            </div>
+            </ModalNotice>
 
             <div>
               <p className="text-sm font-semibold text-foreground">
@@ -439,7 +439,7 @@ export default function StudyScheduler({
               />
             </label>
 
-            <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <ModalActions>
               <Button
                 type="button"
                 variant="outline"
@@ -464,7 +464,7 @@ export default function StudyScheduler({
               >
                 {deletingStudyId ? "Deleting study..." : "Delete Study"}
               </Button>
-            </div>
+            </ModalActions>
           </div>
         )}
       </Modal>

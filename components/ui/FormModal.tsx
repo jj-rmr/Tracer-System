@@ -3,40 +3,26 @@
 import { useState, type ReactNode } from "react";
 
 import ConfirmationDialog from "@/components/ui/ConfirmationDialog";
-import Modal from "@/components/ui/Modal";
+import Modal, { type ModalProps } from "@/components/ui/Modal";
 
-interface FormModalProps {
-  open: boolean;
-  onClose: () => void;
-  title: string;
+interface FormModalProps extends Omit<ModalProps, "children"> {
   children: ReactNode | ((requestClose: () => void) => ReactNode);
-  description?: string;
-  width?: "sm" | "md" | "lg" | "xl";
-  bodyClassName?: string;
   confirmationTitle?: string;
   confirmationDescription?: string;
   shouldConfirmClose?: boolean;
-  fitContent?: boolean;
-  showCloseButton?: boolean;
   onCloseRequest?: () => void;
 }
 
 export default function FormModal({
-  open,
-  onClose,
-  title,
   children,
-  description,
-  width = "xl",
-  bodyClassName,
   confirmationTitle = "Discard unsaved changes?",
   confirmationDescription = "Any information entered in this form will be lost.",
   shouldConfirmClose = true,
-  fitContent = false,
-  showCloseButton = true,
   onCloseRequest,
+  ...modalProps
 }: FormModalProps) {
   const [confirmingClose, setConfirmingClose] = useState(false);
+  const { open, onClose } = modalProps;
 
   function requestClose() {
     if (onCloseRequest) {
@@ -59,16 +45,7 @@ export default function FormModal({
 
   return (
     <>
-      <Modal
-        open={open}
-        onClose={requestClose}
-        title={title}
-        description={description}
-        width={width}
-        bodyClassName={bodyClassName}
-        fitContent={fitContent}
-        showCloseButton={showCloseButton}
-      >
+      <Modal {...modalProps} onClose={requestClose}>
         {typeof children === "function" ? children(requestClose) : children}
       </Modal>
 

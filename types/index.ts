@@ -3,3 +3,4 @@ export * from "./roles";
 export * from "./survey-document";
 export * from "./forms";
 export * from "./google-drive";
+export * from "./audit";

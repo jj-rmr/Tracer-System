@@ -9,6 +9,7 @@ import {
   getFormResponseDocument,
 } from "@/lib/repositories/form-responses.repository";
 import { getStudyContext } from "@/lib/repositories/forms.repository";
+import { recordUserAuditEventSafely } from "@/lib/repositories/audit.repository";
 
 export async function DELETE(
   _request: NextRequest,
@@ -58,6 +59,13 @@ export async function DELETE(
 
     await deleteDriveFile(document.google_drive_file_id);
     await deleteFormResponseDocument(documentId);
+
+    await recordUserAuditEventSafely(user, {
+      action: "document.deleted",
+      targetType: "form_response_document",
+      targetId: documentId,
+      metadata: { responseId, documentType: document.document_type },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -15,7 +15,7 @@ export default async function ManualResponsePage() {
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">
           Add Manual Response
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm leading-6 text-muted-foreground sm:text-base">
           Transcribe a historical response collected through Google Forms.
         </p>
       </header>

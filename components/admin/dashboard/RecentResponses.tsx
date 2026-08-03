@@ -8,7 +8,7 @@ import ManualResponseEditor from "@/components/admin/responses/ManualResponseEdi
 import ReadOnlyResponseDetails from "@/components/responses/ReadOnlyResponseDetails";
 import LoadingState from "@/components/ui/LoadingState";
 import Modal from "@/components/ui/Modal";
-import { buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { useToast } from "@/components/ui/Toast";
 import { cn } from "@/lib/utils";
 import type { AdminResponseSummary, Survey } from "@/types";
@@ -123,7 +123,7 @@ export default function RecentResponses({ responses }: RecentResponsesProps) {
                   setSelectedResponseId(item.id);
                 }
               }}
-              className="flex cursor-pointer flex-col gap-3 px-5 py-4 outline-none transition-colors duration-200 hover:bg-data-hover focus-visible:bg-data-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:flex-row sm:items-center sm:px-6"
+              className="flex cursor-pointer flex-wrap items-center gap-3 px-5 py-4 outline-none transition-colors duration-200 hover:bg-data-hover focus-visible:bg-data-hover focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:px-6"
             >
               <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-primary/10 text-sm font-semibold text-primary">
                 {(item.respondentName ?? item.respondentEmail ?? "R")
@@ -131,7 +131,7 @@ export default function RecentResponses({ responses }: RecentResponsesProps) {
                   .charAt(0)
                   .toUpperCase()}
               </span>
-              <span className="min-w-0 flex-1">
+              <span className="min-w-40 flex-1">
                 <span className="block truncate text-sm font-semibold text-foreground">
                   {item.respondentName ||
                     item.respondentEmail ||

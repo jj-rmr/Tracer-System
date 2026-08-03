@@ -15,14 +15,17 @@ import { friendlyRequestMessage } from "@/lib/api/client-errors";
 interface ExportButtonProps {
   baseUrl: string;
   label?: string;
+  formats?: readonly ExportFormat[];
 }
 
-function withFormat(baseUrl: string, format: "csv" | "xlsx") {
+type ExportFormat = "csv" | "xlsx";
+
+function withFormat(baseUrl: string, format: ExportFormat) {
   const separator = baseUrl.includes("?") ? "&" : "?";
   return `${baseUrl}${separator}format=${format}`;
 }
 
-function downloadFilename(response: Response, format: "csv" | "xlsx") {
+function downloadFilename(response: Response, format: ExportFormat) {
   const disposition = response.headers.get("Content-Disposition") ?? "";
   const encoded = disposition.match(/filename\*=UTF-8''([^;]+)/i)?.[1];
   const quoted = disposition.match(/filename="([^"]+)"/i)?.[1];
@@ -40,12 +43,17 @@ function downloadFilename(response: Response, format: "csv" | "xlsx") {
 export default function ExportButton({
   baseUrl,
   label = "Export",
+  formats = ["xlsx", "csv"],
 }: ExportButtonProps) {
   const [open, setOpen] = useState(false);
-  const [downloading, setDownloading] = useState<"csv" | "xlsx" | null>(null);
+  const [downloading, setDownloading] = useState<ExportFormat | null>(null);
   const { showToast } = useToast();
+  const availableFormats: readonly ExportFormat[] =
+    formats.length > 0 ? formats : ["xlsx", "csv"];
+  const directFormat =
+    availableFormats.length === 1 ? availableFormats[0] : null;
 
-  async function download(format: "csv" | "xlsx") {
+  async function download(format: ExportFormat) {
     if (downloading) return;
 
     setDownloading(format);
@@ -94,58 +102,75 @@ export default function ExportButton({
 
   return (
     <>
-      <Button type="button" onClick={() => setOpen(true)} variant="success">
+      <Button
+        type="button"
+        onClick={() => {
+          if (directFormat) {
+            void download(directFormat);
+          } else {
+            setOpen(true);
+          }
+        }}
+        variant="success"
+        disabled={downloading !== null}
+      >
         <LuDownload animated />
-        {label}
+        {downloading ? `Preparing ${downloading.toUpperCase()}...` : label}
       </Button>
 
-      <Modal
-        open={open}
-        onClose={() => {
-          if (!downloading) setOpen(false);
-        }}
-        title="Export data"
-        description="Choose the file format for this export."
-        width="sm"
-        fitContent
-      >
-        <div className="grid gap-5">
-          <div>
-            <Button
-              type="button"
-              variant="success"
-              size="option"
-              onClick={() => void download("xlsx")}
-              disabled={downloading !== null}
-            >
-              <LuFileSpreadsheet />
-              {downloading === "xlsx"
-                ? "Preparing Excel..."
-                : "Export to Excel"}
-            </Button>
-            <p className="mt-2 px-1 text-sm leading-5 text-muted-foreground">
-              A styled workbook with readable headers and fitted rows and
-              columns.
-            </p>
-          </div>
+      {!directFormat && (
+        <Modal
+          open={open}
+          onClose={() => {
+            if (!downloading) setOpen(false);
+          }}
+          title="Export data"
+          description="Choose the file format for this export."
+          width="sm"
+          fitContent
+        >
+          <div className="grid gap-5">
+            {availableFormats.includes("xlsx") && (
+              <div>
+                <Button
+                  type="button"
+                  variant="success"
+                  size="option"
+                  onClick={() => void download("xlsx")}
+                  disabled={downloading !== null}
+                >
+                  <LuFileSpreadsheet />
+                  {downloading === "xlsx"
+                    ? "Preparing Excel..."
+                    : "Export to Excel"}
+                </Button>
+                <p className="mt-2 px-1 text-sm leading-5 text-muted-foreground">
+                  A styled workbook with readable headers and fitted rows and
+                  columns.
+                </p>
+              </div>
+            )}
 
-          <div>
-            <Button
-              type="button"
-              variant="success"
-              size="option"
-              onClick={() => void download("csv")}
-              disabled={downloading !== null}
-            >
-              <LuFileText />
-              {downloading === "csv" ? "Preparing CSV..." : "Export to CSV"}
-            </Button>
-            <p className="mt-2 px-1 text-sm leading-5 text-muted-foreground">
-              A lightweight file compatible with spreadsheet and data tools.
-            </p>
+            {availableFormats.includes("csv") && (
+              <div>
+                <Button
+                  type="button"
+                  variant="success"
+                  size="option"
+                  onClick={() => void download("csv")}
+                  disabled={downloading !== null}
+                >
+                  <LuFileText />
+                  {downloading === "csv" ? "Preparing CSV..." : "Export to CSV"}
+                </Button>
+                <p className="mt-2 px-1 text-sm leading-5 text-muted-foreground">
+                  A lightweight file compatible with spreadsheet and data tools.
+                </p>
+              </div>
+            )}
           </div>
-        </div>
-      </Modal>
+        </Modal>
+      )}
     </>
   );
 }

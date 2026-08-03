@@ -238,16 +238,16 @@ export default function ResponsesPage() {
 
   return (
     <div className="space-y-6">
-      <header className="flex flex-col flex-wrap gap-4 rounded-3xl border border-border bg-card/80 p-5 shadow-lg  md:flex-row md:items-center md:justify-between">
-        <div>
+      <header className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-border bg-card/80 p-5 shadow-lg">
+        <div className="min-w-0 flex-1 basis-72">
           <h1 className="text-3xl font-semibold tracking-tight text-foreground">
             Responses
           </h1>
-          <p className="text-muted-foreground">
+          <p className="mt-1 text-sm leading-6 text-muted-foreground sm:text-base">
             View and manage alumni tracer forms.
           </p>
         </div>
-        <div className="flex flex-col-reverse gap-2 md:flex-row">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <div className="flex gap-2">
             <Button
               type="button"
@@ -363,14 +363,14 @@ export default function ResponsesPage() {
             placeholder="All employment statuses"
           />
 
-          <div className="flex flex-row col-span-1 xl:col-span-2 items-end gap-2 md:gap-4">
+          <div className="col-span-1 flex flex-wrap items-end gap-2 md:gap-4 xl:col-span-2">
             <Button
               type="button"
               variant="outline"
               size="lg"
               disabled={!hasFilters}
               onClick={clearFilters}
-              className="flex-1"
+              className="min-w-32 flex-1"
             >
               <LuFilterX size={16} />
               Clear filters
@@ -387,7 +387,7 @@ export default function ResponsesPage() {
                   ? "Refresh available again in 2 seconds"
                   : "Refresh responses table"
               }
-              className="flex-1"
+              className="min-w-32 flex-1"
             >
               <LuRefreshCw
                 size={16}

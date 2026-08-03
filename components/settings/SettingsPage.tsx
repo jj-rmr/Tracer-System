@@ -13,6 +13,7 @@ import {
 } from "@/components/settings/InfoAccordion";
 import { MotionPreference } from "@/components/settings/MotionPreference";
 import { ColorThemePreference } from "@/components/settings/ColorThemePreference";
+import { AuditLogSection } from "@/components/settings/AuditLogSection";
 import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
 import { type Role, ROLES } from "@/types";
 
@@ -95,7 +96,7 @@ export default function SettingsPage({
 
   return (
     <div className="w-full space-y-5 pb-10 sm:space-y-6 sm:pb-16">
-      <header className="rounded-3xl border border-border bg-card/80 p-5 shadow-lg  sm:p-6">
+      <header className="rounded-3xl border border-border bg-card/80 p-5 shadow-lg sm:p-6">
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">
           Settings
         </h1>
@@ -108,6 +109,7 @@ export default function SettingsPage({
         <main className="min-w-0 space-y-5 sm:space-y-6">
           <ColorThemePreference />
           <MotionPreference />
+          {role === ROLES.ADMIN && <AuditLogSection />}
 
           <section className="rounded-3xl border border-border bg-card p-5 shadow-sm sm:p-6">
             <div className="flex items-start gap-3 sm:gap-4">
@@ -135,7 +137,7 @@ export default function SettingsPage({
                 <LuCircleHelp aria-hidden="true" size={22} />
               </div>
               <div className="min-w-0">
-                <h2 className="font-semibold text-foreground">
+                <h2 className="text-lg font-semibold text-foreground">
                   Help and support
                 </h2>
                 <p className="mt-1 text-sm leading-6 text-muted-foreground">
@@ -153,7 +155,7 @@ export default function SettingsPage({
             <div className="flex items-center gap-4 border-b border-border p-5">
               <ProfileAvatar name={name} pictureUrl={pictureUrl} size={56} />
               <div className="min-w-0">
-                <h2 className="font-semibold text-foreground">
+                <h2 className="text-lg font-semibold text-foreground">
                   Account profile
                 </h2>
                 <p className="text-sm text-muted-foreground">
@@ -212,7 +214,7 @@ export default function SettingsPage({
           </section>
 
           <section className="rounded-3xl border border-border bg-card p-5 shadow-sm">
-            <h2 className="font-semibold text-foreground">Session</h2>
+            <h2 className="text-lg font-semibold text-foreground">Session</h2>
             <p className="mt-1 text-sm leading-6 text-muted-foreground">
               Sign out when you are finished, especially on a shared device.
             </p>

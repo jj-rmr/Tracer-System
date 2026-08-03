@@ -14,6 +14,7 @@ import {
   listIndexedDriveDescendantIds,
   updateIndexedDriveItem,
 } from "@/lib/repositories/google-drive-items.repository";
+import { recordUserAuditEventSafely } from "@/lib/repositories/audit.repository";
 
 function sanitizeName(value: string) {
   return value
@@ -28,7 +29,7 @@ export async function PATCH(
   { params }: { params: Promise<{ fileId: string }> },
 ) {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin();
 
     const { fileId } = await params;
     const body = (await request.json()) as Record<string, unknown>;
@@ -60,6 +61,12 @@ export async function PATCH(
           name: response.data.name ?? name,
         });
       }
+
+      await recordUserAuditEventSafely(admin, {
+        action: "file.renamed",
+        targetType: item.isFolder ? "admin_folder" : "admin_file",
+        targetId: fileId,
+      });
 
       return NextResponse.json({ success: true });
     }
@@ -122,6 +129,13 @@ export async function PATCH(
         });
       }
 
+      await recordUserAuditEventSafely(admin, {
+        action: "file.moved",
+        targetType: item.isFolder ? "admin_folder" : "admin_file",
+        targetId: fileId,
+        metadata: { destinationId },
+      });
+
       return NextResponse.json({ success: true, data: { rootId } });
     }
 
@@ -146,10 +160,10 @@ export async function DELETE(
   { params }: { params: Promise<{ fileId: string }> },
 ) {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin();
 
     const { fileId } = await params;
-    const { adminRootId } = await requireAdminDirectoryItem(fileId);
+    const { adminRootId, item } = await requireAdminDirectoryItem(fileId);
 
     if (fileId === adminRootId) {
       return NextResponse.json(
@@ -164,6 +178,13 @@ export async function DELETE(
       deleteIndexedDriveItems(descendantIds),
       deleteRegisteredDriveFoldersByIds(descendantIds),
     ]);
+
+    await recordUserAuditEventSafely(admin, {
+      action: "file.deleted",
+      targetType: item.isFolder ? "admin_folder" : "admin_file",
+      targetId: fileId,
+      metadata: { deletedItemCount: descendantIds.length },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -14,6 +14,7 @@ import {
   StaleFormResponseError,
 } from "@/lib/repositories/form-responses.repository";
 import { getStudyContext } from "@/lib/repositories/forms.repository";
+import { recordUserAuditEventSafely } from "@/lib/repositories/audit.repository";
 import { FormResponseStatus, ROLES } from "@/types";
 
 interface SaveResponseBody {
@@ -168,6 +169,13 @@ export async function PUT(
       expectedUpdatedAt: body.expectedUpdatedAt,
     });
 
+    await recordUserAuditEventSafely(user, {
+      action: "response.saved",
+      targetType: "form_response",
+      targetId: response.id,
+      metadata: { studyPeriodId: studyId, status: response.status },
+    });
+
     if (shouldOrganize) {
       after(async () => {
         try {
@@ -277,6 +285,13 @@ export async function DELETE(
       );
       throw error;
     }
+
+    await recordUserAuditEventSafely(user, {
+      action: "response.deleted",
+      targetType: "form_response",
+      targetId: claimedResponse.id,
+      metadata: { studyPeriodId: studyId, source: claimedResponse.source },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

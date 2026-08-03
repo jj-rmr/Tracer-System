@@ -64,7 +64,7 @@ export function Toast({
           animate={getAnimatePosition()}
           exit={getExitPosition()}
           transition={{ duration: 0.3, ease: "backInOut" }}
-          className={`fixed top-4 left-1/2 z-9999 w-max max-w-[calc(100vw-2rem)] -translate-x-1/2 rounded-2xl px-4 py-3 text-center text-pretty text-sm font-semibold shadow-lg sm:max-w-lg lg:max-w-xl ${toastStyles[type]}`}
+          className={`fixed top-4 left-1/2 z-9999 w-max max-w-[90vw] -translate-x-1/2 rounded-2xl px-4 py-3 text-center text-pretty text-sm font-semibold shadow-lg sm:max-w-lg lg:max-w-xl ${toastStyles[type]}`}
         >
           {message}
         </motion.div>

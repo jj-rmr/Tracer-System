@@ -9,7 +9,7 @@ import {
   setAccountEnabled,
 } from "@/lib/repositories/accounts.repository";
 import { deleteAccountDraftResponses } from "@/lib/forms/account-role-change";
-import { recordSecurityAuditEventSafely } from "@/lib/repositories/audit.repository";
+import { recordUserAuditEventSafely } from "@/lib/repositories/audit.repository";
 import { isValidConfirmationPhrase } from "@/lib/confirmation-code";
 import { isValidOrganizationGrant } from "@/lib/programs/catalog";
 import {
@@ -231,8 +231,7 @@ export async function PATCH(
       const deletedDrafts = roleChanged
         ? await deleteAccountDraftResponses(id)
         : 0;
-      await recordSecurityAuditEventSafely({
-        actorUserId: auth.id,
+      await recordUserAuditEventSafely(auth, {
         action: "account.role_changed",
         targetType: "account",
         targetId: id,
@@ -271,6 +270,11 @@ export async function PATCH(
     }
 
     await updateAccountName(id, name.trim());
+    await recordUserAuditEventSafely(auth, {
+      action: "account.name_changed",
+      targetType: "account",
+      targetId: id,
+    });
 
     return NextResponse.json({
       success: true,
@@ -347,8 +351,7 @@ export async function DELETE(
       await setAccountEnabled(id, true).catch(() => undefined);
       throw error;
     }
-    await recordSecurityAuditEventSafely({
-      actorUserId: user.id,
+    await recordUserAuditEventSafely(user, {
       action: "account.deleted",
       targetType: "account",
       targetId: id,

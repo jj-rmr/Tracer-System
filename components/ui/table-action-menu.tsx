@@ -1,19 +1,19 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect, useRef, useState } from "react";
+import { Menu } from "@base-ui/react/menu";
 import { IconLink as Link } from "@/components/ui/icon-link";
-import { createPortal } from "react-dom";
 import { LuEllipsisVertical } from "@/components/ui/icons";
 
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { Button } from "@/components/ui/button";
 
 interface TableActionItem {
   label: string;
   icon: ReactNode;
   href?: string;
   onSelect?: () => void;
-  variant?: "ghost" | "destructive" | "secondary";
+  variant?: "ghost" | "destructive" | "secondary" | "success";
   disabled?: boolean;
 }
 
@@ -23,122 +23,74 @@ interface TableActionMenuProps {
 }
 
 export function TableActionMenu({ label, items }: TableActionMenuProps) {
-  const [open, setOpen] = useState(false);
-  const [position, setPosition] = useState({ top: 0, right: 0 });
-  const triggerRef = useRef<HTMLButtonElement | null>(null);
-  const menuRef = useRef<HTMLDivElement | null>(null);
-
-  function toggleMenu() {
-    if (!open && triggerRef.current) {
-      const bounds = triggerRef.current.getBoundingClientRect();
-      const estimatedMenuHeight = items.length * 40 + 12;
-      const opensAbove =
-        bounds.bottom + 4 + estimatedMenuHeight > window.innerHeight;
-      setPosition({
-        top: opensAbove
-          ? Math.max(8, bounds.top - estimatedMenuHeight - 4)
-          : bounds.bottom + 4,
-        right: Math.max(8, window.innerWidth - bounds.right),
-      });
-    }
-    setOpen((current) => !current);
-  }
-
-  useEffect(() => {
-    if (!open) return;
-
-    function closeOnOutsidePointer(event: PointerEvent) {
-      const target = event.target as Node;
-      if (
-        !triggerRef.current?.contains(target) &&
-        !menuRef.current?.contains(target)
-      ) {
-        setOpen(false);
-      }
-    }
-
-    function closeOnEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setOpen(false);
-        triggerRef.current?.focus();
-      }
-    }
-
-    const closeOnViewportChange = () => setOpen(false);
-    window.addEventListener("pointerdown", closeOnOutsidePointer);
-    window.addEventListener("keydown", closeOnEscape);
-    window.addEventListener("resize", closeOnViewportChange);
-    window.addEventListener("scroll", closeOnViewportChange, true);
-
-    return () => {
-      window.removeEventListener("pointerdown", closeOnOutsidePointer);
-      window.removeEventListener("keydown", closeOnEscape);
-      window.removeEventListener("resize", closeOnViewportChange);
-      window.removeEventListener("scroll", closeOnViewportChange, true);
-    };
-  }, [open]);
-
   return (
-    <>
-      <Button
-        ref={triggerRef}
-        type="button"
-        variant="ghost"
-        size="icon"
+    <Menu.Root modal={false}>
+      <Menu.Trigger
+        render={
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            className="text-muted-foreground hover:text-foreground data-popup-open:bg-muted data-popup-open:text-foreground"
+          />
+        }
         aria-label={label}
-        aria-expanded={open}
-        aria-haspopup="menu"
-        onClick={toggleMenu}
       >
         <LuEllipsisVertical aria-hidden="true" animated />
-      </Button>
+      </Menu.Trigger>
 
-      {open &&
-        typeof document !== "undefined" &&
-        createPortal(
-          <div
-            ref={menuRef}
-            role="menu"
+      <Menu.Portal>
+        <Menu.Positioner
+          align="end"
+          sideOffset={4}
+          collisionPadding={8}
+          positionMethod="fixed"
+          className="z-120 outline-none"
+        >
+          <Menu.Popup
             aria-label={label}
-            style={{ top: position.top, right: position.right }}
-            className="fixed z-120 w-48 rounded-xl border border-border bg-card p-1.5 shadow-xl"
+            className="w-max min-w-52 max-w-[90vw] origin-(--transform-origin) rounded-xl border border-border bg-card p-2 shadow-xl outline-none transition duration-150 data-ending-style:scale-95 data-ending-style:opacity-0 data-starting-style:scale-95 data-starting-style:opacity-0"
           >
             {items.map((item) =>
               item.href ? (
-                <Link
+                <Menu.LinkItem
                   key={item.label}
-                  href={item.href}
-                  role="menuitem"
-                  onClick={() => setOpen(false)}
-                  className={buttonVariants({
-                    variant: item.variant ?? "ghost",
-                    size: "menu",
-                  })}
+                  closeOnClick
+                  render={
+                    <Link
+                      href={item.href}
+                      className={buttonVariants({
+                        variant: item.variant ?? "ghost",
+                        size: "menu",
+                      })}
+                    />
+                  }
                 >
                   {item.icon}
                   {item.label}
-                </Link>
+                </Menu.LinkItem>
               ) : (
-                <Button
+                <Menu.Item
                   key={item.label}
-                  type="button"
-                  role="menuitem"
-                  variant={item.variant ?? "ghost"}
-                  size="menu"
+                  nativeButton
                   disabled={item.disabled}
-                  onClick={() => {
-                    setOpen(false);
-                    item.onSelect?.();
-                  }}
+                  onClick={item.onSelect}
+                  render={
+                    <Button
+                      type="button"
+                      variant={item.variant ?? "ghost"}
+                      size="menu"
+                    />
+                  }
                 >
                   {item.icon}
                   {item.label}
-                </Button>
+                </Menu.Item>
               ),
             )}
-          </div>,
-          document.body,
-        )}
-    </>
+          </Menu.Popup>
+        </Menu.Positioner>
+      </Menu.Portal>
+    </Menu.Root>
   );
 }

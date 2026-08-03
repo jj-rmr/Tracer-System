@@ -67,12 +67,20 @@ export default function ResponseWorkspace({
   const documentOperationsRef = useRef(new Set<Promise<unknown>>());
   const responseIdRef = useRef(responseId);
   const updatedAtRef = useRef(updatedAt);
+  const refreshAfterModalExitRef = useRef(false);
   const { showToast } = useToast();
   const router = useRouter();
 
   const handleSuccess = () => {
+    refreshAfterModalExitRef.current = true;
     setOpen(false);
   };
+
+  function handleModalExitComplete() {
+    if (!refreshAfterModalExitRef.current) return;
+    refreshAfterModalExitRef.current = false;
+    router.refresh();
+  }
 
   const rememberLatestSurvey = useCallback((nextSurvey: Survey) => {
     latestSurveyRef.current = structuredClone(nextSurvey);
@@ -269,9 +277,9 @@ export default function ResponseWorkspace({
       await saveStudyDraft(latestSurveyRef.current);
       await Promise.allSettled([...documentOperationsRef.current]);
       setConfirmingDraftClose(false);
+      refreshAfterModalExitRef.current = true;
       setOpen(false);
       showToast({ message: "Draft saved.", type: "success" });
-      router.refresh();
     } catch (error) {
       showToast({
         message: friendlyRequestMessage(
@@ -310,6 +318,7 @@ export default function ResponseWorkspace({
       latestSurveyRef.current = structuredClone(clearedSurvey);
       saveQueueRef.current = Promise.resolve();
       documentOperationsRef.current.clear();
+      refreshAfterModalExitRef.current = true;
       setOpen(false);
       setShowDeleteResponseModal(false);
       showToast({
@@ -317,7 +326,6 @@ export default function ResponseWorkspace({
           responseStatus === "draft" ? "Draft discarded." : "Response deleted.",
         type: "success",
       });
-      router.refresh();
     } catch (error) {
       showToast({
         message: friendlyRequestMessage(
@@ -352,6 +360,7 @@ export default function ResponseWorkspace({
           open={open}
           onClose={() => setOpen(false)}
           onCloseRequest={requestDraftClose}
+          onExitComplete={handleModalExitComplete}
           title="New Tracer Response"
           width="xl"
           showCloseButton
@@ -376,10 +385,10 @@ export default function ResponseWorkspace({
   }
 
   return (
-    <div className="space-y-6 w-full flex flex-col items-center relative">
-      <div className="w-full max-w-5xl rounded-3xl border border-border bg-card p-5 text-left shadow-lg ">
-        <div className="flex flex-col gap-2 lg:flex-row justify-center md:justify-between">
-          <div>
+    <div className="relative flex w-full flex-col items-center space-y-6">
+      <div className="w-full max-w-5xl rounded-3xl border border-border bg-card p-5 text-left shadow-lg">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="min-w-52 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <p className="text-xs uppercase text-muted-foreground">
                 Response ID
@@ -394,11 +403,11 @@ export default function ResponseWorkspace({
                 {responseStatus}
               </span>
             </div>
-            <p className="mt-1 font-medium text-sm">{responseId}</p>
+            <p className="mt-1 break-all text-sm font-medium">{responseId}</p>
           </div>
-          <div className="flex flex-col-reverse lg:flex-row items-center justify-center gap-4">
-            <div className="text-left md:text-right inline-flex items-center gap-4 text-xs font-semibold tracking-wider uppercase">
-              <div className=" text-muted-foreground divide-x-2 inline-flex text-[10px] md:text-xs">
+          <div className="flex flex-wrap items-center justify-end gap-4">
+            <div className="inline-flex items-center text-left text-xs font-semibold tracking-wider uppercase text-muted-foreground lg:text-right">
+              <div className="inline-flex divide-x-2">
                 <p className="pr-2">Updated</p>
                 <p className="pl-2 whitespace-nowrap">
                   {updatedAt
@@ -415,16 +424,14 @@ export default function ResponseWorkspace({
               </div>
             </div>
 
-            <div className="flex w-full items-center gap-2 lg:w-auto">
+            <div className="flex items-center gap-3">
               <Button
                 variant="default"
                 onClick={openForm}
                 disabled={open}
                 className="flex-1"
               >
-                <span className="whitespace-nowrap">
-                  {readOnly ? "View" : "Edit"} Form
-                </span>
+                {readOnly ? "View" : "Edit"} Form
               </Button>
               {!readOnly && (
                 <Button
@@ -447,6 +454,7 @@ export default function ResponseWorkspace({
         <Modal
           open={open}
           onClose={() => setOpen(false)}
+          onExitComplete={handleModalExitComplete}
           title="View Tracer Response"
           headerContent={<TracerResponseModalHeader response={currentSurvey} />}
           headerVariant="accent"
@@ -458,6 +466,7 @@ export default function ResponseWorkspace({
         <FormModal
           open={open}
           onClose={() => setOpen(false)}
+          onExitComplete={handleModalExitComplete}
           onCloseRequest={
             responseStatus === "draft" ? requestDraftClose : undefined
           }

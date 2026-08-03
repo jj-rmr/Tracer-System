@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { initializeAdminDriveHierarchy } from "@/lib/google-drive/initialize-hierarchy";
 import { syncGoogleDriveIndex } from "@/lib/google-drive/sync-index";
+import { recordUserAuditEventSafely } from "@/lib/repositories/audit.repository";
 
 const ACADEMIC_YEAR_PATTERN = /^(\d{4})-(\d{4})$/;
 
@@ -10,7 +11,7 @@ export const maxDuration = 300;
 
 export async function POST(request: NextRequest) {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin();
 
     const body = (await request.json()) as Record<string, unknown>;
     const academicYear =
@@ -29,6 +30,13 @@ export async function POST(request: NextRequest) {
 
     const generated = await initializeAdminDriveHierarchy(academicYear);
     const sync = await syncGoogleDriveIndex();
+
+    await recordUserAuditEventSafely(admin, {
+      action: "file.hierarchy_generated",
+      targetType: "drive_hierarchy",
+      targetId: academicYear,
+      metadata: { academicYear },
+    });
 
     return NextResponse.json({ success: true, data: { generated, sync } });
   } catch (error) {

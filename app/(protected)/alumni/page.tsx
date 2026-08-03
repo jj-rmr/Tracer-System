@@ -13,7 +13,7 @@ import {
 import type { SystemIconProps } from "@/components/ui/icons";
 import type { ComponentType } from "react";
 
-import { buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { requireUserRole } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { listFormResponsesByUser } from "@/lib/repositories/form-responses.repository";
@@ -151,7 +151,10 @@ export default async function AlumniPage() {
             {(openContext || responses.length > 0) && (
               <Link
                 href="/alumni/responses"
-                className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors duration-200 hover:bg-primary-hover"
+                className={cn(
+                  buttonVariants({ variant: "default", size: "lg" }),
+                  "mt-6",
+                )}
               >
                 {openContext ? actionLabel : "View your latest response"}
                 <LuChevronRight aria-hidden="true" />
@@ -246,7 +249,7 @@ export default async function AlumniPage() {
             {responses.slice(0, 3).map((response) => (
               <div
                 key={response.id}
-                className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:px-6"
+                className="flex flex-wrap items-center gap-3 px-5 py-4 sm:px-6"
               >
                 <span
                   className={`grid size-10 shrink-0 place-items-center rounded-2xl ${
@@ -261,7 +264,7 @@ export default async function AlumniPage() {
                     <LuClock3 aria-hidden="true" />
                   )}
                 </span>
-                <span className="min-w-0 flex-1">
+                <span className="min-w-40 flex-1">
                   <span className="block text-sm font-semibold capitalize text-foreground">
                     {response.status} response
                   </span>

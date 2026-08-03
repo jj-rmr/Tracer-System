@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 
 import { useEffect, useRef, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { useRouter } from "next/navigation";
 
 import { EducationSection } from "@/components/forms/graduate-tracer/EducationSection";
 import { EmploymentSection } from "@/components/forms/graduate-tracer/EmploymentSection";
@@ -12,6 +11,7 @@ import { JobHistorySection } from "@/components/forms/graduate-tracer/JobHistory
 import { PersonalInfoSection } from "@/components/forms/graduate-tracer/PersonalInfoSection";
 import { useToast } from "@/components/ui/Toast";
 import ConfirmationDialog from "@/components/ui/ConfirmationDialog";
+import { ModalActions } from "@/components/ui/Modal";
 import {
   type GraduateTracerFieldErrors,
   validateGraduateTracerStep,
@@ -101,8 +101,6 @@ export default function GraduateTracerForm({
   const uploadingFilesRef = useRef(new WeakSet<File>());
   const employmentDocumentsRef = useRef(employmentDocuments);
   const awardsDocumentsRef = useRef(awardsDocuments);
-
-  const router = useRouter();
 
   useEffect(() => {
     employmentDocumentsRef.current = employmentDocuments;
@@ -431,7 +429,6 @@ export default function GraduateTracerForm({
 
       onSuccess?.();
       setShowSaveModal(false);
-      router.refresh();
     } catch {
       showToast({
         message: isNew
@@ -563,7 +560,7 @@ export default function GraduateTracerForm({
             them.
           </p>
         )}
-      <div className="flex flex-col-reverse md:flex-row justify-stretch md:justify-end gap-2 md:gap-4">
+      <ModalActions>
         {onRequestClose && !readOnly && (
           <Button
             type="button"
@@ -609,7 +606,7 @@ export default function GraduateTracerForm({
             </Button>
           )
         )}
-      </div>
+      </ModalActions>
       <ConfirmationDialog
         open={!readOnly && showSaveModal}
         onClose={() => setShowSaveModal(false)}

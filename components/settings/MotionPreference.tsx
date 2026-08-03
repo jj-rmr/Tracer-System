@@ -39,7 +39,9 @@ export function MotionPreference() {
           <LuAccessibility aria-hidden="true" size={22} />
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className="font-semibold text-foreground">Accessibility</h2>
+          <h2 className="text-lg font-semibold text-foreground">
+            Accessibility
+          </h2>
           <p className="mt-1 text-sm leading-6 text-muted-foreground">
             Adjust motion and visual structure on this device.
           </p>

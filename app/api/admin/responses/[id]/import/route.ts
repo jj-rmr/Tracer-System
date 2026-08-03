@@ -13,6 +13,7 @@ import {
   getFormResponseDocuments,
   setManualImportStatus,
 } from "@/lib/repositories/form-responses.repository";
+import { recordUserAuditEventSafely } from "@/lib/repositories/audit.repository";
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -110,6 +111,13 @@ export async function PATCH(
         { status: 404 },
       );
     }
+
+    await recordUserAuditEventSafely(staff, {
+      action: "response.manual_import_status_changed",
+      targetType: "form_response",
+      targetId: id,
+      metadata: { status: body.status },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

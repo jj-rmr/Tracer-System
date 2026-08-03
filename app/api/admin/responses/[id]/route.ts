@@ -21,6 +21,7 @@ import {
   markFormResponseDeletionFailed,
   updateManualFormResponse,
 } from "@/lib/repositories/form-responses.repository";
+import { recordUserAuditEventSafely } from "@/lib/repositories/audit.repository";
 
 interface ResponseRouteProps {
   params: Promise<{ id: string }>;
@@ -168,6 +169,13 @@ export async function PATCH(
       );
     }
 
+    await recordUserAuditEventSafely(staff, {
+      action: "response.manual_updated",
+      targetType: "form_response",
+      targetId: id,
+      metadata: { studyPeriodId: existing.studyPeriodId },
+    });
+
     after(async () => {
       try {
         await organizeResponseDriveFolder(updated);
@@ -250,6 +258,16 @@ export async function DELETE(
       await markFormResponseDeletionFailed(response.id).catch(() => undefined);
       throw error;
     }
+
+    await recordUserAuditEventSafely(staff, {
+      action: "response.deleted",
+      targetType: "form_response",
+      targetId: response.id,
+      metadata: {
+        studyPeriodId: response.studyPeriodId,
+        source: response.source,
+      },
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

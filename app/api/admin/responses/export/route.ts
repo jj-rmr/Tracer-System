@@ -10,7 +10,7 @@ import {
   getResponseExportRows,
 } from "@/lib/exports/responses";
 import { createStyledWorkbook } from "@/lib/exports/excel";
-import { recordSecurityAuditEvent } from "@/lib/repositories/audit.repository";
+import { recordUserAuditEvent } from "@/lib/repositories/audit.repository";
 
 export async function GET(request: NextRequest) {
   try {
@@ -29,8 +29,7 @@ export async function GET(request: NextRequest) {
       getAllowedProgramValues(staff),
     );
 
-    await recordSecurityAuditEvent({
-      actorUserId: staff.id,
+    await recordUserAuditEvent(staff, {
       action: "responses.exported",
       targetType: "response_collection",
       metadata: { format, rowCount: rows.length },

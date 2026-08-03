@@ -338,49 +338,55 @@ export default function ResponseTable({
   return (
     <div className="w-full overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
       <Table className="min-w-280 table-auto">
-        <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            <SortableTableHead
-              direction={sortKey === "name" ? sortDirection : undefined}
-              onSort={() => handleSort("name")}
-            >
-              Full Name
-            </SortableTableHead>
-            <SortableTableHead
-              direction={sortKey === "academicYear" ? sortDirection : undefined}
-              onSort={() => handleSort("academicYear")}
-            >
-              Academic Year
-            </SortableTableHead>
-            <SortableTableHead
-              direction={sortKey === "program" ? sortDirection : undefined}
-              onSort={() => handleSort("program")}
-            >
-              Program
-            </SortableTableHead>
-            <SortableTableHead
-              direction={
-                sortKey === "employmentStatus" ? sortDirection : undefined
-              }
-              onSort={() => handleSort("employmentStatus")}
-            >
-              Employment Status
-            </SortableTableHead>
-            <SortableTableHead
-              direction={sortKey === "createdAt" ? sortDirection : undefined}
-              onSort={() => handleSort("createdAt")}
-            >
-              Created
-            </SortableTableHead>
-            <SortableTableHead
-              direction={sortKey === "driveStatus" ? sortDirection : undefined}
-              onSort={() => handleSort("driveStatus")}
-            >
-              Drive
-            </SortableTableHead>
-            <TableHead className="text-center">Menu</TableHead>
-          </TableRow>
-        </TableHeader>
+        {!loading && (
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <SortableTableHead
+                direction={sortKey === "name" ? sortDirection : undefined}
+                onSort={() => handleSort("name")}
+              >
+                Full Name
+              </SortableTableHead>
+              <SortableTableHead
+                direction={
+                  sortKey === "academicYear" ? sortDirection : undefined
+                }
+                onSort={() => handleSort("academicYear")}
+              >
+                Academic Year
+              </SortableTableHead>
+              <SortableTableHead
+                direction={sortKey === "program" ? sortDirection : undefined}
+                onSort={() => handleSort("program")}
+              >
+                Program
+              </SortableTableHead>
+              <SortableTableHead
+                direction={
+                  sortKey === "employmentStatus" ? sortDirection : undefined
+                }
+                onSort={() => handleSort("employmentStatus")}
+              >
+                Employment Status
+              </SortableTableHead>
+              <SortableTableHead
+                direction={sortKey === "createdAt" ? sortDirection : undefined}
+                onSort={() => handleSort("createdAt")}
+              >
+                Created
+              </SortableTableHead>
+              <SortableTableHead
+                direction={
+                  sortKey === "driveStatus" ? sortDirection : undefined
+                }
+                onSort={() => handleSort("driveStatus")}
+              >
+                Drive
+              </SortableTableHead>
+              <TableHead className="text-center">Menu</TableHead>
+            </TableRow>
+          </TableHeader>
+        )}
         <TableBody aria-busy={loading}>
           {loading ? (
             <TableContentState
@@ -641,25 +647,24 @@ export default function ResponseTable({
       </Modal>
 
       {totalRows > 0 && (
-        <div className="flex flex-wrap gap-3 border-t border-border bg-muted/40 p-4 text-sm sm:px-6">
+        <div className="flex flex-wrap items-center gap-3 border-t border-border bg-muted/40 p-4 text-sm sm:px-6">
           {totalRows > 1 ? (
-            <span className="w-full rounded-lg bg-muted/60 px-4 py-2 font-semibold whitespace-nowrap text-muted-foreground sm:w-fit">
+            <span className="rounded-lg bg-muted/60 px-4 py-2 font-semibold whitespace-nowrap text-muted-foreground">
               Showing <span>{responses.length}</span> of{" "}
               <span>{totalRows} Entries</span>
             </span>
           ) : (
-            <span className="w-full rounded-lg bg-muted/60 px-4 py-2 font-semibold whitespace-nowrap text-muted-foreground sm:w-fit">
+            <span className="rounded-lg bg-muted/60 px-4 py-2 font-semibold whitespace-nowrap text-muted-foreground">
               Showing 1 Entry
             </span>
           )}
 
-          <div className="flex w-full gap-2 sm:ml-auto sm:w-fit">
+          <div className="ml-auto flex gap-2">
             <Button
               onClick={() => onPageChange(currentPage - 1)}
               disabled={loading || !hasPrevPage}
               variant="outline"
               size="sm"
-              className="flex-1 sm:flex-none"
             >
               Previous
             </Button>
@@ -669,7 +674,6 @@ export default function ResponseTable({
               disabled={loading || !hasNextPage}
               variant="default"
               size="sm"
-              className="flex-1 sm:flex-none"
             >
               Next
             </Button>

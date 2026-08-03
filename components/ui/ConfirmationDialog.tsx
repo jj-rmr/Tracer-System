@@ -34,32 +34,30 @@ export default function ConfirmationDialog({
       open={open}
       onClose={busy ? () => undefined : onClose}
       title={title}
+      description={description}
       width="md"
       layer="nested"
-      bodyClassName="p-6"
       showCloseButton={showCloseButton}
-    >
-      <p className="text-sm leading-6 text-muted-foreground">{description}</p>
-      <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-        <Button
-          type="button"
-          variant="outline"
-          disabled={busy}
-          onClick={onClose}
-          className="w-full sm:w-auto"
-        >
-          {cancelLabel}
-        </Button>
-        <Button
-          type="button"
-          variant={tone === "danger" ? "destructive" : "default"}
-          disabled={busy}
-          onClick={onConfirm}
-          className="w-full sm:w-auto"
-        >
-          {busy ? "Please wait..." : confirmLabel}
-        </Button>
-      </div>
-    </Modal>
+      footer={
+        <>
+          <Button
+            type="button"
+            variant="outline"
+            disabled={busy}
+            onClick={onClose}
+          >
+            {cancelLabel}
+          </Button>
+          <Button
+            type="button"
+            variant={tone === "danger" ? "destructive" : "default"}
+            disabled={busy}
+            onClick={onConfirm}
+          >
+            {busy ? "Please wait..." : confirmLabel}
+          </Button>
+        </>
+      }
+    />
   );
 }

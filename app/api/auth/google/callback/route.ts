@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { AUTH_COOKIE, COOKIE_OPTIONS } from "@/lib/auth";
 import { authProvider } from "@/lib/auth/provider";
 import { ROLES } from "@/types";
+import { recordUserAuditEventSafely } from "@/lib/repositories/audit.repository";
 
 function redirect(request: NextRequest, destination: string) {
   const response = NextResponse.redirect(new URL(destination, request.url));
@@ -19,6 +20,11 @@ export async function GET(request: NextRequest) {
       code,
       request.nextUrl.searchParams.get("state"),
     );
+    await recordUserAuditEventSafely(user, {
+      action: "authentication.signed_in",
+      targetType: "session",
+      metadata: { provider: "google" },
+    });
     const destination = user.role === ROLES.ALUMNI ? "/alumni" : "/admin";
     const response = redirect(request, destination);
     response.cookies.set(AUTH_COOKIE, "1", {

@@ -3,13 +3,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { getStudyContext } from "@/lib/repositories/forms.repository";
 import { archiveStudyPeriod } from "@/lib/repositories/study-admin.repository";
+import { recordUserAuditEventSafely } from "@/lib/repositories/audit.repository";
 
 export async function POST(
   _request: NextRequest,
   { params }: { params: Promise<{ studyId: string }> },
 ) {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin();
 
     const { studyId } = await params;
     const context = await getStudyContext(studyId);
@@ -32,6 +33,13 @@ export async function POST(
     }
 
     const study = await archiveStudyPeriod(studyId);
+
+    await recordUserAuditEventSafely(admin, {
+      action: "study.archived",
+      targetType: "study_period",
+      targetId: studyId,
+      metadata: { academicYear: context.study.academicYear },
+    });
 
     return NextResponse.json({ success: true, data: study });
   } catch (error) {

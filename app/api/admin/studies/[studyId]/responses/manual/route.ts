@@ -7,6 +7,7 @@ import {
   ManualImportConflictError,
 } from "@/lib/repositories/form-responses.repository";
 import { getStudyContext } from "@/lib/repositories/forms.repository";
+import { recordUserAuditEventSafely } from "@/lib/repositories/audit.repository";
 
 interface ManualResponseBody {
   respondentName?: unknown;
@@ -126,6 +127,13 @@ export async function POST(
       answers: body.answers,
       importToken,
       status: mode,
+    });
+
+    await recordUserAuditEventSafely(staff, {
+      action: "response.manual_created",
+      targetType: "form_response",
+      targetId: saved.response.id,
+      metadata: { studyPeriodId: studyId, status: mode },
     });
 
     if (mode === "submitted") {

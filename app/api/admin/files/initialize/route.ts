@@ -4,12 +4,13 @@ import { requireAdmin } from "@/lib/auth";
 import { initializeStudyDriveHierarchy } from "@/lib/google-drive/initialize-hierarchy";
 import { syncGoogleDriveIndex } from "@/lib/google-drive/sync-index";
 import { listStudyDriveContexts } from "@/lib/repositories/study-admin.repository";
+import { recordUserAuditEventSafely } from "@/lib/repositories/audit.repository";
 
 export const maxDuration = 300;
 
 export async function POST() {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin();
 
     const studies = await listStudyDriveContexts();
     let foldersPrepared = 0;
@@ -20,6 +21,12 @@ export async function POST() {
     }
 
     const sync = await syncGoogleDriveIndex();
+
+    await recordUserAuditEventSafely(admin, {
+      action: "file.hierarchy_initialized",
+      targetType: "drive_hierarchy",
+      metadata: { studies: studies.length, foldersPrepared },
+    });
 
     return NextResponse.json({
       success: true,

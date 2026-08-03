@@ -18,7 +18,7 @@ import {
   LuUsersRound,
 } from "@/components/ui/icons";
 
-import Modal from "@/components/ui/Modal";
+import Modal, { ModalNotice } from "@/components/ui/Modal";
 
 const tracerBenefits = [
   {
@@ -249,7 +249,6 @@ export default function SignInPage() {
         description="Why universities follow graduate outcomes and how your response helps"
         width="lg"
         fitContent
-        bodyClassName="p-5 sm:p-6"
       >
         <div className="space-y-6 text-sm leading-7 text-muted-foreground">
           <section>
@@ -341,16 +340,18 @@ export default function SignInPage() {
         description="Placement Tracer System usage terms"
         width="lg"
         fitContent
-        bodyClassName="p-5 sm:p-6"
       >
-        <div className="mb-5 flex items-start gap-3 rounded-2xl border border-warning/30 bg-warning/10 p-4 text-sm leading-6 text-warning">
-          <LuFileText aria-hidden="true" className="mt-0.5 shrink-0" />
+        <ModalNotice
+          icon={<LuFileText aria-hidden="true" />}
+          tone="warning"
+          className="mb-5"
+        >
           <p>
             These terms describe responsible use of this system. University
             privacy notices and approved institutional policies continue to
             apply where relevant.
           </p>
-        </div>
+        </ModalNotice>
 
         <div className="space-y-5">
           {termsSections.map((section) => (

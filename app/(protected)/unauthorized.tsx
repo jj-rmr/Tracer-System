@@ -1,21 +1,20 @@
 import Link from "next/link";
 
+import { buttonVariants } from "@/components/ui/button-variants";
+
 export default function Unauthorized() {
   return (
-    <div className="flex flex-col items-center justify-center h-11/12 gap-8">
-      <div className="flex flex-col items-center gap-4 sm:flex-row sm:gap-8">
-        <h1 className="text-6xl font-semibold text-center">403</h1>
+    <div className="flex h-11/12 flex-col items-center justify-center gap-8">
+      <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8">
+        <h1 className="text-center text-6xl font-semibold">403</h1>
         <p className="text-center text-foreground">Unauthorized</p>
       </div>
 
-      <p className="text-sm text-muted-foreground text-center max-w-md">
+      <p className="max-w-md text-center text-sm text-muted-foreground">
         You do not have permission to access this page.
       </p>
 
-      <Link
-        href="/"
-        className="rounded-2xl border border-border px-4 py-2 transition-colors duration-200 hover:bg-secondary hover:text-primary active:bg-secondary active:text-primary"
-      >
+      <Link href="/" className={buttonVariants({ variant: "outline" })}>
         Return Home
       </Link>
     </div>

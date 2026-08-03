@@ -5,6 +5,9 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
+  interpolate-size: allow-keywords;
+
+  /* Palette */
   --palette-300: var(--color-sky-300);
   --palette-400: var(--color-sky-400);
   --palette-500: var(--color-sky-500);
@@ -28,6 +31,8 @@
     sans-serif;
   --font-system-mono:
     ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+
+  /* Semantic colors */
   --accent: var(--palette-400);
   --dark-accent: var(--palette-800);
   --dark-accent-foreground: var(--color-white);
@@ -41,7 +46,6 @@
   --nav-inactive: var(--undertone-500);
   --nav-active: var(--palette-700);
   --brand-accent: var(--palette-400);
-  interpolate-size: allow-keywords;
   --background: var(--undertone-100);
   --foreground: var(--undertone-950);
   --card: var(--color-white);
@@ -87,14 +91,19 @@
   --sidebar-accent-foreground: var(--undertone-950);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--palette-700);
+
+  /* Effects */
   --elevation-color: color-mix(in oklab, var(--undertone-950) 16%, transparent);
-  scrollbar-color: var(--color-border) transparent;
+  scrollbar-color: var(--border) transparent;
 }
 
 @theme inline {
+  --font-sans: var(--font-system-sans);
+  --font-mono: var(--font-system-mono);
+  --font-heading: var(--font-sans);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-
   --color-accent: var(--accent);
   --color-dark-accent: var(--dark-accent);
   --color-dark-accent-foreground: var(--dark-accent-foreground);
@@ -104,9 +113,6 @@
   --color-nav-inactive: var(--nav-inactive);
   --color-nav-active: var(--nav-active);
 
-  --font-sans: var(--font-system-sans);
-  --font-mono: var(--font-system-mono);
-  --font-heading: var(--font-sans);
   --color-brand-accent: var(--brand-accent);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -159,29 +165,41 @@
   --shadow-2xl: 0 34px 80px -26px var(--elevation-color);
 }
 
-body {
-  font-family: var(--font-sans), Arial, sans-serif;
-  line-height: 1.5;
-  margin: 0;
-  scrollbar-gutter: stable;
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    min-height: 100%;
+    scrollbar-gutter: stable;
+    @apply bg-background font-sans text-foreground;
+  }
+
+  body {
+    min-height: 100%;
+    margin: 0;
+    line-height: 1.5;
+    @apply bg-background text-foreground;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-weight: 600;
+    letter-spacing: -0.025em;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
 }
 
-h1,
-h2,
-h3 {
-  font-weight: 600;
-  letter-spacing: -0.025em;
-}
-
-html,
-body {
-  min-height: 100%;
-}
-
-[data-modal-root] {
-  scrollbar-gutter: auto;
-}
-
+/* Border system */
 /* The permanent light-border treatment hides incidental browser edges, then
    restores only declared structural and control borders with subtle tokens. */
 :where([data-nav-control]) {
@@ -255,14 +273,7 @@ body {
   border-style: solid !important;
 }
 
-button {
-  cursor: pointer;
-}
-
-button:disabled {
-  cursor: not-allowed;
-}
-
+/* Interaction */
 /* File rows open from the full pointer hitbox. Keep the semantic inner button,
    but draw its keyboard focus on that same full row instead of the filename. */
 [data-file-open]:focus-visible {
@@ -310,6 +321,7 @@ label
   transition: none !important;
 }
 
+/* Theme variants */
 .dark {
   color-scheme: dark;
   --surface: var(--undertone-800);
@@ -351,18 +363,12 @@ label
   --border: var(--control-border-subtle);
   --input: var(--control-border-subtle);
   --ring: var(--palette-500);
-  --chart-1: var(--color-slate-300);
-  --chart-2: var(--color-slate-500);
-  --chart-3: var(--color-slate-600);
-  --chart-4: var(--color-slate-700);
-  --chart-5: var(--color-slate-800);
   --sidebar: var(--undertone-900);
   --sidebar-foreground: var(--undertone-200);
   --sidebar-primary: var(--palette-500);
   --sidebar-primary-foreground: var(--undertone-950);
   --sidebar-accent: var(--undertone-800);
   --sidebar-accent-foreground: var(--undertone-200);
-  --sidebar-border: var(--border);
   --sidebar-ring: var(--palette-500);
   --elevation-color: color-mix(in oklab, var(--undertone-950) 68%, transparent);
 }
@@ -444,11 +450,7 @@ label
   --muted-foreground: var(--color-gray-600);
   --data-hover: var(--color-white);
   --data-header: var(--color-gray-50);
-  --nav-inactive: var(--undertone-500);
-  --nav-active: var(--palette-700);
   --control-border-subtle: var(--color-gray-200);
-  --border: var(--control-border-subtle);
-  --input: var(--control-border-subtle);
   --sidebar: var(--color-gray-50);
   --sidebar-foreground: var(--color-gray-950);
   --sidebar-accent: var(--color-gray-200);
@@ -480,11 +482,7 @@ label
     var(--color-gray-800) 50%,
     var(--color-gray-900)
   );
-  --nav-inactive: var(--undertone-400);
-  --nav-active: var(--palette-300);
   --control-border-subtle: var(--color-gray-800);
-  --border: var(--control-border-subtle);
-  --input: var(--control-border-subtle);
   --sidebar: var(--color-gray-900);
   --sidebar-foreground: var(--color-gray-200);
   --sidebar-accent: var(--color-gray-800);
@@ -500,6 +498,7 @@ label
   --sidebar-ring: var(--color-gray-400);
 }
 
+/* Motion */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -549,17 +548,4 @@ label
   transform-origin: left center;
   animation: dashboard-progress-reveal 800ms cubic-bezier(0.22, 1, 0.36, 1)
     800ms both;
-}
-
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  html,
-  body {
-    @apply bg-background text-foreground;
-  }
-  html {
-    @apply font-sans;
-  }
 }

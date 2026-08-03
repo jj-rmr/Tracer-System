@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { getStudyContext } from "@/lib/repositories/forms.repository";
 import { setStudyPeriodStatus } from "@/lib/repositories/study-admin.repository";
-import { recordSecurityAuditEventSafely } from "@/lib/repositories/audit.repository";
+import { recordUserAuditEventSafely } from "@/lib/repositories/audit.repository";
 
 export async function PATCH(
   request: NextRequest,
@@ -34,8 +34,7 @@ export async function PATCH(
     }
 
     const study = await setStudyPeriodStatus(studyId, body.status);
-    await recordSecurityAuditEventSafely({
-      actorUserId: admin.id,
+    await recordUserAuditEventSafely(admin, {
       action: "study.status_changed",
       targetType: "study_period",
       targetId: studyId,

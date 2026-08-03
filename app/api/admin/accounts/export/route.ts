@@ -5,7 +5,7 @@ import {
 import { NextRequest, NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { createStyledWorkbook } from "@/lib/exports/excel";
-import { recordSecurityAuditEvent } from "@/lib/repositories/audit.repository";
+import { recordUserAuditEvent } from "@/lib/repositories/audit.repository";
 
 export async function GET(request: NextRequest) {
   const admin = await requireAdmin();
@@ -24,8 +24,7 @@ export async function GET(request: NextRequest) {
   const timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
   const rows = await getAccountExportRows();
 
-  await recordSecurityAuditEvent({
-    actorUserId: admin.id,
+  await recordUserAuditEvent(admin, {
     action: "accounts.exported",
     targetType: "account_collection",
     metadata: { format, rowCount: rows.length },

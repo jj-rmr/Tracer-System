@@ -14,6 +14,7 @@ import {
 
 import RecentResponses from "@/components/admin/dashboard/RecentResponses";
 import EmploymentPieChart from "@/components/admin/dashboard/EmploymentPieChart";
+import { buttonVariants } from "@/components/ui/button-variants";
 import { getAllowedProgramValues, isAdmin, requireStaff } from "@/lib/auth";
 import { PROGRAMS } from "@/lib/programs/catalog";
 import { listAdminDashboardResponses } from "@/lib/repositories/admin-responses.repository";
@@ -125,8 +126,8 @@ export default async function AdminPage() {
   return (
     <div className="space-y-6">
       <header className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
-        <div className="flex flex-col gap-6 p-6 sm:p-8 lg:flex-row lg:items-center lg:justify-between">
-          <div>
+        <div className="flex flex-wrap items-center justify-between gap-6 p-6 sm:p-8">
+          <div className="min-w-0 flex-1 basis-72">
             <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
               <LuChartNoAxesCombined aria-hidden="true" />
               {isAdmin(user)
@@ -143,7 +144,7 @@ export default async function AdminPage() {
           </div>
           <Link
             href="/admin/responses"
-            className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-sm transition-colors duration-200 hover:bg-primary-hover"
+            className={buttonVariants({ variant: "default", size: "lg" })}
           >
             View responses
             <LuChevronRight aria-hidden="true" />
@@ -205,7 +206,7 @@ export default async function AdminPage() {
               {employmentRate}%
             </span>
           </div>
-          <div className="mt-6 flex flex-col items-center gap-7 sm:flex-row sm:justify-center">
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-7">
             <EmploymentPieChart slices={employmentBreakdown} />
             <div className="w-full min-w-0 space-y-3 sm:max-w-60">
               {employmentBreakdown.map((item) => {
@@ -342,14 +343,14 @@ export default async function AdminPage() {
                 {isAdmin(user) && (
                   <Link
                     href="/admin/studies"
-                    className="inline-flex items-center gap-2 rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-semibold text-foreground transition-colors duration-200 hover:bg-muted"
+                    className={buttonVariants({ variant: "outline" })}
                   >
                     Manage study
                   </Link>
                 )}
                 <Link
                   href={`/admin/responses?study=${encodeURIComponent(openStudy.id)}`}
-                  className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-primary transition-colors duration-200 hover:bg-primary/10"
+                  className={buttonVariants({ variant: "default" })}
                 >
                   View study responses
                   <LuChevronRight aria-hidden="true" />
@@ -359,7 +360,7 @@ export default async function AdminPage() {
           ) : isAdmin(user) ? (
             <Link
               href="/admin/studies"
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground"
+              className={`${buttonVariants({ variant: "default" })} mt-6`}
             >
               <LuPlus aria-hidden="true" />
               Manage studies

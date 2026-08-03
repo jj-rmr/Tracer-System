@@ -17,7 +17,8 @@ import {
 import { Role, ROLES } from "@/types";
 import Modal from "@/components/ui/Modal";
 import ThemeToggle from "@/components/ui/ThemeToggle";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button-variants";
+import { Button } from "@/components/ui/button";
 import { IconLink as Link } from "@/components/ui/icon-link";
 
 interface DashboardNavigationProps {
@@ -202,7 +203,7 @@ export default function DashboardNavigation({
           {desktopNavSections.map((section) => (
             <div key={section.label} className="flex flex-col gap-1">
               <p
-                className={`h-5 cursor-default select-none whitespace-nowrap px-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground transition-opacity duration-200 ${
+                className={`h-5 cursor-default select-none whitespace-nowrap px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground transition-opacity duration-200 ${
                   isOpen ? "opacity-100" : "opacity-0"
                 }`}
               >
@@ -337,13 +338,18 @@ export default function DashboardNavigation({
                 href={item.href}
                 prefetch={!active}
                 onClick={(event) => markNavigationPending(event, item.href)}
-                className={`group relative flex flex-1 flex-col items-center p-2 hover:text-nav-active ${
+                className={`${buttonVariants({
+                  variant: "plain",
+                  size: "mobile-nav",
+                })} group relative hover:text-nav-active ${
                   active ? "text-nav-active" : "text-nav-inactive"
                 }`}
               >
                 <Icon size={24} />
 
-                <span className="text-[10px] mt-1">{item.label}</span>
+                <span className="text-xs leading-none font-medium">
+                  {item.label}
+                </span>
 
                 <div
                   className={`absolute top-1.5 -z-10 h-7.5 w-full max-w-16 rounded-full ${
@@ -374,7 +380,7 @@ export default function DashboardNavigation({
             }`}
           >
             <LuEllipsis aria-hidden="true" className="size-6" />
-            <span className="mt-1 text-[10px]">More</span>
+            <span className="text-xs leading-none font-medium">More</span>
             <span
               className={`absolute top-1.5 -z-10 h-7.5 w-full max-w-16 rounded-full ${
                 isMoreActive
@@ -395,7 +401,7 @@ export default function DashboardNavigation({
         fitContent
         placement="bottom"
       >
-        <nav aria-label="More administration pages" className="grid gap-2">
+        <nav aria-label="More pages" className="grid gap-2">
           {mobileMoreItems.map((item) => {
             const Icon = item.icon;
             const active = isActiveLink(item.href);
@@ -410,11 +416,10 @@ export default function DashboardNavigation({
                   setShowMoreMenu(false);
                   markNavigationPending(event, item.href);
                 }}
-                className={`relative flex min-h-14 items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition-colors duration-200 ${
-                  active
-                    ? "bg-accent/15 text-nav-active"
-                    : "text-nav-inactive hover:bg-primary/10 hover:text-nav-active"
-                }`}
+                className={`${buttonVariants({
+                  variant: active ? "navigation-active" : "navigation",
+                  size: "theme-menu",
+                })} relative rounded-2xl`}
               >
                 <Icon aria-hidden="true" size={22} />
                 {item.label}

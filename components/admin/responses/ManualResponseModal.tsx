@@ -9,6 +9,7 @@ import ManualResponseEntry, {
 import ConfirmationDialog from "@/components/ui/ConfirmationDialog";
 import FormModal from "@/components/ui/FormModal";
 import LoadingState from "@/components/ui/LoadingState";
+import { ModalNotice } from "@/components/ui/Modal";
 import { useToast } from "@/components/ui/Toast";
 import { friendlyRequestMessage, readApiJson } from "@/lib/api/client-errors";
 import { PublishedFormVersion, StudyPeriod, StudyPeriodSummary } from "@/types";
@@ -42,8 +43,16 @@ export default function ManualResponseModal({
   const [savingDraft, setSavingDraft] = useState(false);
   const [formDirty, setFormDirty] = useState(false);
   const [confirmingClose, setConfirmingClose] = useState(false);
+  const [open, setOpen] = useState(true);
   const entryRef = useRef<ManualResponseEntryHandle>(null);
+  const afterExitRef = useRef(onClose);
   const { showToast } = useToast();
+
+  function closeWithAnimation(afterExit = onClose) {
+    afterExitRef.current = afterExit;
+    setConfirmingClose(false);
+    setOpen(false);
+  }
 
   useEffect(() => {
     const controller = new AbortController();
@@ -111,7 +120,7 @@ export default function ManualResponseModal({
   async function saveDraftAndClose() {
     if (savingDraft) return;
     if (!formDirty) {
-      onClose();
+      closeWithAnimation();
       return;
     }
     setSavingDraft(true);
@@ -120,8 +129,7 @@ export default function ManualResponseModal({
       if (!saved) return;
       showToast({ message: "Manual response draft saved.", type: "success" });
       onDraftSaved(saved.id);
-      setConfirmingClose(false);
-      onClose();
+      closeWithAnimation();
     } catch (actionError) {
       showToast({
         message: friendlyRequestMessage(
@@ -141,15 +149,16 @@ export default function ManualResponseModal({
       return;
     }
 
-    onClose();
+    closeWithAnimation();
   }
 
   return (
     <>
       <FormModal
-        open
-        onClose={onClose}
+        open={open}
+        onClose={closeWithAnimation}
         onCloseRequest={requestClose}
+        onExitComplete={() => afterExitRef.current()}
         title={initialDraft ? "Edit Draft Response" : "Add Manual Response"}
         description="Transcribe a historical tracer study response."
         width="xl"
@@ -158,15 +167,15 @@ export default function ManualResponseModal({
         {loading ? (
           <LoadingState className="min-h-72" message="Loading studies..." />
         ) : error ? (
-          <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-5 text-sm text-destructive">
+          <ModalNotice tone="danger" className="p-5">
             {error}
-          </div>
+          </ModalNotice>
         ) : (
           <ManualResponseEntry
             ref={entryRef}
             studies={studies}
             initialDraft={initialDraft}
-            onComplete={onComplete}
+            onComplete={() => closeWithAnimation(onComplete)}
             onDraftSaved={onDraftSaved}
             onDirtyChange={setFormDirty}
             onRequestClose={requestClose}

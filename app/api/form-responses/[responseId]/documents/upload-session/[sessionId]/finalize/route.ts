@@ -32,6 +32,7 @@ import {
   validateUploadSignature,
 } from "@/lib/security/uploads";
 import { EXTERNAL_TIMEOUTS } from "@/lib/server/timeouts";
+import { recordUserAuditEventSafely } from "@/lib/repositories/audit.repository";
 
 export async function POST(
   _request: Request,
@@ -179,6 +180,16 @@ export async function POST(
     const document = await markFormResponseDocumentReady(staged.id);
     await markDirectDriveUploadFinalized(sessionId, document.id);
     claimedSessionId = null;
+    await recordUserAuditEventSafely(user, {
+      action: "document.uploaded",
+      targetType: "form_response_document",
+      targetId: document.id,
+      metadata: {
+        responseId,
+        documentType: claimed.documentType,
+        size: claimed.size,
+      },
+    });
     return NextResponse.json({ success: true, document }, { status: 201 });
   } catch (error) {
     console.error("Failed to finalize direct Drive upload:", error);

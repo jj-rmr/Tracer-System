@@ -64,8 +64,9 @@ enabled = true
 schema_paths = []
 
 [db.seed]
-# If enabled, seeds the database after migrations during a db reset.
-enabled = true
+# Form definitions are seeded by versioned migrations. There is intentionally no
+# supabase/seed.sql, so keep the optional seed phase disabled for local resets.
+enabled = false
 # Specifies an ordered list of seed files to load during db reset.
 # Supports glob patterns relative to supabase directory: "./seeds/*.sql"
 sql_paths = ["./seed.sql"]

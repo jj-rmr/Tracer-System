@@ -12,6 +12,7 @@ import {
   listPublishedFormVersions,
   listStudyPeriodSummaries,
 } from "@/lib/repositories/study-admin.repository";
+import { recordUserAuditEventSafely } from "@/lib/repositories/audit.repository";
 
 const ACADEMIC_YEAR_PATTERN = /^(\d{4})-(\d{4})$/;
 
@@ -60,7 +61,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin();
 
     const body = (await request.json()) as Record<string, unknown>;
     const formVersionId =
@@ -83,6 +84,13 @@ export async function POST(request: NextRequest) {
       formVersionId,
       academicYear,
       title,
+    });
+
+    await recordUserAuditEventSafely(admin, {
+      action: "study.created",
+      targetType: "study_period",
+      targetId: study.id,
+      metadata: { academicYear, title },
     });
 
     after(async () => {

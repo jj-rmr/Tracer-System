@@ -23,7 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import Modal from "@/components/ui/Modal";
+import Modal, { ModalActions, ModalNotice } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/input";
 import { ProfileAvatar } from "@/components/ui/ProfileAvatar";
 import {
@@ -389,50 +389,52 @@ export default function AccountsTable({
   return (
     <div className="w-full overflow-hidden rounded-3xl border border-border bg-card text-sm shadow-sm">
       <Table>
-        <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            <SortableTableHead
-              direction={sortKey === "name" ? sortDirection : undefined}
-              onSort={() => handleSort("name")}
-            >
-              Full Name
-            </SortableTableHead>
-            <SortableTableHead
-              direction={sortKey === "email" ? sortDirection : undefined}
-              onSort={() => handleSort("email")}
-            >
-              Email
-            </SortableTableHead>
-            <SortableTableHead
-              align="center"
-              direction={sortKey === "role" ? sortDirection : undefined}
-              onSort={() => handleSort("role")}
-            >
-              Role
-            </SortableTableHead>
-            <SortableTableHead
-              align="center"
-              direction={sortKey === "verified" ? sortDirection : undefined}
-              onSort={() => handleSort("verified")}
-            >
-              Verified
-            </SortableTableHead>
-            <SortableTableHead
-              direction={sortKey === "createdAt" ? sortDirection : undefined}
-              onSort={() => handleSort("createdAt")}
-            >
-              Created
-            </SortableTableHead>
-            <SortableTableHead
-              direction={sortKey === "updatedAt" ? sortDirection : undefined}
-              onSort={() => handleSort("updatedAt")}
-            >
-              Updated
-            </SortableTableHead>
+        {!loading && (
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <SortableTableHead
+                direction={sortKey === "name" ? sortDirection : undefined}
+                onSort={() => handleSort("name")}
+              >
+                Full Name
+              </SortableTableHead>
+              <SortableTableHead
+                direction={sortKey === "email" ? sortDirection : undefined}
+                onSort={() => handleSort("email")}
+              >
+                Email
+              </SortableTableHead>
+              <SortableTableHead
+                align="center"
+                direction={sortKey === "role" ? sortDirection : undefined}
+                onSort={() => handleSort("role")}
+              >
+                Role
+              </SortableTableHead>
+              <SortableTableHead
+                align="center"
+                direction={sortKey === "verified" ? sortDirection : undefined}
+                onSort={() => handleSort("verified")}
+              >
+                Verified
+              </SortableTableHead>
+              <SortableTableHead
+                direction={sortKey === "createdAt" ? sortDirection : undefined}
+                onSort={() => handleSort("createdAt")}
+              >
+                Created
+              </SortableTableHead>
+              <SortableTableHead
+                direction={sortKey === "updatedAt" ? sortDirection : undefined}
+                onSort={() => handleSort("updatedAt")}
+              >
+                Updated
+              </SortableTableHead>
 
-            <TableHead className="text-center">Menu</TableHead>
-          </TableRow>
-        </TableHeader>
+              <TableHead className="text-center">Menu</TableHead>
+            </TableRow>
+          </TableHeader>
+        )}
 
         <TableBody aria-busy={loading}>
           {loading ? (
@@ -583,6 +585,7 @@ export default function AccountsTable({
                                       size={16}
                                     />
                                   ),
+                                  variant: "success" as const,
                                   onSelect: () =>
                                     openRoleConfirmation(account, ROLES.ADMIN),
                                 },
@@ -594,6 +597,7 @@ export default function AccountsTable({
                                       size={16}
                                     />
                                   ),
+                                  variant: "secondary" as const,
                                   onSelect: () =>
                                     openRoleConfirmation(
                                       account,
@@ -611,6 +615,7 @@ export default function AccountsTable({
                                         size={16}
                                       />
                                     ),
+                                    variant: "secondary" as const,
                                     onSelect: () =>
                                       openRoleConfirmation(
                                         account,
@@ -625,6 +630,7 @@ export default function AccountsTable({
                                         size={16}
                                       />
                                     ),
+                                    variant: "success" as const,
                                     onSelect: () =>
                                       openRoleConfirmation(
                                         account,
@@ -639,6 +645,7 @@ export default function AccountsTable({
                                         size={16}
                                       />
                                     ),
+                                    variant: "destructive" as const,
                                     onSelect: () =>
                                       openRoleConfirmation(
                                         account,
@@ -655,6 +662,7 @@ export default function AccountsTable({
                                         size={16}
                                       />
                                     ),
+                                    variant: "destructive" as const,
                                     onSelect: () =>
                                       openRoleConfirmation(
                                         account,
@@ -781,7 +789,7 @@ export default function AccountsTable({
             </dl>
 
             {accountToView.id !== currentUserId && (
-              <div className="flex flex-wrap justify-end gap-3 border-t border-border pt-4">
+              <ModalActions>
                 {accountToView.role === "alumni" && (
                   <Button
                     type="button"
@@ -847,7 +855,7 @@ export default function AccountsTable({
                     ? "Promote to Admin"
                     : "Demote to Alumni"}
                 </Button>
-              </div>
+              </ModalActions>
             )}
           </div>
         )}
@@ -867,14 +875,13 @@ export default function AccountsTable({
         showCloseButton={!deleting}
       >
         <div className="space-y-5">
-          <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm leading-6 text-destructive">
-            <p className="font-semibold">This action cannot be undone</p>
-            <p className="mt-1">
+          <ModalNotice title="This action cannot be undone" tone="danger">
+            <p>
               The login account, all draft responses, draft manual imports,
               draft documents, and their Google Drive folders will be
               permanently deleted.
             </p>
-          </div>
+          </ModalNotice>
 
           <div>
             <p className="text-sm font-semibold text-foreground">
@@ -910,7 +917,7 @@ export default function AccountsTable({
             />
           </label>
 
-          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <ModalActions>
             <Button
               type="button"
               variant="outline"
@@ -933,7 +940,7 @@ export default function AccountsTable({
             >
               {deleting ? "Deleting account..." : "Delete Account"}
             </Button>
-          </div>
+          </ModalActions>
         </div>
       </Modal>
       <Modal
@@ -953,14 +960,13 @@ export default function AccountsTable({
         showCloseButton={!changingRole}
       >
         <div className="space-y-5">
-          <div className="rounded-2xl border border-warning/30 bg-warning/10 p-4 text-sm leading-6 text-warning">
-            <p className="font-semibold">Important data and access warning</p>
-            <p className="mt-1">
+          <ModalNotice title="Important data and access warning" tone="warning">
+            <p>
               {roleChange?.account.role === roleChange?.role
                 ? "Saving these assignments changes which organizational records this coordinator can access immediately. Existing submitted records are not deleted."
                 : "Changing this role permanently deletes every draft owned by this account, including draft alumni responses, draft manual imports, uploaded documents, and their Google Drive folders. Submitted responses and completed manual imports are retained."}
             </p>
-          </div>
+          </ModalNotice>
 
           {roleChange?.role === ROLES.ADMIN ? (
             <div>
@@ -1201,7 +1207,7 @@ export default function AccountsTable({
             />
           </label>
 
-          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <ModalActions>
             <Button
               type="button"
               variant="outline"
@@ -1231,25 +1237,24 @@ export default function AccountsTable({
                       : "Promote to Coordinator"
                     : "Demote to Alumni"}
             </Button>
-          </div>
+          </ModalActions>
         </div>
       </Modal>
       {totalRows > 0 && (
-        <div className="flex flex-wrap gap-3 border-t border-border bg-muted/40 p-4 text-sm sm:px-6">
+        <div className="flex flex-wrap items-center gap-3 border-t border-border bg-muted/40 p-4 text-sm sm:px-6">
           {totalRows > 1 ? (
-            <span className="w-full rounded-lg bg-muted/60 px-4 py-2 font-semibold whitespace-nowrap text-muted-foreground sm:w-fit">
+            <span className="rounded-lg bg-muted/60 px-4 py-2 font-semibold whitespace-nowrap text-muted-foreground">
               Showing <span>{accounts.length}</span> of{" "}
               <span>{totalRows} Entries</span>
             </span>
           ) : (
-            <span className="w-full rounded-lg bg-muted/60 px-4 py-2 font-semibold whitespace-nowrap text-muted-foreground sm:w-fit">
+            <span className="rounded-lg bg-muted/60 px-4 py-2 font-semibold whitespace-nowrap text-muted-foreground">
               Showing 1 Entry
             </span>
           )}
 
-          <div className="flex w-full gap-2 sm:ml-auto sm:w-fit">
+          <div className="ml-auto flex gap-2">
             <Button
-              className="flex-1 sm:flex-none"
               onClick={() => onPageChange(currentPage - 1)}
               disabled={loading || currentPage <= 1}
               variant="outline"
@@ -1259,7 +1264,6 @@ export default function AccountsTable({
             </Button>
 
             <Button
-              className="flex-1 sm:flex-none"
               onClick={() => onPageChange(currentPage + 1)}
               disabled={loading || currentPage >= totalPages}
               variant="default"

@@ -5,6 +5,7 @@ import { requireAdminDirectoryItem } from "@/lib/google-drive/admin-files";
 import { DRIVE_FOLDER_MIME_TYPE } from "@/lib/google-drive/browser";
 import { drive } from "@/lib/google-drive/client";
 import { upsertDriveIndexItems } from "@/lib/repositories/google-drive-items.repository";
+import { recordUserAuditEventSafely } from "@/lib/repositories/audit.repository";
 
 function sanitizeFolderName(value: string) {
   return value
@@ -16,7 +17,7 @@ function sanitizeFolderName(value: string) {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireAdmin();
+    const admin = await requireAdmin();
 
     const body = (await request.json()) as Record<string, unknown>;
     const parentId = typeof body.parentId === "string" ? body.parentId : "";
@@ -66,6 +67,13 @@ export async function POST(request: NextRequest) {
         syncedAt: new Date().toISOString(),
       },
     ]);
+
+    await recordUserAuditEventSafely(admin, {
+      action: "file.folder_created",
+      targetType: "admin_folder",
+      targetId: response.data.id,
+      metadata: { parentId },
+    });
 
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (error) {
