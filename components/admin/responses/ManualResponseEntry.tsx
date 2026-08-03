@@ -47,6 +47,7 @@ interface ManualResponseEntryProps {
   onDraftSaved?: (responseId: string) => void;
   onRequestClose?: () => void;
   onDirtyChange?: (isDirty: boolean) => void;
+  allowedProgramValues?: string[] | null;
 }
 
 const ManualResponseEntry = forwardRef<
@@ -60,6 +61,7 @@ const ManualResponseEntry = forwardRef<
     onDraftSaved,
     onRequestClose,
     onDirtyChange,
+    allowedProgramValues,
   },
   ref,
 ) {
@@ -355,7 +357,7 @@ const ManualResponseEntry = forwardRef<
               value={respondentEmail}
               onChange={(event) => setRespondentEmail(event.target.value)}
               placeholder="Optional"
-              className="w-full rounded-2xl border border-border bg-muted px-4 py-3 text-sm inset-shadow-sm focus:border-ring focus:outline-none focus:ring-4 focus:ring-ring/30"
+              className="w-full"
             />
           </label>
         </div>
@@ -383,6 +385,7 @@ const ManualResponseEntry = forwardRef<
           if (onComplete) onComplete();
           else router.push("/admin/responses");
         }}
+        allowedProgramValues={allowedProgramValues}
       />
     </div>
   );

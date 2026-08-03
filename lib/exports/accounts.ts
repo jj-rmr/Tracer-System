@@ -10,6 +10,13 @@ export async function getAccountExportRows() {
       name: formatAccount.name,
       email: formatAccount.email,
       role: formatAccount.role,
+      coordinatorAssignments: formatAccount.coordinatorGrants
+        .map((grant) =>
+          [grant.scopeType, grant.campus, grant.college, grant.program]
+            .filter(Boolean)
+            .join(" / "),
+        )
+        .join("; "),
       verified: formatAccount.verified,
       labels: formatAccount.labels,
       createdAt: formatAccount.createdAt

@@ -1,6 +1,12 @@
 import { after, NextRequest, NextResponse } from "next/server";
 
-import { requireAdmin } from "@/lib/auth";
+import {
+  canAccessProgram,
+  canManageManualResponse,
+  canManageResponse,
+  isCoordinator,
+  requireStaff,
+} from "@/lib/auth";
 import { formResponseToSurvey } from "@/lib/forms/graduate-tracer-adapter";
 import { deleteResponseDriveData } from "@/lib/google-drive/response-cleanup";
 import { organizeResponseDriveFolder } from "@/lib/google-drive/organize-response";
@@ -25,11 +31,17 @@ export async function GET(
   { params }: ResponseRouteProps,
 ) {
   try {
-    await requireAdmin();
+    const staff = await requireStaff();
     const { id } = await params;
     const response = await getFormResponseById(id);
 
     if (!response) {
+      return NextResponse.json(
+        { success: false, message: "Response not found." },
+        { status: 404 },
+      );
+    }
+    if (!canManageResponse(staff, response)) {
       return NextResponse.json(
         { success: false, message: "Response not found." },
         { status: 404 },
@@ -70,11 +82,11 @@ export async function PATCH(
   { params }: ResponseRouteProps,
 ) {
   try {
-    await requireAdmin();
+    const staff = await requireStaff();
     const { id } = await params;
     const existing = await getFormResponseById(id);
 
-    if (!existing || existing.source !== "admin_import") {
+    if (!existing || !canManageManualResponse(staff, existing)) {
       return NextResponse.json(
         { success: false, message: "Manual response not found." },
         { status: 404 },
@@ -98,6 +110,18 @@ export async function PATCH(
       return NextResponse.json(
         { success: false, message: "Answers must be a valid object." },
         { status: 400 },
+      );
+    }
+    if (
+      isCoordinator(staff) &&
+      !canAccessProgram(staff, body.answers.program)
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "The selected program is outside your assignments.",
+        },
+        { status: 403 },
       );
     }
 
@@ -170,11 +194,17 @@ export async function DELETE(
   { params }: ResponseRouteProps,
 ) {
   try {
-    await requireAdmin();
+    const staff = await requireStaff();
     const { id } = await params;
     const existingResponse = await getFormResponseForDeletion(id);
 
     if (!existingResponse) {
+      return NextResponse.json(
+        { success: false, message: "Response not found." },
+        { status: 404 },
+      );
+    }
+    if (!canManageResponse(staff, existingResponse)) {
       return NextResponse.json(
         { success: false, message: "Response not found." },
         { status: 404 },

@@ -5,7 +5,12 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase/server";
 import { createSupabaseSessionClient } from "@/lib/supabase/session";
 import { EXTERNAL_TIMEOUTS, withExternalTimeout } from "@/lib/server/timeouts";
-import { ROLES, type Role } from "@/types";
+import {
+  ROLES,
+  type CoordinatorScopeGrant,
+  type CoordinatorScopeType,
+  type Role,
+} from "@/types";
 import type { AuthProvider, AuthUser } from "../types";
 
 interface AccountRow {
@@ -20,6 +25,15 @@ interface AccountRow {
   role_change_notice: string | null;
   created_at: string;
   updated_at: string;
+  coordinator_scope_grants?: CoordinatorGrantRow[];
+}
+
+interface CoordinatorGrantRow {
+  id: string;
+  scope_type: CoordinatorScopeType;
+  campus: string;
+  college: string | null;
+  program: string | null;
 }
 
 class AccountDisabledError extends Error {}
@@ -36,6 +50,15 @@ function formatUser(row: AccountRow): AuthUser {
     email: row.email,
     pictureUrl: row.picture_url,
     role: row.role,
+    coordinatorGrants: (row.coordinator_scope_grants ?? []).map(
+      (grant): CoordinatorScopeGrant => ({
+        id: grant.id,
+        scopeType: grant.scope_type,
+        campus: grant.campus,
+        college: grant.college,
+        program: grant.program,
+      }),
+    ),
     emailVerified: row.email_verified,
     enabled: row.enabled,
     roleChangeNotice: row.role_change_notice,
@@ -72,7 +95,9 @@ async function linkAccount(providerUser: User) {
   const profile = googleProfile(providerUser);
   const { data: linked, error: linkedError } = await supabase
     .from("auth_accounts")
-    .select("*")
+    .select(
+      "*, coordinator_scope_grants!coordinator_scope_grants_account_id_fkey(*)",
+    )
     .eq("provider_user_id", providerUser.id)
     .maybeSingle<AccountRow>();
 
@@ -97,7 +122,9 @@ async function linkAccount(providerUser: User) {
         email_verified: profile.emailVerified,
       })
       .eq("id", linked.id)
-      .select("*")
+      .select(
+        "*, coordinator_scope_grants!coordinator_scope_grants_account_id_fkey(*)",
+      )
       .single<AccountRow>();
     if (error) throw error;
     if (!data.enabled) throw new AccountDisabledError("Account is disabled");
@@ -106,7 +133,9 @@ async function linkAccount(providerUser: User) {
 
   const { data: imported, error: importedError } = await supabase
     .from("auth_accounts")
-    .select("*")
+    .select(
+      "*, coordinator_scope_grants!coordinator_scope_grants_account_id_fkey(*)",
+    )
     .eq("email", profile.email)
     .maybeSingle<AccountRow>();
   if (importedError) throw importedError;
@@ -129,7 +158,9 @@ async function linkAccount(providerUser: User) {
       },
       { onConflict: "id" },
     )
-    .select("*")
+    .select(
+      "*, coordinator_scope_grants!coordinator_scope_grants_account_id_fkey(*)",
+    )
     .single<AccountRow>();
 
   if (error) throw error;

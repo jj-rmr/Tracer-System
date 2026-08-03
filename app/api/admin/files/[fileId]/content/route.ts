@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { requireAdmin } from "@/lib/auth";
+import { canManageResponse, isAdmin, requireStaff } from "@/lib/auth";
 import { getDriveFileContent } from "@/lib/google-drive/browser";
+import { getFormResponseForDriveFile } from "@/lib/repositories/form-responses.repository";
 
 function safeFilename(value: string) {
   return value.replace(/[\r\n"]/g, "_");
@@ -12,9 +13,17 @@ export async function GET(
   { params }: { params: Promise<{ fileId: string }> },
 ) {
   try {
-    await requireAdmin();
-
+    const staff = await requireStaff();
     const { fileId } = await params;
+    if (!isAdmin(staff)) {
+      const response = await getFormResponseForDriveFile(fileId);
+      if (!response || !canManageResponse(staff, response)) {
+        return NextResponse.json(
+          { success: false, message: "File not found." },
+          { status: 404 },
+        );
+      }
+    }
     const content = await getDriveFileContent(
       fileId,
       request.headers.get("range") ?? undefined,

@@ -108,7 +108,7 @@ export default function ManualResponseEditor({
           value={respondentEmail}
           onChange={(event) => setRespondentEmail(event.target.value)}
           placeholder="Optional"
-          className="w-full rounded-2xl border border-border bg-muted px-4 py-3 text-sm inset-shadow-sm focus:border-ring focus:outline-none focus:ring-4 focus:ring-ring/30"
+          className="w-full"
         />
       </label>
       <GraduateTracerForm

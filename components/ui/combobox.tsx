@@ -72,7 +72,7 @@ function ComboboxInput({
     <ComboboxPrimitive.InputGroup
       data-slot="combobox-input-group"
       className={cn(
-        "group/combobox-input relative flex h-11 w-full min-w-0 items-center rounded-xl border border-input bg-background text-foreground inset-shadow-sm transition-[color,background-color,border-color,box-shadow] duration-200 hover:border-ring/60 focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/30 has-aria-invalid:border-destructive has-aria-invalid:bg-destructive/5 has-aria-invalid:ring-3 has-aria-invalid:ring-destructive/20 has-data-disabled:bg-muted has-data-disabled:text-muted-foreground has-data-disabled:shadow-none has-data-disabled:inset-shadow-none has-data-disabled:opacity-60",
+        "group/combobox-input relative flex h-11 w-full min-w-0 items-center rounded-xl border border-input bg-background text-foreground inset-shadow-sm transition-[color,background-color,border-color,box-shadow] duration-200 hover:border-ring focus-within:border-ring focus-within:ring-3 focus-within:ring-ring has-aria-invalid:border-destructive has-aria-invalid:bg-destructive/5 has-aria-invalid:ring-3 has-aria-invalid:ring-destructive/40 has-data-disabled:bg-muted has-data-disabled:text-muted-foreground has-data-disabled:shadow-none has-data-disabled:inset-shadow-none has-data-disabled:opacity-60",
         className,
       )}
     >

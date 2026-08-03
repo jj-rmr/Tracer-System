@@ -4,7 +4,7 @@ import {
   InvalidResponseQueryError,
   parseAdminResponseQuery,
 } from "@/lib/admin/response-query";
-import { requireAdmin } from "@/lib/auth";
+import { getAllowedProgramValues, requireStaff } from "@/lib/auth";
 import {
   exportResponsesCsv,
   getResponseExportRows,
@@ -14,7 +14,7 @@ import { recordSecurityAuditEvent } from "@/lib/repositories/audit.repository";
 
 export async function GET(request: NextRequest) {
   try {
-    const admin = await requireAdmin();
+    const staff = await requireStaff();
 
     const { filters } = parseAdminResponseQuery(request.nextUrl.searchParams);
     const format = request.nextUrl.searchParams.get("format") ?? "csv";
@@ -24,10 +24,13 @@ export async function GET(request: NextRequest) {
     const now = new Date();
     const pad = (value: number) => value.toString().padStart(2, "0");
     const timestamp = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}-${pad(now.getSeconds())}`;
-    const rows = await getResponseExportRows(filters);
+    const rows = await getResponseExportRows(
+      filters,
+      getAllowedProgramValues(staff),
+    );
 
     await recordSecurityAuditEvent({
-      actorUserId: admin.id,
+      actorUserId: staff.id,
       action: "responses.exported",
       targetType: "response_collection",
       metadata: { format, rowCount: rows.length },

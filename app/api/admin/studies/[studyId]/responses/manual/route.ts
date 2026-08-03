@@ -1,8 +1,11 @@
 import { after, NextRequest, NextResponse } from "next/server";
 
-import { requireAdmin } from "@/lib/auth";
+import { canAccessProgram, isCoordinator, requireStaff } from "@/lib/auth";
 import { organizeResponseDriveFolder } from "@/lib/google-drive/organize-response";
-import { createManualFormResponse } from "@/lib/repositories/form-responses.repository";
+import {
+  createManualFormResponse,
+  ManualImportConflictError,
+} from "@/lib/repositories/form-responses.repository";
 import { getStudyContext } from "@/lib/repositories/forms.repository";
 
 interface ManualResponseBody {
@@ -25,7 +28,7 @@ export async function POST(
   { params }: { params: Promise<{ studyId: string }> },
 ) {
   try {
-    const admin = await requireAdmin();
+    const staff = await requireStaff();
     const { studyId } = await params;
     const context = await getStudyContext(studyId);
 
@@ -74,6 +77,22 @@ export async function POST(
       );
     }
 
+    const selectedProgram = body.answers.program;
+    if (
+      isCoordinator(staff) &&
+      ((typeof selectedProgram === "string" && selectedProgram) ||
+        mode === "submitted") &&
+      !canAccessProgram(staff, selectedProgram)
+    ) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "The selected program is outside your assignments.",
+        },
+        { status: 403 },
+      );
+    }
+
     const allowedKeys = new Set(
       context.definition.sections.flatMap((section) => section.fieldKeys),
     );
@@ -101,7 +120,7 @@ export async function POST(
 
     const saved = await createManualFormResponse({
       studyPeriodId: studyId,
-      enteredByUserId: admin.id,
+      enteredByUserId: staff.id,
       respondentName: respondentName || undefined,
       respondentEmail,
       answers: body.answers,
@@ -131,6 +150,17 @@ export async function POST(
     );
   } catch (error) {
     console.error("Failed to create manual response:", error);
+
+    if (error instanceof ManualImportConflictError) {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "This manual import session is no longer available. Start a new response.",
+        },
+        { status: 409 },
+      );
+    }
 
     return NextResponse.json(
       {

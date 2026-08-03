@@ -65,6 +65,21 @@ const adminInformation: InfoAccordionItem[] = [
   },
 ];
 
+const coordinatorInformation: InfoAccordionItem[] = [
+  {
+    id: "access",
+    title: "Coordinator access",
+    content:
+      "Your administrator assigns the campuses, colleges, and programs whose tracer responses you may manage.",
+  },
+  {
+    id: "reporting",
+    title: "Scoped response review and exports",
+    content:
+      "Response lists, manual entries, documents, dashboard totals, and exports are limited to your current assignments.",
+  },
+];
+
 export default function SettingsPage({
   name,
   email,
@@ -72,7 +87,11 @@ export default function SettingsPage({
   pictureUrl,
 }: SettingsPageProps) {
   const informationItems =
-    role === ROLES.ADMIN ? adminInformation : alumniInformation;
+    role === ROLES.ADMIN
+      ? adminInformation
+      : role === ROLES.COORDINATOR
+        ? coordinatorInformation
+        : alumniInformation;
 
   return (
     <div className="w-full space-y-5 pb-10 sm:space-y-6 sm:pb-16">

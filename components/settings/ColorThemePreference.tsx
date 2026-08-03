@@ -16,7 +16,7 @@ const colorThemes: Array<{
 }> = [
   { value: "blue", label: "Blue", swatch: "bg-sky-500" },
   { value: "green", label: "Green", swatch: "bg-emerald-500" },
-  { value: "purple", label: "Purple", swatch: "bg-violet-500" },
+  { value: "purple", label: "Fuchsia", swatch: "bg-fuchsia-500" },
   { value: "gray", label: "Gray", swatch: "bg-gray-500" },
 ];
 
@@ -90,7 +90,7 @@ export function ColorThemePreference() {
                   role="radio"
                   aria-checked={selected}
                   onClick={() => selectColorTheme(theme.value)}
-                  className="flex min-h-11 items-center gap-3 rounded-xl border border-border bg-background px-3 py-2.5 text-left text-sm font-medium text-foreground outline-none transition-[color,background-color,border-color,box-shadow] hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-checked:border-primary aria-checked:bg-primary/10 aria-checked:text-primary"
+                  className="flex min-h-11 items-center gap-3 rounded-xl border border-border bg-background px-3 py-2.5 text-left text-sm font-medium text-foreground outline-none transition-[color,background-color,border-color,box-shadow] hover:bg-muted focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring aria-checked:border-primary aria-checked:bg-primary/10 aria-checked:text-primary"
                 >
                   <span
                     aria-hidden="true"

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { requireUser } from "@/lib/auth";
-import { isAdmin } from "@/lib/auth/roles";
+import { canManageResponse, requireUser } from "@/lib/auth";
 import { canChangeResponseDocuments } from "@/lib/forms/response-document-lifecycle";
 import { deleteDriveFile } from "@/lib/google-drive/files";
 import {
@@ -31,7 +30,7 @@ export async function DELETE(
       !response ||
       !document ||
       document.response_id !== responseId ||
-      (!isAdmin(user) && response.userId !== user.id)
+      !canManageResponse(user, response)
     ) {
       return NextResponse.json(
         { success: false, message: "Document not found." },

@@ -41,6 +41,7 @@ interface Props {
   onDirtyChange?: (isDirty: boolean) => void;
   onRequestClose?: () => void;
   recoveryKey?: string;
+  allowedProgramValues?: string[] | null;
 }
 
 export interface PendingSurveyDocuments {
@@ -67,6 +68,7 @@ export default function GraduateTracerForm({
   onDirtyChange,
   onRequestClose,
   recoveryKey,
+  allowedProgramValues,
 }: Props) {
   const { control, getValues, register, reset, setValue } = useForm<Survey>({
     defaultValues: initialData,
@@ -504,6 +506,7 @@ export default function GraduateTracerForm({
             readOnly={readOnly}
             register={register}
             clearFieldError={clearFieldError}
+            allowedProgramValues={allowedProgramValues}
           />
         )}
         {step === 3 && (

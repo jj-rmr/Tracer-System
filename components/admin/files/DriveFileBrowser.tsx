@@ -872,7 +872,7 @@ export default function DriveFileBrowser() {
               </div>
             )}
             <div
-              className={`hidden items-center gap-3 border-b border-white bg-data-header px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:grid ${
+              className={`hidden items-center gap-3 border-b border-border bg-data-header px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:grid ${
                 canUpload
                   ? "lg:grid-cols-[auto_auto_minmax(0,1fr)_7rem_9rem_11rem_auto]"
                   : "lg:grid-cols-[auto_auto_minmax(0,1fr)_7rem_9rem_11rem]"

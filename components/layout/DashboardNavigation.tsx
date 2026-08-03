@@ -14,7 +14,7 @@ import {
   LuFolderOpen,
   LuEllipsis,
 } from "@/components/ui/icons";
-import { Role } from "@/types";
+import { Role, ROLES } from "@/types";
 import Modal from "@/components/ui/Modal";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -107,39 +107,55 @@ export default function DashboardNavigation({
     },
   ];
 
-  const secondaryNavItems =
-    role === "admin"
-      ? [
-          {
-            label: "Settings",
-            href: "/admin/settings",
-            icon: LuSettings2,
-          },
-        ]
-      : [
-          {
-            label: "Settings",
-            href: "/alumni/settings",
-            icon: LuSettings2,
-          },
-        ];
+  const coordinatorNavItems = adminNavItems.slice(0, 2);
+  const isAdministrativePortal = role !== ROLES.ALUMNI;
+  const roleNavItems =
+    role === ROLES.ADMIN
+      ? adminNavItems
+      : role === ROLES.COORDINATOR
+        ? coordinatorNavItems
+        : alumniNavItems;
 
-  const mainNavItems = role === "admin" ? adminNavItems : alumniNavItems;
+  const secondaryNavItems = isAdministrativePortal
+    ? [
+        {
+          label: "Settings",
+          href: "/admin/settings",
+          icon: LuSettings2,
+        },
+      ]
+    : [
+        {
+          label: "Settings",
+          href: "/alumni/settings",
+          icon: LuSettings2,
+        },
+      ];
+
+  const mainNavItems = roleNavItems;
   const desktopNavSections =
-    role === "admin"
+    role === ROLES.ADMIN
       ? [
           { label: "Overview", items: adminNavItems.slice(0, 1) },
           { label: "Tracer study", items: adminNavItems.slice(1, 3) },
           { label: "Administration", items: adminNavItems.slice(3) },
         ]
-      : [
-          { label: "Overview", items: alumniNavItems.slice(0, 1) },
-          { label: "Tracer study", items: alumniNavItems.slice(1) },
-        ];
+      : role === ROLES.COORDINATOR
+        ? [
+            { label: "Overview", items: coordinatorNavItems.slice(0, 1) },
+            {
+              label: "Tracer study",
+              items: coordinatorNavItems.slice(1),
+            },
+          ]
+        : [
+            { label: "Overview", items: alumniNavItems.slice(0, 1) },
+            { label: "Tracer study", items: alumniNavItems.slice(1) },
+          ];
   const mobilePrimaryItems =
-    role === "admin" ? adminNavItems.slice(0, 3) : alumniNavItems;
+    role === ROLES.ADMIN ? adminNavItems.slice(0, 3) : roleNavItems;
   const mobileMoreItems =
-    role === "admin"
+    role === ROLES.ADMIN
       ? [...adminNavItems.slice(3), ...secondaryNavItems]
       : secondaryNavItems;
 
@@ -204,10 +220,10 @@ export default function DashboardNavigation({
                     title={isOpen ? undefined : item.label}
                     aria-label={item.label}
                     onClick={(event) => markNavigationPending(event, item.href)}
-                    className={`relative flex h-10 items-center rounded-xl px-4 outline-none transition-colors duration-200 focus-visible:ring-3 focus-visible:ring-inset focus-visible:ring-ring/50 ${
+                    className={`relative flex h-10 items-center rounded-xl px-4 outline-none transition-colors duration-200 focus-visible:ring-3 focus-visible:ring-inset focus-visible:ring-ring ${
                       isActiveLink(item.href)
                         ? "bg-primary/10 text-nav-active"
-                        : "text-nav-inactive hover:bg-muted hover:text-nav-active"
+                        : "text-nav-inactive hover:bg-primary/10 hover:text-nav-active"
                     }`}
                   >
                     <Icon size={19} className="shrink-0" />
@@ -321,7 +337,7 @@ export default function DashboardNavigation({
                 href={item.href}
                 prefetch={!active}
                 onClick={(event) => markNavigationPending(event, item.href)}
-                className={`relative flex flex-1 flex-col items-center p-2 ${
+                className={`group relative flex flex-1 flex-col items-center p-2 hover:text-nav-active ${
                   active ? "text-nav-active" : "text-nav-inactive"
                 }`}
               >
@@ -331,7 +347,9 @@ export default function DashboardNavigation({
 
                 <div
                   className={`absolute top-1.5 -z-10 h-7.5 w-full max-w-16 rounded-full ${
-                    active ? "bg-accent/25 dark:bg-accent/15" : ""
+                    active
+                      ? "bg-accent/25 dark:bg-accent/15"
+                      : "group-hover:bg-primary/10"
                   }`}
                 />
                 {isNavigationPending && pendingHref === item.href && (
@@ -351,7 +369,7 @@ export default function DashboardNavigation({
             aria-haspopup="dialog"
             aria-expanded={showMoreMenu}
             onClick={() => setShowMoreMenu(true)}
-            className={`relative ${
+            className={`group relative hover:text-nav-active ${
               isMoreActive ? "text-nav-active" : "text-nav-inactive"
             }`}
           >
@@ -359,7 +377,9 @@ export default function DashboardNavigation({
             <span className="mt-1 text-[10px]">More</span>
             <span
               className={`absolute top-1.5 -z-10 h-7.5 w-full max-w-16 rounded-full ${
-                isMoreActive ? "bg-accent/25 dark:bg-accent/15" : ""
+                isMoreActive
+                  ? "bg-accent/25 dark:bg-accent/15"
+                  : "group-hover:bg-primary/10"
               }`}
             />
           </Button>
@@ -393,7 +413,7 @@ export default function DashboardNavigation({
                 className={`relative flex min-h-14 items-center gap-3 rounded-2xl px-4 py-3 text-sm font-semibold transition-colors duration-200 ${
                   active
                     ? "bg-accent/15 text-nav-active"
-                    : "text-nav-inactive hover:bg-muted hover:text-nav-active"
+                    : "text-nav-inactive hover:bg-primary/10 hover:text-nav-active"
                 }`}
               >
                 <Icon aria-hidden="true" size={22} />

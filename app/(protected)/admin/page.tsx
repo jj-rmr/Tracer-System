@@ -4,69 +4,121 @@ import {
   LuCalendarClock,
   LuChartNoAxesCombined,
   LuCircleCheck,
-  LuClock3,
+  LuBriefcaseBusiness,
   LuFileSpreadsheet,
   LuFolderOpen,
+  LuGraduationCap,
   LuPlus,
   LuUsersRound,
 } from "@/components/ui/icons";
 
 import RecentResponses from "@/components/admin/dashboard/RecentResponses";
-import { requireAdmin } from "@/lib/auth";
-import { listAdminResponseSummaries } from "@/lib/repositories/admin-responses.repository";
+import EmploymentPieChart from "@/components/admin/dashboard/EmploymentPieChart";
+import { getAllowedProgramValues, isAdmin, requireStaff } from "@/lib/auth";
+import { PROGRAMS } from "@/lib/programs/catalog";
+import { listAdminDashboardResponses } from "@/lib/repositories/admin-responses.repository";
 import { listStudyPeriodSummaries } from "@/lib/repositories/study-admin.repository";
 
 function firstName(name: string) {
   return name.trim().split(/\s+/)[0] || "Administrator";
 }
 
-export default async function AdminPage() {
-  const user = await requireAdmin();
-  const [studies, recentResult] = await Promise.all([
-    listStudyPeriodSummaries(),
-    listAdminResponseSummaries({ filters: {}, page: 1, limit: 5 }),
-  ]);
+function pluralize(count: number, singular: string, plural = `${singular}s`) {
+  return count === 1 ? singular : plural;
+}
 
+export default async function AdminPage() {
+  const user = await requireStaff();
+  const allowedProgramValues = getAllowedProgramValues(user);
+  const [studies, responses] = await Promise.all([
+    listStudyPeriodSummaries(),
+    listAdminDashboardResponses(allowedProgramValues),
+  ]);
   const openStudy = studies.find((study) => study.status === "open") ?? null;
-  const totalResponses = studies.reduce(
-    (total, study) => total + study.responseCount,
-    0,
+  const submitted = responses.filter(
+    (response) => response.status === "submitted",
   );
-  const submittedResponses = studies.reduce(
-    (total, study) => total + study.submittedResponseCount,
-    0,
-  );
-  const draftResponses = Math.max(0, totalResponses - submittedResponses);
-  const submissionRate = openStudy?.responseCount
-    ? Math.round(
-        (openStudy.submittedResponseCount / openStudy.responseCount) * 100,
-      )
+  const openResponses = openStudy
+    ? responses.filter((response) => response.studyPeriodId === openStudy.id)
+    : [];
+  const openResponseCount = openResponses.length;
+  const openSubmittedCount = openResponses.filter(
+    (response) => response.status === "submitted",
+  ).length;
+  const submissionRate = openResponseCount
+    ? Math.round((openSubmittedCount / openResponseCount) * 100)
     : 0;
+  const employmentAnswered = submitted.filter((response) =>
+    ["Yes", "No", "Never Employed"].includes(response.employmentStatus),
+  );
+  const employedCount = employmentAnswered.filter(
+    (response) => response.employmentStatus === "Yes",
+  ).length;
+  const employmentRate = employmentAnswered.length
+    ? Math.round((employedCount / employmentAnswered.length) * 100)
+    : 0;
+  const employmentBreakdown = [
+    {
+      status: "Yes",
+      label: "Employed",
+      count: employedCount,
+      colorClass: "bg-emerald-600 dark:bg-emerald-500",
+    },
+    {
+      status: "No",
+      label: "Not employed",
+      count: employmentAnswered.filter(
+        (response) => response.employmentStatus === "No",
+      ).length,
+      colorClass: "bg-orange-600 dark:bg-orange-500",
+    },
+    {
+      status: "Never Employed",
+      label: "Never employed",
+      count: employmentAnswered.filter(
+        (response) => response.employmentStatus === "Never Employed",
+      ).length,
+      colorClass: "bg-blue-600 dark:bg-blue-500",
+    },
+  ];
+  const programCounts = Array.from(
+    submitted.reduce((counts, response) => {
+      const program = response.program.trim() || "Not specified";
+      counts.set(program, (counts.get(program) ?? 0) + 1);
+      return counts;
+    }, new Map<string, number>()),
+  ).sort((left, right) => right[1] - left[1]);
+  const maxProgramCount = programCounts[0]?.[1] ?? 0;
+  const programNames = new Map(
+    PROGRAMS.map((program) => [program.value, program.label]),
+  );
+  const recentResponses = responses.slice(0, 5);
 
   const metrics = [
     {
-      label: "All responses",
-      value: totalResponses,
-      detail: "Across every study",
+      label: "Active participation",
+      value: openResponseCount,
+      detail: openStudy ? `In ${openStudy.academicYear}` : "No open study",
       icon: LuFileSpreadsheet,
     },
     {
-      label: "Submitted",
-      value: submittedResponses,
-      detail: "Completed responses",
+      label: "Completion rate",
+      value: `${submissionRate}%`,
+      detail: `${openSubmittedCount} of ${openResponseCount} ${pluralize(openResponseCount, "response")} submitted`,
       icon: LuCircleCheck,
     },
     {
-      label: "Drafts",
-      value: draftResponses,
-      detail: "Awaiting completion",
-      icon: LuClock3,
+      label: "Employment rate",
+      value: `${employmentRate}%`,
+      detail: `${employedCount} of ${employmentAnswered.length} reporting ${pluralize(employmentAnswered.length, "graduate")}`,
+      icon: LuBriefcaseBusiness,
     },
     {
-      label: "Study periods",
-      value: studies.length,
-      detail: `${studies.filter((study) => study.status === "open").length} currently open`,
-      icon: LuCalendarClock,
+      label: "Programs represented",
+      value: programCounts.filter(([program]) => program !== "Not specified")
+        .length,
+      detail: `${submitted.length} submitted ${pluralize(submitted.length, "response")} analyzed`,
+      icon: LuGraduationCap,
     },
   ];
 
@@ -77,7 +129,9 @@ export default async function AdminPage() {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-primary">
               <LuChartNoAxesCombined aria-hidden="true" />
-              Administration overview
+              {isAdmin(user)
+                ? "Administration overview"
+                : "Coordinator overview"}
             </div>
             <h1 className="mt-4 text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
               Welcome back, {firstName(user.name)}
@@ -114,7 +168,9 @@ export default async function AdminPage() {
                     {metric.label}
                   </p>
                   <p className="mt-2 text-3xl font-semibold tracking-tight text-foreground">
-                    {metric.value.toLocaleString()}
+                    {typeof metric.value === "number"
+                      ? metric.value.toLocaleString()
+                      : metric.value}
                   </p>
                 </div>
                 <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-primary/10 text-primary">
@@ -129,8 +185,103 @@ export default async function AdminPage() {
         })}
       </section>
 
-      <div className="grid gap-6 lg:grid-cols-[1.25fr_0.75fr]">
+      <div className="grid gap-6 lg:grid-cols-2">
         <section className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+                Graduate outcomes
+              </p>
+              <h2 className="mt-2 text-lg font-semibold text-foreground">
+                Employment status
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Based on {employmentAnswered.length} submitted{" "}
+                {pluralize(employmentAnswered.length, "response")} with an
+                employment answer
+              </p>
+            </div>
+            <span className="text-2xl font-semibold text-foreground">
+              {employmentRate}%
+            </span>
+          </div>
+          <div className="mt-6 flex flex-col items-center gap-7 sm:flex-row sm:justify-center">
+            <EmploymentPieChart slices={employmentBreakdown} />
+            <div className="w-full min-w-0 space-y-3 sm:max-w-60">
+              {employmentBreakdown.map((item) => {
+                const percentage = employmentAnswered.length
+                  ? Math.round((item.count / employmentAnswered.length) * 100)
+                  : 0;
+                return (
+                  <div
+                    key={item.status}
+                    className="flex items-center gap-3 text-sm"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className={`size-3 shrink-0 rounded-sm ${item.colorClass}`}
+                    />
+                    <span className="min-w-0 flex-1 font-medium text-foreground">
+                      {item.label}
+                    </span>
+                    <span className="tabular-nums text-muted-foreground">
+                      {item.count} · {percentage}%
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-3xl border border-border bg-card p-6 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+            Participation mix
+          </p>
+          <h2 className="mt-2 text-lg font-semibold text-foreground">
+            Responses by program
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Top programs among submitted responses
+          </p>
+          <div className="mt-6 space-y-4">
+            {programCounts.length ? (
+              programCounts.slice(0, 5).map(([program, count], index) => (
+                <div
+                  key={program}
+                  className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2"
+                >
+                  <p
+                    className="text-sm font-medium leading-5 text-foreground"
+                    title={programNames.get(program) ?? program}
+                  >
+                    {programNames.get(program) ?? program}
+                  </p>
+                  <p className="text-sm font-semibold text-foreground">
+                    {count}
+                  </p>
+                  <div className="col-span-2 h-2 overflow-hidden rounded-full bg-secondary">
+                    <div
+                      className="dashboard-progress-bar h-full rounded-full bg-primary"
+                      style={{
+                        width: `${maxProgramCount ? (count / maxProgramCount) * 100 : 0}%`,
+                        animationDelay: `${150 + index * 90}ms`,
+                      }}
+                    />
+                  </div>
+                </div>
+              ))
+            ) : (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                Program participation will appear after responses are submitted.
+              </p>
+            )}
+          </div>
+        </section>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-[1.25fr_0.75fr]">
+        <section className="flex flex-col rounded-3xl border border-border bg-card p-6 shadow-sm">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wider text-primary">
@@ -157,37 +308,45 @@ export default async function AdminPage() {
           </div>
 
           {openStudy ? (
-            <div className="mt-7">
-              <div className="flex items-end justify-between gap-4">
-                <div>
-                  <p className="text-3xl font-semibold text-foreground">
-                    {openStudy.submittedResponseCount.toLocaleString()}
-                    <span className="text-base font-medium text-muted-foreground">
-                      {" "}
-                      / {openStudy.responseCount.toLocaleString()}
-                    </span>
-                  </p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Submitted out of recorded responses
+            <div className="flex flex-1 flex-col">
+              <div className="flex flex-1 flex-col justify-center py-7">
+                <div className="flex items-end justify-between gap-4">
+                  <div>
+                    <p className="text-3xl font-semibold text-foreground">
+                      {openSubmittedCount.toLocaleString()}
+                      <span className="text-base font-medium text-muted-foreground">
+                        {" "}
+                        / {openResponseCount.toLocaleString()}
+                      </span>
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      Submitted out of recorded{" "}
+                      {pluralize(openResponseCount, "response")}
+                    </p>
+                  </div>
+                  <p className="text-sm font-semibold text-primary">
+                    {submissionRate}% submitted
                   </p>
                 </div>
-                <p className="text-sm font-semibold text-primary">
-                  {submissionRate}% submitted
-                </p>
+                <div className="mt-4 h-2 overflow-hidden rounded-full bg-secondary">
+                  <div
+                    className="dashboard-progress-bar h-full rounded-full bg-primary"
+                    style={{
+                      width: `${submissionRate}%`,
+                      animationDelay: "150ms",
+                    }}
+                  />
+                </div>
               </div>
-              <div className="mt-4 h-2 overflow-hidden rounded-full bg-secondary">
-                <div
-                  className="h-full rounded-full bg-primary"
-                  style={{ width: `${submissionRate}%` }}
-                />
-              </div>
-              <div className="mt-6 flex flex-wrap gap-3">
-                <Link
-                  href="/admin/studies"
-                  className="inline-flex items-center gap-2 rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-semibold text-foreground transition-colors duration-200 hover:bg-muted"
-                >
-                  Manage study
-                </Link>
+              <div className="flex flex-wrap gap-3">
+                {isAdmin(user) && (
+                  <Link
+                    href="/admin/studies"
+                    className="inline-flex items-center gap-2 rounded-xl border border-border bg-background px-4 py-2.5 text-sm font-semibold text-foreground transition-colors duration-200 hover:bg-muted"
+                  >
+                    Manage study
+                  </Link>
+                )}
                 <Link
                   href={`/admin/responses?study=${encodeURIComponent(openStudy.id)}`}
                   className="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-primary transition-colors duration-200 hover:bg-primary/10"
@@ -197,7 +356,7 @@ export default async function AdminPage() {
                 </Link>
               </div>
             </div>
-          ) : (
+          ) : isAdmin(user) ? (
             <Link
               href="/admin/studies"
               className="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground"
@@ -205,7 +364,7 @@ export default async function AdminPage() {
               <LuPlus aria-hidden="true" />
               Manage studies
             </Link>
-          )}
+          ) : null}
         </section>
 
         <section className="rounded-3xl border border-border bg-card p-6 shadow-sm">
@@ -218,9 +377,13 @@ export default async function AdminPage() {
           <div className="mt-5 grid gap-2">
             {[
               ["Review responses", "/admin/responses", LuFileSpreadsheet],
-              ["Manage studies", "/admin/studies", LuCalendarClock],
-              ["Manage accounts", "/admin/accounts", LuUsersRound],
-              ["Browse files", "/admin/files", LuFolderOpen],
+              ...(isAdmin(user)
+                ? [
+                    ["Manage studies", "/admin/studies", LuCalendarClock],
+                    ["Manage accounts", "/admin/accounts", LuUsersRound],
+                    ["Browse files", "/admin/files", LuFolderOpen],
+                  ]
+                : []),
             ].map(([label, href, Icon]) => (
               <Link
                 key={href as string}
@@ -241,7 +404,7 @@ export default async function AdminPage() {
         </section>
       </div>
 
-      <RecentResponses responses={recentResult.responses} />
+      <RecentResponses responses={recentResponses} />
     </div>
   );
 }

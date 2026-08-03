@@ -4,7 +4,7 @@ This document defines the visual language and interaction standards for the Plac
 
 ## Design direction
 
-The interface should feel calm, trustworthy, and lightly elevated. Use cool slate surfaces, sky-blue accents, generous rounded corners, and broad diffused shadows. Borders provide structure but should not be mistaken for elevation.
+The interface should feel calm, trustworthy, and lightly elevated. Use theme-aware undertone surfaces, a distinct semantic accent, generous rounded corners, and broad diffused shadows. The default theme uses slate surfaces with sky-blue accents. Borders provide structure but should not be mistaken for elevation.
 
 Priorities:
 
@@ -27,21 +27,39 @@ Use semantic Tailwind tokens instead of hard-coded colors whenever possible.
 | Secondary surface | `muted` / `surface` | Light slate | Slate 800   |
 | Primary text      | `foreground`        | Slate 950   | Slate 200   |
 | Secondary text    | `muted-foreground`  | Slate 700   | Slate 400   |
-| Primary action    | `primary`           | Sky 600     | Sky 500     |
-| Primary hover     | `primary-hover`     | Sky 700     | Sky 400     |
-| Focus indicator   | `ring`              | Sky 500     | Sky 500     |
+| Primary action    | `primary`           | Sky 700     | Sky 500     |
+| Primary hover     | `primary-hover`     | Sky 800     | Sky 400     |
+| Focus indicator   | `ring`              | Sky 700     | Sky 500     |
 | Destructive       | `destructive`       | Rose 600    | Rose 400    |
 | Success           | `success`           | Emerald 700 | Emerald 400 |
 | Warning           | `warning`           | Amber 800   | Amber 300   |
 
 Color must never be the only indicator of status. Pair it with text, an icon, or both.
 
-The settings-only color-theme preference provides Blue, Green, Purple, and Gray palettes. Every theme defines two centralized ramps: an accent ramp makes primary actions, focus, and active states pop, while an undertone ramp keeps text, supporting surfaces, borders, shadows, and inactive states legible. Blue pairs Sky accents with Slate undertones; Green pairs Emerald with Slate; Purple pairs its subdued Violet blend with Slate; Gray uses Gray for both ramps and remains achromatic. Status colors remain semantic for accessibility. Feature components must not branch on the selected palette or introduce palette-specific raw colors.
+The settings-only color-theme preference provides Blue, Green, Fuchsia, and Gray palettes. Every theme defines two centralized ramps: an accent ramp makes primary actions, focus, and active states pop, while an undertone ramp supplies text, supporting surfaces, borders, shadows, and inactive states.
+
+| Theme   | Accent ramp | Undertone ramp |
+| ------- | ----------- | -------------- |
+| Blue    | Sky         | Slate          |
+| Green   | Emerald     | Olive          |
+| Fuchsia | Fuchsia     | Mauve          |
+| Gray    | Gray        | Gray           |
+
+Accent and undertone ramps must use complete, existing Tailwind color ranges without blending or synthesizing palette steps. The undertone must remain supporting and must not replace the accent on actions, focus indicators, active navigation, or themed hover states. The internal stored value for Fuchsia remains `purple` for backward compatibility with saved preferences. Status colors remain semantic for accessibility. Feature components must not branch on the selected palette or introduce palette-specific raw colors.
+
+Theme implementation rules:
+
+- Light-mode primary actions use accent 700 with accent 800 on hover and white foreground text. This pairing must maintain WCAG AA contrast in every selectable palette.
+- Dark-mode primary actions use accent 500 with accent 400 on hover and undertone 950 foreground text.
+- Light-mode focus indicators use accent 700; dark mode uses accent 500. Standard focus rings render at full opacity.
+- Accent 300–500 remains available for dark-mode actions, decorative tints, indicators, and low-opacity accent surfaces. Do not lighten a primary action merely to make the theme appear brighter.
+- Changing the color theme updates semantic tokens only. It must not change component structure, spacing, behavior, status colors, or application functionality.
+- The preference is device-local. Existing stored `purple` values resolve to the Fuchsia theme so upgrades do not reset a user’s selection.
 
 ### Typography
 
-- Primary family: Geist Sans.
-- Monospace family: Geist Mono.
+- Primary family: the shared system sans stack (`--font-system-sans`).
+- Monospace family: the shared system monospace stack (`--font-system-mono`).
 - Body line height: `1.5`.
 - Headings use weight `600` and tight `-0.025em` tracking.
 - Default body and control text should generally be `text-sm` on application screens.
@@ -94,11 +112,13 @@ Rules:
 
 ## Components
 
+Use the shared primitives in `components/ui` before creating or styling a native control. Shared primitives own shape, semantic color, disabled behavior, focus treatment, validation treatment, touch feedback, and icon interaction. Feature code may add layout classes such as width, margin, or grid placement, but must not restate the primitive’s background, border, radius, padding, shadow, or focus ring. Remove local variations when the shared primitive already expresses the required behavior.
+
 ### Buttons
 
 - Use the shared `Button` component for new actions.
 - Primary page actions use `default`. It includes the standard primary color and restrained elevation.
-- Secondary actions use `secondary` or `outline`. The `outline` variant includes the standard subtle elevation.
+- Secondary actions use `secondary` or `outline`. The `outline` variant includes the standard subtle elevation. Secondary hover states use semantic `muted`, never hard-coded Slate or another raw palette.
 - Low-emphasis actions use `ghost`; use `plain` only when the surrounding surface already supplies the hover treatment.
 - Destructive actions must use `destructive` and require confirmation when data loss is possible.
 - Reserve `success` for confirmed positive/export actions, `inverse` for controls on dark or primary surfaces, `link` for text-like actions, and the navigation variants for dashboard navigation only.
@@ -121,9 +141,10 @@ Rules:
 ### Inputs and selection controls
 
 - Use a muted or background surface, a one-pixel semantic border, and `inset-shadow-sm`. Inputs must read as recessed controls and must not use outer elevation shadows.
+- Use the shared `Input`, `Combobox`, and `Checkbox` controls. Form sections and administrative editors must not maintain competing input recipes.
 - Hover may strengthen the border only on devices that support hover.
-- Focus uses the semantic ring and must remain visibly distinct from hover.
-- Error states combine destructive color, an error message, and appropriate ARIA attributes.
+- Focus uses the full-opacity semantic ring and must remain visibly distinct from hover. Do not dilute the standard focus ring with low-opacity modifiers.
+- Error states combine destructive color, an error message, and appropriate ARIA attributes. Destructive focus rings may use a stronger semantic opacity than resting error fills, but must remain visually distinct in both color modes.
 - Labels remain outside the interactive hitbox; controls themselves must retain direct pointer input.
 - Do not remove outlines without replacing them with an equally visible focus ring.
 
@@ -149,6 +170,8 @@ Rules:
 - Mobile navigation is fixed to the bottom and accounts for the safe-area inset.
 - Active destinations use both color and a visible surface treatment.
 - Navigation separates the two ramps: inactive text uses undertone 500 and active text uses accent 700 in light mode (for example, Slate 500 and Sky 700). Dark mode uses undertone 400 and accent 300 for equivalent contrast. Active destinations also retain their accent surface treatment.
+- Navigation hover uses the accent ramp for both its tinted surface (`primary/10`) and active-colored text. It must not fall back to a neutral or undertone-only `muted` hover, because the selected theme should remain recognizable before activation.
+- Apply the same themed hover language to the desktop sidebar, secondary sidebar controls, mobile navigation items, the mobile More control, and links inside the More menu.
 - Navigation icons use the same full-hitbox animation behavior as buttons on desktop, keyboard, and touch input.
 - Sidebar navigation uses inset focus rings so scroll and clipping boundaries never crop the indicator.
 - Navigation press feedback must work without hover and must not scale the item or icon.
@@ -209,9 +232,11 @@ Design mobile-first, then add complexity at larger breakpoints.
 Before merging a UI change, confirm that:
 
 - Semantic theme tokens are used instead of raw colors.
+- Accent and undertone ramps match the documented Tailwind ranges and are not blended together.
 - Elevation matches the surface’s hierarchy.
 - Shadows are broad and subtle, not border-like.
 - Hover, keyboard focus, active press, disabled, loading, and error states are covered.
+- Navigation hover and active treatments visibly reflect every selectable color theme.
 - Essential feedback works on touch devices.
 - Icons are imported through the shared mapper, and intentional icon animation uses the complete control hitbox.
 - No generic icon or control scale transforms are present.
@@ -219,4 +244,5 @@ Before merging a UI change, confirm that:
 - Light and dark themes are both legible.
 - Reduced-motion behavior remains usable.
 - The shared component primitives are used where available.
+- Feature components do not duplicate shared input, button, combobox, or checkbox visual recipes.
 - Formatting, linting, TypeScript, and the production build pass.

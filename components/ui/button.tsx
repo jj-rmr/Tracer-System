@@ -8,7 +8,7 @@ import { IconInteractionProvider } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "group/button inline-flex max-w-full shrink-0 items-center justify-center rounded-xl border border-transparent bg-clip-padding text-center text-sm font-semibold! whitespace-normal transition-[color,background-color,border-color,box-shadow,opacity] duration-200 outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 [&>svg]:pointer-events-none [&>svg]:shrink-0 [&>svg:not([class*='size-'])]:size-4",
+  "group/button inline-flex max-w-full shrink-0 items-center justify-center rounded-xl border border-transparent bg-clip-padding text-center text-sm font-semibold! whitespace-normal transition-[color,background-color,border-color,box-shadow,opacity] duration-200 outline-none select-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/40 [&>svg]:pointer-events-none [&>svg]:shrink-0 [&>svg:not([class*='size-'])]:size-4",
   {
     variants: {
       variant: {
@@ -17,7 +17,7 @@ const buttonVariants = cva(
         outline:
           "border-border bg-background shadow-sm hover:bg-muted hover:text-foreground hover:shadow-md aria-expanded:bg-muted aria-expanded:text-foreground",
         secondary:
-          "bg-secondary text-secondary-foreground hover:bg-slate-300 dark:hover:bg-slate-700 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
+          "bg-secondary text-secondary-foreground hover:bg-muted aria-expanded:bg-muted aria-expanded:text-secondary-foreground",
         success:
           "bg-success text-success-foreground shadow-sm hover:bg-success/85 focus-visible:border-success focus-visible:ring-success/30",
         ghost:
@@ -29,7 +29,7 @@ const buttonVariants = cva(
         inverse:
           "bg-transparent text-primary-foreground hover:bg-primary-foreground/10 focus-visible:border-primary-foreground/50 focus-visible:ring-primary-foreground/40",
         navigation:
-          "text-nav-inactive hover:bg-muted hover:text-nav-active focus-visible:ring-inset",
+          "text-nav-inactive hover:bg-primary/10 hover:text-nav-active focus-visible:ring-inset",
         "navigation-active":
           "bg-primary/10 text-nav-active hover:bg-primary/10 hover:text-nav-active focus-visible:ring-inset",
       },

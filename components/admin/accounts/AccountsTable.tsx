@@ -6,7 +6,13 @@ import { TableActionMenu } from "@/components/ui/table-action-menu";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LuEye, LuShieldCheck, LuTrash2 } from "@/components/ui/icons";
-import { Role } from "@/types";
+import {
+  COORDINATOR_SCOPE_TYPES,
+  ROLES,
+  type CoordinatorScopeGrant,
+  type CoordinatorScopeType,
+  type Role,
+} from "@/types";
 import { useToast } from "@/components/ui/Toast";
 import { friendlyRequestMessage } from "@/lib/api/client-errors";
 import {
@@ -27,6 +33,12 @@ import {
 import { TableContentState } from "@/components/ui/table-content-state";
 import { CopyButton } from "@/components/ui/copy-button";
 import { createConfirmationCode } from "@/lib/confirmation-code";
+import {
+  CAMPUSES,
+  getCollegesForCampus,
+  getProgramsForCollege,
+} from "@/lib/programs/catalog";
+import { SelectField } from "@/components/forms/SelectField";
 
 interface Account {
   id: string;
@@ -34,6 +46,7 @@ interface Account {
   email: string;
   pictureUrl: string | null;
   role: Role;
+  coordinatorGrants: CoordinatorScopeGrant[];
   verified: boolean;
   createdAt: string;
   updatedAt: string;
@@ -75,7 +88,13 @@ export default function AccountsTable({
   const [roleChange, setRoleChange] = useState<{
     account: Account;
     role: Role;
+    coordinatorGrants: CoordinatorScopeGrant[];
   } | null>(null);
+  const [newScopeType, setNewScopeType] =
+    useState<CoordinatorScopeType>("campus");
+  const [newScopeCampus, setNewScopeCampus] = useState("");
+  const [newScopeCollege, setNewScopeCollege] = useState("");
+  const [newScopeProgram, setNewScopeProgram] = useState("");
   const [roleConfirmation, setRoleConfirmation] = useState("");
   const [roleConfirmationCode, setRoleConfirmationCode] = useState("");
   const [changingRole, setChangingRole] = useState(false);
@@ -188,7 +207,13 @@ export default function AccountsTable({
     );
 
   const roleConfirmationAction =
-    roleChange?.role === "admin" ? "PROMOTE TO ADMIN" : "DEMOTE TO ALUMNI";
+    roleChange?.role === ROLES.ADMIN
+      ? "PROMOTE TO ADMIN"
+      : roleChange?.role === ROLES.COORDINATOR
+        ? roleChange.account.role === ROLES.COORDINATOR
+          ? "UPDATE COORDINATOR ACCESS"
+          : "PROMOTE TO COORDINATOR"
+        : "DEMOTE TO ALUMNI";
   const requiredRoleConfirmation = `${roleConfirmationAction} ${roleConfirmationCode}`;
   const requiredDeleteConfirmation = `DELETE ${deleteConfirmationCode}`;
 
@@ -201,7 +226,57 @@ export default function AccountsTable({
   function openRoleConfirmation(account: Account, role: Role) {
     setRoleConfirmation("");
     setRoleConfirmationCode(createConfirmationCode());
-    setRoleChange({ account, role });
+    setNewScopeType(COORDINATOR_SCOPE_TYPES.CAMPUS);
+    setNewScopeCampus("");
+    setNewScopeCollege("");
+    setNewScopeProgram("");
+    setRoleChange({
+      account,
+      role,
+      coordinatorGrants:
+        role === ROLES.COORDINATOR
+          ? account.coordinatorGrants.map((grant) => ({ ...grant }))
+          : [],
+    });
+  }
+
+  function addCoordinatorGrant() {
+    if (!roleChange || roleChange.role !== ROLES.COORDINATOR) return;
+    const grant: CoordinatorScopeGrant = {
+      scopeType: newScopeType,
+      campus: newScopeCampus,
+      college: newScopeType === "campus" ? null : newScopeCollege || null,
+      program: newScopeType === "program" ? newScopeProgram || null : null,
+    };
+    if (
+      !grant.campus ||
+      (grant.scopeType !== "campus" && !grant.college) ||
+      (grant.scopeType === "program" && !grant.program)
+    ) {
+      return;
+    }
+    const key = [
+      grant.scopeType,
+      grant.campus,
+      grant.college,
+      grant.program,
+    ].join("\u0000");
+    setRoleChange((current) => {
+      if (!current) return current;
+      const exists = current.coordinatorGrants.some(
+        (item) =>
+          [item.scopeType, item.campus, item.college, item.program].join(
+            "\u0000",
+          ) === key,
+      );
+      return exists
+        ? current
+        : {
+            ...current,
+            coordinatorGrants: [...current.coordinatorGrants, grant],
+          };
+    });
+    setNewScopeProgram("");
   }
 
   const closeRoleChange = () => {
@@ -221,7 +296,9 @@ export default function AccountsTable({
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: roleChange.role === "admin" ? "promote" : "demote",
+          action: "set_access",
+          role: roleChange.role,
+          coordinatorGrants: roleChange.coordinatorGrants,
           confirmation: roleConfirmation,
         }),
       });
@@ -229,7 +306,8 @@ export default function AccountsTable({
       if (!res.ok)
         throw new Error(data.message ?? "Failed to change account role.");
 
-      if (roleFilter && roleFilter !== roleChange.role) {
+      const updatedAccount = data.account as Account;
+      if (roleFilter && roleFilter !== updatedAccount.role) {
         setAccounts((current) =>
           current.filter((account) => account.id !== roleChange.account.id),
         );
@@ -237,9 +315,7 @@ export default function AccountsTable({
       } else {
         setAccounts((current) =>
           current.map((account) =>
-            account.id === roleChange.account.id
-              ? { ...account, role: roleChange.role }
-              : account,
+            account.id === roleChange.account.id ? updatedAccount : account,
           ),
         );
       }
@@ -497,24 +573,95 @@ export default function AccountsTable({
                           onSelect: () => openAccount(account),
                         },
                         ...(account.id !== currentUserId
-                          ? [
-                              {
-                                label:
-                                  account.role === "alumni"
-                                    ? "Promote to Admin"
-                                    : "Demote to Alumni",
-                                icon: (
-                                  <LuShieldCheck aria-hidden="true" size={16} />
-                                ),
-                                onSelect: () =>
-                                  openRoleConfirmation(
-                                    account,
-                                    account.role === "alumni"
-                                      ? "admin"
-                                      : "alumni",
+                          ? account.role === ROLES.ALUMNI
+                            ? [
+                                {
+                                  label: "Promote to Admin",
+                                  icon: (
+                                    <LuShieldCheck
+                                      aria-hidden="true"
+                                      size={16}
+                                    />
                                   ),
-                              },
-                            ]
+                                  onSelect: () =>
+                                    openRoleConfirmation(account, ROLES.ADMIN),
+                                },
+                                {
+                                  label: "Promote to Coordinator",
+                                  icon: (
+                                    <LuShieldCheck
+                                      aria-hidden="true"
+                                      size={16}
+                                    />
+                                  ),
+                                  onSelect: () =>
+                                    openRoleConfirmation(
+                                      account,
+                                      ROLES.COORDINATOR,
+                                    ),
+                                },
+                              ]
+                            : account.role === ROLES.COORDINATOR
+                              ? [
+                                  {
+                                    label: "Manage Coordinator Access",
+                                    icon: (
+                                      <LuShieldCheck
+                                        aria-hidden="true"
+                                        size={16}
+                                      />
+                                    ),
+                                    onSelect: () =>
+                                      openRoleConfirmation(
+                                        account,
+                                        ROLES.COORDINATOR,
+                                      ),
+                                  },
+                                  {
+                                    label: "Promote to Admin",
+                                    icon: (
+                                      <LuShieldCheck
+                                        aria-hidden="true"
+                                        size={16}
+                                      />
+                                    ),
+                                    onSelect: () =>
+                                      openRoleConfirmation(
+                                        account,
+                                        ROLES.ADMIN,
+                                      ),
+                                  },
+                                  {
+                                    label: "Demote to Alumni",
+                                    icon: (
+                                      <LuShieldCheck
+                                        aria-hidden="true"
+                                        size={16}
+                                      />
+                                    ),
+                                    onSelect: () =>
+                                      openRoleConfirmation(
+                                        account,
+                                        ROLES.ALUMNI,
+                                      ),
+                                  },
+                                ]
+                              : [
+                                  {
+                                    label: "Demote to Alumni",
+                                    icon: (
+                                      <LuShieldCheck
+                                        aria-hidden="true"
+                                        size={16}
+                                      />
+                                    ),
+                                    onSelect: () =>
+                                      openRoleConfirmation(
+                                        account,
+                                        ROLES.ALUMNI,
+                                      ),
+                                  },
+                                ]
                           : []),
                       ]}
                     />
@@ -591,6 +738,22 @@ export default function AccountsTable({
                   {accountToView.role}
                 </dd>
               </div>
+              {accountToView.role === ROLES.COORDINATOR && (
+                <div className="sm:col-span-2">
+                  <dt className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Coordinator assignments
+                  </dt>
+                  <dd className="mt-2 space-y-1 text-sm text-foreground">
+                    {accountToView.coordinatorGrants.map((grant, index) => (
+                      <div key={grant.id ?? index}>
+                        {grant.campus}
+                        {grant.college ? ` / ${grant.college}` : ""}
+                        {grant.program ? ` / ${grant.program}` : ""}
+                      </div>
+                    ))}
+                  </dd>
+                </div>
+              )}
               <div>
                 <dt className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Account ID
@@ -633,22 +796,54 @@ export default function AccountsTable({
                     Delete Account
                   </Button>
                 )}
+                {accountToView.role === ROLES.COORDINATOR && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      const account = accountToView;
+                      setAccountToView(null);
+                      openRoleConfirmation(account, ROLES.COORDINATOR);
+                    }}
+                  >
+                    <LuShieldCheck aria-hidden="true" />
+                    Manage Access
+                  </Button>
+                )}
+                {accountToView.role === ROLES.ALUMNI && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      const account = accountToView;
+                      setAccountToView(null);
+                      openRoleConfirmation(account, ROLES.COORDINATOR);
+                    }}
+                  >
+                    <LuShieldCheck aria-hidden="true" />
+                    Promote to Coordinator
+                  </Button>
+                )}
                 <Button
                   type="button"
                   variant={
-                    accountToView.role === "alumni" ? "success" : "destructive"
+                    accountToView.role === ROLES.ALUMNI
+                      ? "success"
+                      : "destructive"
                   }
                   onClick={() => {
                     const account = accountToView;
                     setAccountToView(null);
                     openRoleConfirmation(
                       account,
-                      account.role === "alumni" ? "admin" : "alumni",
+                      account.role === ROLES.ALUMNI
+                        ? ROLES.ADMIN
+                        : ROLES.ALUMNI,
                     );
                   }}
                 >
                   <LuShieldCheck aria-hidden="true" />
-                  {accountToView.role === "alumni"
+                  {accountToView.role === ROLES.ALUMNI
                     ? "Promote to Admin"
                     : "Demote to Alumni"}
                 </Button>
@@ -745,9 +940,13 @@ export default function AccountsTable({
         open={roleChange !== null}
         onClose={closeRoleChange}
         title={
-          roleChange?.role === "admin"
+          roleChange?.role === ROLES.ADMIN
             ? "Promote account to administrator?"
-            : "Demote administrator to alumni?"
+            : roleChange?.role === ROLES.COORDINATOR
+              ? roleChange.account.role === ROLES.COORDINATOR
+                ? "Manage coordinator access"
+                : "Promote account to coordinator?"
+              : "Demote account to alumni?"
         }
         width="xl"
         fitContent
@@ -757,16 +956,13 @@ export default function AccountsTable({
           <div className="rounded-2xl border border-warning/30 bg-warning/10 p-4 text-sm leading-6 text-warning">
             <p className="font-semibold">Important data and access warning</p>
             <p className="mt-1">
-              Changing this role permanently deletes every draft owned by this
-              account, including draft alumni responses, draft manual imports,
-              uploaded documents, and their Google Drive folders. Submitted
-              responses and completed manual imports are retained. Draft
-              deletion cannot be undone, and available features change
-              immediately.
+              {roleChange?.account.role === roleChange?.role
+                ? "Saving these assignments changes which organizational records this coordinator can access immediately. Existing submitted records are not deleted."
+                : "Changing this role permanently deletes every draft owned by this account, including draft alumni responses, draft manual imports, uploaded documents, and their Google Drive folders. Submitted responses and completed manual imports are retained."}
             </p>
           </div>
 
-          {roleChange?.role === "admin" ? (
+          {roleChange?.role === ROLES.ADMIN ? (
             <div>
               <p className="text-sm font-semibold text-foreground">
                 This person will receive access to:
@@ -782,6 +978,18 @@ export default function AccountsTable({
                 Submitted alumni responses remain stored, but all drafts are
                 permanently deleted. This account will use the administrator
                 portal after its next authorization check.
+              </p>
+            </div>
+          ) : roleChange?.role === ROLES.COORDINATOR ? (
+            <div>
+              <p className="text-sm font-semibold text-foreground">
+                This person can view and manage responses belonging to the
+                assignments listed below.
+              </p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                Campus, college, and program assignments can be combined. Study
+                lifecycle, account management, and unrestricted Drive access
+                remain administrator-only.
               </p>
             </div>
           ) : (
@@ -847,6 +1055,135 @@ export default function AccountsTable({
             </div>
           )}
 
+          {roleChange?.role === ROLES.COORDINATOR && (
+            <section className="space-y-4 rounded-2xl border border-border bg-background p-5">
+              <div>
+                <h3 className="font-semibold text-foreground">
+                  Coordinator assignments
+                </h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Add any combination. Overlapping assignments are safely
+                  deduplicated when access is calculated.
+                </p>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <SelectField
+                  id="coordinator-scope-type"
+                  label="Assignment type"
+                  value={newScopeType}
+                  onChange={(value) => {
+                    setNewScopeType(value as CoordinatorScopeType);
+                    setNewScopeCollege("");
+                    setNewScopeProgram("");
+                  }}
+                  options={[
+                    { value: "campus", label: "Entire campus" },
+                    { value: "college", label: "Entire college" },
+                    { value: "program", label: "Specific program" },
+                  ]}
+                />
+                <SelectField
+                  id="coordinator-scope-campus"
+                  label="Campus"
+                  value={newScopeCampus}
+                  onChange={(value) => {
+                    setNewScopeCampus(value);
+                    setNewScopeCollege("");
+                    setNewScopeProgram("");
+                  }}
+                  options={CAMPUSES}
+                  placeholder="Select campus"
+                />
+                {newScopeType !== COORDINATOR_SCOPE_TYPES.CAMPUS && (
+                  <SelectField
+                    id="coordinator-scope-college"
+                    label="College"
+                    value={newScopeCollege}
+                    onChange={(value) => {
+                      setNewScopeCollege(value);
+                      setNewScopeProgram("");
+                    }}
+                    options={getCollegesForCampus(newScopeCampus)}
+                    placeholder="Select college"
+                  />
+                )}
+                {newScopeType === COORDINATOR_SCOPE_TYPES.PROGRAM && (
+                  <SelectField
+                    id="coordinator-scope-program"
+                    label="Program"
+                    value={newScopeProgram}
+                    onChange={setNewScopeProgram}
+                    options={getProgramsForCollege(
+                      newScopeCampus,
+                      newScopeCollege,
+                    )}
+                    placeholder="Select program"
+                  />
+                )}
+              </div>
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={addCoordinatorGrant}
+                disabled={
+                  !newScopeCampus ||
+                  (newScopeType !== COORDINATOR_SCOPE_TYPES.CAMPUS &&
+                    !newScopeCollege) ||
+                  (newScopeType === COORDINATOR_SCOPE_TYPES.PROGRAM &&
+                    !newScopeProgram)
+                }
+              >
+                Add Assignment
+              </Button>
+
+              <div className="space-y-2">
+                {roleChange.coordinatorGrants.length === 0 ? (
+                  <p className="rounded-xl bg-muted p-3 text-sm text-muted-foreground">
+                    Add at least one assignment.
+                  </p>
+                ) : (
+                  roleChange.coordinatorGrants.map((grant, index) => (
+                    <div
+                      key={`${grant.scopeType}-${grant.campus}-${grant.college}-${grant.program}`}
+                      className="flex items-center gap-3 rounded-xl border border-border bg-muted/50 p-3"
+                    >
+                      <p className="min-w-0 flex-1 text-sm text-foreground">
+                        <span className="font-semibold capitalize">
+                          {grant.scopeType}:
+                        </span>{" "}
+                        {grant.campus}
+                        {grant.college ? ` / ${grant.college}` : ""}
+                        {grant.program ? ` / ${grant.program}` : ""}
+                      </p>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          setRoleChange((current) =>
+                            current
+                              ? {
+                                  ...current,
+                                  coordinatorGrants:
+                                    current.coordinatorGrants.filter(
+                                      (_, grantIndex) => grantIndex !== index,
+                                    ),
+                                }
+                              : current,
+                          )
+                        }
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </section>
+          )}
+
           <label className="block">
             <span className="text-sm font-medium text-foreground">
               Type the confirmation phrase below to continue
@@ -877,15 +1214,22 @@ export default function AccountsTable({
               type="button"
               variant="destructive"
               disabled={
-                changingRole || roleConfirmation !== requiredRoleConfirmation
+                changingRole ||
+                roleConfirmation !== requiredRoleConfirmation ||
+                (roleChange?.role === ROLES.COORDINATOR &&
+                  roleChange.coordinatorGrants.length === 0)
               }
               onClick={() => void confirmRoleChange()}
             >
               {changingRole
                 ? "Changing role..."
-                : roleChange?.role === "admin"
+                : roleChange?.role === ROLES.ADMIN
                   ? "Promote to Admin"
-                  : "Demote to Alumni"}
+                  : roleChange?.role === ROLES.COORDINATOR
+                    ? roleChange.account.role === ROLES.COORDINATOR
+                      ? "Save Coordinator Access"
+                      : "Promote to Coordinator"
+                    : "Demote to Alumni"}
             </Button>
           </div>
         </div>

@@ -4,13 +4,21 @@ import { isAdmin } from "@/lib/auth/roles";
 import {
   deleteAccount,
   getAccount,
-  updateAccountRole,
+  replaceAccountAccess,
   updateAccountName,
   setAccountEnabled,
 } from "@/lib/repositories/accounts.repository";
 import { deleteAccountDraftResponses } from "@/lib/forms/account-role-change";
 import { recordSecurityAuditEventSafely } from "@/lib/repositories/audit.repository";
 import { isValidConfirmationPhrase } from "@/lib/confirmation-code";
+import { isValidOrganizationGrant } from "@/lib/programs/catalog";
+import {
+  COORDINATOR_SCOPE_TYPES,
+  ROLES,
+  type CoordinatorScopeGrant,
+  type CoordinatorScopeType,
+  type Role,
+} from "@/types";
 
 async function authorize(): Promise<AuthUser | NextResponse> {
   const { user } = await requireUser();
@@ -78,12 +86,42 @@ export async function PATCH(
       action?: unknown;
       confirmation?: unknown;
       name?: unknown;
+      role?: unknown;
+      coordinatorGrants?: unknown;
     };
 
-    if (body.action === "promote" || body.action === "demote") {
-      const targetRole = body.action === "promote" ? "admin" : "alumni";
+    if (
+      body.action === "set_access" ||
+      body.action === "promote" ||
+      body.action === "demote"
+    ) {
+      const requestedRole =
+        body.action === "promote"
+          ? ROLES.ADMIN
+          : body.action === "demote"
+            ? ROLES.ALUMNI
+            : body.role;
+      const validRoles = new Set<Role>([
+        ROLES.ADMIN,
+        ROLES.COORDINATOR,
+        ROLES.ALUMNI,
+      ]);
+      if (!validRoles.has(requestedRole as Role)) {
+        return NextResponse.json(
+          { success: false, message: "Select a valid account role." },
+          { status: 400 },
+        );
+      }
+      const targetRole = requestedRole as Role;
+      const account = await getAccount(id);
       const expectedConfirmation =
-        targetRole === "admin" ? "PROMOTE TO ADMIN" : "DEMOTE TO ALUMNI";
+        account.role === targetRole && targetRole === ROLES.COORDINATOR
+          ? "UPDATE COORDINATOR ACCESS"
+          : targetRole === ROLES.ADMIN
+            ? "PROMOTE TO ADMIN"
+            : targetRole === ROLES.COORDINATOR
+              ? "PROMOTE TO COORDINATOR"
+              : "DEMOTE TO ALUMNI";
 
       if (!isValidConfirmationPhrase(body.confirmation, expectedConfirmation)) {
         return NextResponse.json(
@@ -95,36 +133,126 @@ export async function PATCH(
         );
       }
 
-      if (auth.id === id && targetRole !== "admin") {
+      if (auth.id === id && targetRole !== ROLES.ADMIN) {
         return NextResponse.json(
           { success: false, message: "You cannot demote your own account." },
           { status: 400 },
         );
       }
 
-      const account = await getAccount(id);
-      if (account.role === targetRole) {
+      if (account.role === targetRole && targetRole !== ROLES.COORDINATOR) {
         return NextResponse.json(
           { success: false, message: `This account is already ${targetRole}.` },
           { status: 409 },
         );
       }
 
-      await updateAccountRole(id, targetRole);
-      const deletedDrafts = await deleteAccountDraftResponses(id);
+      const rawGrants =
+        targetRole === ROLES.COORDINATOR ? body.coordinatorGrants : [];
+      if (!Array.isArray(rawGrants)) {
+        return NextResponse.json(
+          { success: false, message: "Coordinator assignments are required." },
+          { status: 400 },
+        );
+      }
+      if (rawGrants.length > 100) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Coordinator assignments cannot exceed 100 entries.",
+          },
+          { status: 400 },
+        );
+      }
+
+      const scopeTypes = new Set<CoordinatorScopeType>(
+        Object.values(COORDINATOR_SCOPE_TYPES),
+      );
+      const coordinatorGrants: CoordinatorScopeGrant[] = [];
+      for (const value of rawGrants) {
+        if (!value || typeof value !== "object" || Array.isArray(value)) {
+          return NextResponse.json(
+            { success: false, message: "A coordinator assignment is invalid." },
+            { status: 400 },
+          );
+        }
+        const grant = value as Record<string, unknown>;
+        const normalized: CoordinatorScopeGrant = {
+          scopeType: grant.scopeType as CoordinatorScopeType,
+          campus: typeof grant.campus === "string" ? grant.campus.trim() : "",
+          college:
+            typeof grant.college === "string" && grant.college.trim()
+              ? grant.college.trim()
+              : null,
+          program:
+            typeof grant.program === "string" && grant.program.trim()
+              ? grant.program.trim()
+              : null,
+        };
+        if (
+          !scopeTypes.has(normalized.scopeType) ||
+          !isValidOrganizationGrant(normalized)
+        ) {
+          return NextResponse.json(
+            { success: false, message: "A coordinator assignment is invalid." },
+            { status: 400 },
+          );
+        }
+        coordinatorGrants.push(normalized);
+      }
+
+      const uniqueGrants = [
+        ...new Map(
+          coordinatorGrants.map((grant) => [
+            [grant.scopeType, grant.campus, grant.college, grant.program].join(
+              "\u0000",
+            ),
+            grant,
+          ]),
+        ).values(),
+      ];
+      if (targetRole === ROLES.COORDINATOR && uniqueGrants.length === 0) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Add at least one coordinator assignment.",
+          },
+          { status: 400 },
+        );
+      }
+
+      const roleChanged = account.role !== targetRole;
+      const updatedAccount = await replaceAccountAccess({
+        id,
+        role: targetRole,
+        coordinatorGrants: uniqueGrants,
+        actorUserId: auth.id,
+      });
+      const deletedDrafts = roleChanged
+        ? await deleteAccountDraftResponses(id)
+        : 0;
       await recordSecurityAuditEventSafely({
         actorUserId: auth.id,
         action: "account.role_changed",
         targetType: "account",
         targetId: id,
-        metadata: { role: targetRole, deletedDrafts },
+        metadata: {
+          previousRole: account.role,
+          role: targetRole,
+          previousCoordinatorGrants: account.coordinatorGrants,
+          coordinatorGrants: uniqueGrants,
+          deletedDrafts,
+        },
       });
       return NextResponse.json({
         success: true,
+        account: updatedAccount,
         message:
-          targetRole === "admin"
-            ? `Account promoted to administrator. ${deletedDrafts} draft response${deletedDrafts === 1 ? " was" : "s were"} permanently deleted.`
-            : `Administrator changed to an alumni account. ${deletedDrafts} draft response${deletedDrafts === 1 ? " was" : "s were"} permanently deleted.`,
+          targetRole === ROLES.ADMIN
+            ? "Account promoted to administrator."
+            : targetRole === ROLES.COORDINATOR
+              ? `${roleChanged ? "Account promoted" : "Access updated"} with ${uniqueGrants.length} coordinator assignment${uniqueGrants.length === 1 ? "" : "s"}.`
+              : "Account changed to an alumni account.",
       });
     }
 
@@ -188,11 +316,11 @@ export async function DELETE(
 
     const account = await getAccount(id);
 
-    if (account.role === "admin") {
+    if (account.role !== ROLES.ALUMNI) {
       return NextResponse.json(
         {
           success: false,
-          message: "Administrator accounts must be demoted before deletion.",
+          message: "Privileged accounts must be demoted before deletion.",
         },
         { status: 409 },
       );

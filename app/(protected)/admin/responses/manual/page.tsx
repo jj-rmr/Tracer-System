@@ -1,9 +1,9 @@
 import ManualResponseEntry from "@/components/admin/responses/ManualResponseEntry";
-import { requireAdmin } from "@/lib/auth";
+import { getAllowedProgramValues, requireStaff } from "@/lib/auth";
 import { listStudyPeriodsForFormVersion } from "@/lib/repositories/forms.repository";
 
 export default async function ManualResponsePage() {
-  await requireAdmin();
+  const staff = await requireStaff();
 
   const studies = (
     await listStudyPeriodsForFormVersion("graduate-tracer", 1)
@@ -20,7 +20,10 @@ export default async function ManualResponsePage() {
         </p>
       </header>
 
-      <ManualResponseEntry studies={studies} />
+      <ManualResponseEntry
+        studies={studies}
+        allowedProgramValues={getAllowedProgramValues(staff)}
+      />
     </div>
   );
 }

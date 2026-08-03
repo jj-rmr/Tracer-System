@@ -6,7 +6,7 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  await requireUserRole([ROLES.ADMIN]);
+  await requireUserRole([ROLES.ADMIN, ROLES.COORDINATOR]);
 
   return children;
 }

@@ -10,15 +10,13 @@ import ConfirmationDialog from "@/components/ui/ConfirmationDialog";
 import FormModal from "@/components/ui/FormModal";
 import LoadingState from "@/components/ui/LoadingState";
 import { useToast } from "@/components/ui/Toast";
-import {
-  friendlyRequestMessage,
-  readApiJson,
-} from "@/lib/api/client-errors";
+import { friendlyRequestMessage, readApiJson } from "@/lib/api/client-errors";
 import { PublishedFormVersion, StudyPeriod, StudyPeriodSummary } from "@/types";
 
 interface StudiesPayload {
   studies: StudyPeriodSummary[];
   formVersions: PublishedFormVersion[];
+  allowedProgramValues: string[] | null;
 }
 
 interface ManualResponseModalProps {
@@ -38,6 +36,9 @@ export default function ManualResponseModal({
   );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [allowedProgramValues, setAllowedProgramValues] = useState<
+    string[] | null
+  >(null);
   const [savingDraft, setSavingDraft] = useState(false);
   const [formDirty, setFormDirty] = useState(false);
   const [confirmingClose, setConfirmingClose] = useState(false);
@@ -85,6 +86,7 @@ export default function ManualResponseModal({
             eligibleVersionIds.has(study.formVersionId),
           ),
         );
+        setAllowedProgramValues(data.allowedProgramValues);
         setInitialDraft(
           (draftResult.data as ManualResponseDraft | null) ?? null,
         );
@@ -168,6 +170,7 @@ export default function ManualResponseModal({
             onDraftSaved={onDraftSaved}
             onDirtyChange={setFormDirty}
             onRequestClose={requestClose}
+            allowedProgramValues={allowedProgramValues}
           />
         )}
       </FormModal>

@@ -96,8 +96,13 @@ function escapeLikePattern(value: string) {
 function applyFilters<T extends ReturnType<typeof createSummaryQuery>>(
   query: T,
   filters: AdminResponseFilters,
+  allowedProgramValues: string[] | null = null,
 ) {
   let filteredQuery = query;
+
+  if (allowedProgramValues) {
+    filteredQuery = filteredQuery.in("program", allowedProgramValues) as T;
+  }
 
   if (filters.search) {
     filteredQuery = filteredQuery.ilike(
@@ -149,6 +154,7 @@ export async function listAdminResponseSummaries({
   limit,
   sort = "createdAt",
   direction = "desc",
+  allowedProgramValues = null,
 }: {
   filters: AdminResponseFilters;
   page: number;
@@ -161,7 +167,11 @@ export async function listAdminResponseSummaries({
     | "createdAt"
     | "driveStatus";
   direction?: "asc" | "desc";
+  allowedProgramValues?: string[] | null;
 }) {
+  if (allowedProgramValues?.length === 0) {
+    return { responses: [], total: 0 };
+  }
   const from = (page - 1) * limit;
   const sortColumns = {
     name: "sort_name",
@@ -174,6 +184,7 @@ export async function listAdminResponseSummaries({
   const { data, error, count } = await applyFilters(
     createSummaryQuery(),
     filters,
+    allowedProgramValues,
   )
     .order(sortColumns[sort], { ascending: direction === "asc" })
     .order("id", { ascending: false })
@@ -185,4 +196,32 @@ export async function listAdminResponseSummaries({
     responses: (data as unknown as AdminResponseSummaryRow[]).map(mapSummary),
     total: count ?? 0,
   };
+}
+
+/**
+ * Loads the complete, access-scoped response set used for dashboard rollups.
+ * Pagination avoids silently truncating analytics at Supabase's row limit.
+ */
+export async function listAdminDashboardResponses(
+  allowedProgramValues: string[] | null = null,
+) {
+  const pageSize = 1000;
+  const responses: AdminResponseSummary[] = [];
+  let page = 1;
+  let total = 0;
+
+  do {
+    const result = await listAdminResponseSummaries({
+      filters: {},
+      page,
+      limit: pageSize,
+      allowedProgramValues,
+    });
+
+    responses.push(...result.responses);
+    total = result.total;
+    page += 1;
+  } while (responses.length < total);
+
+  return responses;
 }

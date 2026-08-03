@@ -48,8 +48,10 @@
   --card-foreground: var(--undertone-950);
   --popover: var(--color-white);
   --popover-foreground: var(--undertone-950);
-  --primary: var(--palette-600);
-  --primary-hover: var(--palette-700);
+  /* The 700/800 steps keep white button labels above WCAG AA across every
+     selectable accent palette. Lighter steps remain available for tint fills. */
+  --primary: var(--palette-700);
+  --primary-hover: var(--palette-800);
   --primary-foreground: var(--color-white);
   --secondary: var(--undertone-200);
   --secondary-foreground: var(--undertone-950);
@@ -70,7 +72,7 @@
   );
   --border: var(--control-border-subtle);
   --input: var(--control-border-subtle);
-  --ring: var(--palette-500);
+  --ring: var(--palette-700);
   --chart-1: var(--color-slate-300);
   --chart-2: var(--color-slate-500);
   --chart-3: var(--color-slate-600);
@@ -79,12 +81,12 @@
   --radius: 0.625rem;
   --sidebar: var(--color-white);
   --sidebar-foreground: var(--undertone-950);
-  --sidebar-primary: var(--palette-600);
+  --sidebar-primary: var(--palette-700);
   --sidebar-primary-foreground: var(--color-white);
   --sidebar-accent: var(--undertone-200);
   --sidebar-accent-foreground: var(--undertone-950);
   --sidebar-border: var(--border);
-  --sidebar-ring: var(--palette-500);
+  --sidebar-ring: var(--palette-700);
   --elevation-color: color-mix(in oklab, var(--undertone-950) 16%, transparent);
   scrollbar-color: var(--color-border) transparent;
 }
@@ -373,44 +375,38 @@ label
   --palette-700: var(--color-emerald-700);
   --palette-800: var(--color-emerald-800);
   --palette-950: var(--color-emerald-950);
+  --undertone-50: var(--color-olive-50);
+  --undertone-100: var(--color-olive-100);
+  --undertone-200: var(--color-olive-200);
+  --undertone-300: var(--color-olive-300);
+  --undertone-400: var(--color-olive-400);
+  --undertone-500: var(--color-olive-500);
+  --undertone-600: var(--color-olive-600);
+  --undertone-700: var(--color-olive-700);
+  --undertone-800: var(--color-olive-800);
+  --undertone-900: var(--color-olive-900);
+  --undertone-950: var(--color-olive-950);
 }
 
 :root[data-color-theme="purple"] {
-  --palette-300: color-mix(
-    in oklab,
-    var(--color-violet-200) 55%,
-    var(--color-slate-300)
-  );
-  --palette-400: color-mix(
-    in oklab,
-    var(--color-violet-300) 55%,
-    var(--color-slate-400)
-  );
-  --palette-500: color-mix(
-    in oklab,
-    var(--color-violet-400) 55%,
-    var(--color-slate-500)
-  );
-  --palette-600: color-mix(
-    in oklab,
-    var(--color-violet-500) 55%,
-    var(--color-slate-600)
-  );
-  --palette-700: color-mix(
-    in oklab,
-    var(--color-violet-600) 55%,
-    var(--color-slate-700)
-  );
-  --palette-800: color-mix(
-    in oklab,
-    var(--color-violet-700) 55%,
-    var(--color-slate-800)
-  );
-  --palette-950: color-mix(
-    in oklab,
-    var(--color-violet-950) 70%,
-    var(--color-slate-950)
-  );
+  --palette-300: var(--color-fuchsia-300);
+  --palette-400: var(--color-fuchsia-400);
+  --palette-500: var(--color-fuchsia-500);
+  --palette-600: var(--color-fuchsia-600);
+  --palette-700: var(--color-fuchsia-700);
+  --palette-800: var(--color-fuchsia-800);
+  --palette-950: var(--color-fuchsia-950);
+  --undertone-50: var(--color-mauve-50);
+  --undertone-100: var(--color-mauve-100);
+  --undertone-200: var(--color-mauve-200);
+  --undertone-300: var(--color-mauve-300);
+  --undertone-400: var(--color-mauve-400);
+  --undertone-500: var(--color-mauve-500);
+  --undertone-600: var(--color-mauve-600);
+  --undertone-700: var(--color-mauve-700);
+  --undertone-800: var(--color-mauve-800);
+  --undertone-900: var(--color-mauve-900);
+  --undertone-950: var(--color-mauve-950);
 }
 
 :root[data-color-theme="gray"] {
@@ -538,6 +534,21 @@ label
 
 .reduce-motion :where([data-system-icon], [data-system-icon] *) {
   transform: none !important;
+}
+
+@keyframes dashboard-progress-reveal {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.dashboard-progress-bar {
+  transform-origin: left center;
+  animation: dashboard-progress-reveal 800ms cubic-bezier(0.22, 1, 0.36, 1)
+    800ms both;
 }
 
 @layer base {

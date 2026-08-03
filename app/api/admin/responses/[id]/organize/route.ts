@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { requireAdmin } from "@/lib/auth";
+import { canManageResponse, requireStaff } from "@/lib/auth";
 import { organizeResponseDriveFolder } from "@/lib/google-drive/organize-response";
 import { getFormResponseById } from "@/lib/repositories/form-responses.repository";
 
@@ -9,11 +9,17 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requireAdmin();
+    const staff = await requireStaff();
     const { id } = await params;
     const response = await getFormResponseById(id);
 
     if (!response) {
+      return NextResponse.json(
+        { success: false, message: "Response not found." },
+        { status: 404 },
+      );
+    }
+    if (!canManageResponse(staff, response)) {
       return NextResponse.json(
         { success: false, message: "Response not found." },
         { status: 404 },

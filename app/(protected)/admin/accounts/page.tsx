@@ -39,7 +39,7 @@ export default function AccountsPage() {
             Accounts
           </h1>
           <p className="text-muted-foreground">
-            Manage administrator and alumni accounts.
+            Manage administrator, coordinator, and alumni accounts.
           </p>
         </div>
 
@@ -71,6 +71,7 @@ export default function AccountsPage() {
             options={[
               { value: "", label: "All roles" },
               { value: "admin", label: "Administrators" },
+              { value: "coordinator", label: "Coordinators" },
               { value: "alumni", label: "Alumni" },
             ]}
             placeholder="All roles"

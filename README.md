@@ -51,7 +51,8 @@ npm audit --omit=dev
 ## Security model
 
 - Supabase Auth owns provider sessions. Application roles and stable provider-neutral account IDs are stored in the server-only `auth_accounts` table.
-- Every protected page validates the session server-side. API handlers independently validate the user or admin role; the proxy cookie check is only an optimistic navigation guard.
+- Coordinator access is composed from any number of campus, college, and program grants. Effective access is the deduplicated union of the programs covered by those grants; administrators remain unrestricted.
+- Every protected page validates the session server-side. API handlers independently validate the role and organizational scope; the proxy cookie check is only an optimistic navigation guard.
 - Supabase is accessed with the server-only service credential. Browser database roles have no application-table grants and RLS remains enabled.
 - Alumni response and document access is checked against the authenticated canonical application user ID.
 - Uploads are limited to 10 MB, allowed extensions/MIME types, and recognized file signatures.

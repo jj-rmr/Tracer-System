@@ -433,6 +433,17 @@ export async function getFormResponseDocumentByDriveFileId(fileId: string) {
   return data ? mapFormResponseDocument(data) : null;
 }
 
+export async function getFormResponseForDriveFile(fileId: string) {
+  const { data, error } = await supabase
+    .from("form_response_documents")
+    .select("response_id")
+    .eq("google_drive_file_id", fileId)
+    .maybeSingle<{ response_id: string }>();
+
+  if (error) throw error;
+  return data ? getFormResponseById(data.response_id) : null;
+}
+
 export async function listStagedFormResponseDocumentsOlderThan(
   olderThan: string,
 ) {
@@ -524,17 +535,27 @@ export async function createManualFormResponse({
     drive_organization_status: "pending" as const,
     drive_organization_error: null,
   };
-  const existing = await getManualFormResponseByImportToken(importToken);
+  const existing = await getManualFormResponseByImportToken({
+    importToken,
+    enteredByUserId,
+    studyPeriodId,
+  });
 
   if (existing) {
     const { data, error } = await supabase
       .from("form_responses")
       .update(values)
       .eq("id", existing.id)
+      .eq("source", "admin_import")
+      .eq("entered_by_user_id", enteredByUserId)
+      .eq("study_period_id", studyPeriodId)
+      .eq("import_status", "processing")
+      .eq("deletion_status", "active")
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
+    if (!data) throw new ManualImportConflictError();
     return {
       response: mapFormResponse(data as FormResponseRow),
       importToken,
@@ -551,11 +572,17 @@ export async function createManualFormResponse({
       .from("form_responses")
       .update({ ...values, import_token: resumableDraft.importToken })
       .eq("id", resumableDraft.response.id)
+      .eq("source", "admin_import")
+      .eq("entered_by_user_id", enteredByUserId)
+      .eq("study_period_id", studyPeriodId)
+      .eq("status", "draft")
+      .eq("import_status", "processing")
       .eq("deletion_status", "active")
       .select()
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
+    if (!data) throw new ManualImportConflictError();
     return {
       response: mapFormResponse(data as FormResponseRow),
       importToken: resumableDraft.importToken,
@@ -569,8 +596,11 @@ export async function createManualFormResponse({
     .single();
 
   if (error?.code === "23505") {
-    const concurrentResponse =
-      await getManualFormResponseByImportToken(importToken);
+    const concurrentResponse = await getManualFormResponseByImportToken({
+      importToken,
+      enteredByUserId,
+      studyPeriodId,
+    });
 
     if (concurrentResponse) {
       return { response: concurrentResponse, importToken };
@@ -586,16 +616,24 @@ export async function createManualFormResponse({
         .from("form_responses")
         .update({ ...values, import_token: existingDraft.importToken })
         .eq("id", existingDraft.response.id)
+        .eq("source", "admin_import")
+        .eq("entered_by_user_id", enteredByUserId)
+        .eq("study_period_id", studyPeriodId)
+        .eq("status", "draft")
+        .eq("import_status", "processing")
         .eq("deletion_status", "active")
         .select()
-        .single();
+        .maybeSingle();
 
       if (updateError) throw updateError;
+      if (!updatedDraft) throw new ManualImportConflictError();
       return {
         response: mapFormResponse(updatedDraft as FormResponseRow),
         importToken: existingDraft.importToken,
       };
     }
+
+    throw new ManualImportConflictError();
   }
 
   if (error) throw error;
@@ -705,16 +743,35 @@ export async function getLatestOpenManualDraftForAdmin(
   };
 }
 
-async function getManualFormResponseByImportToken(importToken: string) {
+async function getManualFormResponseByImportToken({
+  importToken,
+  enteredByUserId,
+  studyPeriodId,
+}: {
+  importToken: string;
+  enteredByUserId: string;
+  studyPeriodId: string;
+}) {
   const { data, error } = await supabase
     .from("form_responses")
     .select("*")
     .eq("source", "admin_import")
     .eq("import_token", importToken)
+    .eq("entered_by_user_id", enteredByUserId)
+    .eq("study_period_id", studyPeriodId)
+    .eq("import_status", "processing")
+    .eq("deletion_status", "active")
     .maybeSingle();
 
   if (error) throw error;
   return data ? mapFormResponse(data as FormResponseRow) : null;
+}
+
+export class ManualImportConflictError extends Error {
+  constructor() {
+    super("The manual import session cannot be resumed.");
+    this.name = "ManualImportConflictError";
+  }
 }
 
 export async function setManualImportStatus(

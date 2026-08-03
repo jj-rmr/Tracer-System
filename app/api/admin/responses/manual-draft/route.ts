@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { requireAdmin } from "@/lib/auth";
+import { canManageResponse, requireStaff } from "@/lib/auth";
 import { formResponseToSurvey } from "@/lib/forms/graduate-tracer-adapter";
 import {
   getLatestOpenManualDraftForAdmin,
@@ -9,10 +9,10 @@ import {
 
 export async function GET() {
   try {
-    const admin = await requireAdmin();
-    const draft = await getLatestOpenManualDraftForAdmin(admin.id);
+    const staff = await requireStaff();
+    const draft = await getLatestOpenManualDraftForAdmin(staff.id);
 
-    if (!draft) {
+    if (!draft || !canManageResponse(staff, draft.response)) {
       return NextResponse.json({ success: true, data: null });
     }
 

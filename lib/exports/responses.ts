@@ -21,6 +21,7 @@ function formatDate(value: string | null) {
 
 export async function getResponseExportRows(
   filters: AdminResponseFilters = {},
+  allowedProgramValues: string[] | null = null,
 ) {
   const responseIds: string[] = [];
   const limit = 100;
@@ -28,7 +29,12 @@ export async function getResponseExportRows(
   let total = 0;
 
   do {
-    const result = await listAdminResponseSummaries({ filters, page, limit });
+    const result = await listAdminResponseSummaries({
+      filters,
+      page,
+      limit,
+      allowedProgramValues,
+    });
     responseIds.push(...result.responses.map((response) => response.id));
     total = result.total;
     page += 1;

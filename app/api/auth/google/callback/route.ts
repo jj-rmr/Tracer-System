@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       code,
       request.nextUrl.searchParams.get("state"),
     );
-    const destination = user.role === ROLES.ADMIN ? "/admin" : "/alumni";
+    const destination = user.role === ROLES.ALUMNI ? "/alumni" : "/admin";
     const response = redirect(request, destination);
     response.cookies.set(AUTH_COOKIE, "1", {
       ...COOKIE_OPTIONS,

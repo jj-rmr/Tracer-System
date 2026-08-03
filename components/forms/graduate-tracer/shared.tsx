@@ -45,8 +45,8 @@ export const fieldStyles = {
     const stateClass = disabled
       ? "cursor-not-allowed border-border bg-secondary text-muted-foreground shadow-none inset-shadow-none placeholder:opacity-0"
       : err
-        ? "border-destructive bg-destructive/10 text-foreground inset-shadow-sm focus:border-destructive focus:bg-card focus:outline-none focus:ring-4 focus:ring-destructive/20"
-        : "border-border bg-muted text-foreground inset-shadow-sm focus:border-ring focus:bg-card focus:outline-none focus:ring-4 focus:ring-ring/30";
+        ? "border-destructive bg-destructive/10 text-foreground inset-shadow-sm focus:border-destructive focus:bg-card focus:outline-none focus:ring-4 focus:ring-destructive/40"
+        : "border-border bg-muted text-foreground inset-shadow-sm focus:border-ring focus:bg-card focus:outline-none focus:ring-3 focus:ring-ring";
 
     return `w-full rounded-2xl border px-4 py-3 text-sm transition duration-200 placeholder:text-muted-foreground ${stateClass}`;
   },

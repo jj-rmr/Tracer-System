@@ -38,3 +38,7 @@ export async function requireAdmin() {
 
   return user;
 }
+
+export async function requireStaff() {
+  return requireUserRole([ROLES.ADMIN, ROLES.COORDINATOR]);
+}

@@ -1,6 +1,10 @@
 import { after, NextRequest, NextResponse } from "next/server";
 
-import { requireAdmin } from "@/lib/auth";
+import {
+  getAllowedProgramValues,
+  requireAdmin,
+  requireStaff,
+} from "@/lib/auth";
 import { initializeStudyDriveHierarchy } from "@/lib/google-drive/initialize-hierarchy";
 import { syncGoogleDriveIndex } from "@/lib/google-drive/sync-index";
 import {
@@ -21,18 +25,27 @@ function isValidAcademicYear(value: string) {
 
 export async function GET() {
   try {
-    await requireAdmin();
+    const staff = await requireStaff();
 
     const [studies, formVersions] = await Promise.all([
       listStudyPeriodSummaries(),
       listPublishedFormVersions(),
     ]);
+    const allowedProgramValues = getAllowedProgramValues(staff);
+    const visibleStudies = allowedProgramValues
+      ? studies.map((study) => ({
+          ...study,
+          responseCount: 0,
+          submittedResponseCount: 0,
+        }))
+      : studies;
 
     return NextResponse.json({
       success: true,
       data: {
-        studies,
+        studies: visibleStudies,
         formVersions,
+        allowedProgramValues,
       },
     });
   } catch (error) {

@@ -1,4 +1,4 @@
-import type { Role } from "@/types";
+import type { CoordinatorScopeGrant, Role } from "@/types";
 
 export interface AuthUser {
   id: string;
@@ -7,6 +7,7 @@ export interface AuthUser {
   email: string;
   pictureUrl: string | null;
   role: Role;
+  coordinatorGrants: CoordinatorScopeGrant[];
   emailVerified: boolean;
   enabled: boolean;
   roleChangeNotice: string | null;

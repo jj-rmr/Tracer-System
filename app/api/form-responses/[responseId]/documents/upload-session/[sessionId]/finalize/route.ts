@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { requireUser } from "@/lib/auth";
-import { isAdmin } from "@/lib/auth/roles";
+import { canManageResponse, requireUser } from "@/lib/auth";
 import { canChangeResponseDocuments } from "@/lib/forms/response-document-lifecycle";
 import { getDriveRootId } from "@/lib/google-drive/browser";
 import { drive } from "@/lib/google-drive/client";
@@ -46,7 +45,7 @@ export async function POST(
     const { user } = await requireUser();
     const { responseId, sessionId } = await params;
     const response = await getFormResponseById(responseId);
-    if (!response || (!isAdmin(user) && response.userId !== user.id)) {
+    if (!response || !canManageResponse(user, response)) {
       return NextResponse.json(
         { success: false, message: "Response not found." },
         { status: 404 },

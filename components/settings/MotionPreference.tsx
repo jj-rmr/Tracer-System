@@ -66,7 +66,7 @@ export function MotionPreference() {
               aria-labelledby="reduce-motion-label"
               aria-describedby="reduce-motion-description"
               onClick={() => setReduceMotion(!reduceMotion)}
-              className="group relative h-6 w-11 shrink-0 rounded-full border border-input bg-muted p-0.5 outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-checked:border-primary aria-checked:bg-primary"
+              className="group relative h-6 w-11 shrink-0 rounded-full border border-input bg-muted p-0.5 outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring aria-checked:border-primary aria-checked:bg-primary"
             >
               <span className="block size-4.5 rounded-full bg-card shadow-xs transition-transform group-aria-checked:translate-x-5" />
             </button>

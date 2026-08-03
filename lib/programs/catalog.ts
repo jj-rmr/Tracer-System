@@ -313,3 +313,56 @@ export function getProgramsForCollege(
     return organization?.campus === campus && organization.college === college;
   });
 }
+
+export function isValidOrganizationGrant({
+  scopeType,
+  campus,
+  college,
+  program,
+}: {
+  scopeType: "campus" | "college" | "program";
+  campus: string;
+  college: string | null;
+  program: string | null;
+}) {
+  if (!CAMPUSES.some((option) => option.value === campus)) return false;
+  if (scopeType === "campus") return college === null && program === null;
+
+  if (
+    !college ||
+    !getCollegesForCampus(campus).some((option) => option.value === college)
+  ) {
+    return false;
+  }
+
+  if (scopeType === "college") return program === null;
+
+  return Boolean(
+    program &&
+    getProgramsForCollege(campus, college).some(
+      (option) => option.value === program,
+    ),
+  );
+}
+
+export function resolveOrganizationGrantPrograms({
+  scopeType,
+  campus,
+  college,
+  program,
+}: {
+  scopeType: "campus" | "college" | "program";
+  campus: string;
+  college: string | null;
+  program: string | null;
+}) {
+  if (scopeType === "program") return program ? [program] : [];
+
+  return PROGRAMS.filter((option) => {
+    const organization = PROGRAM_FOLDER_MAP[option.value];
+    return (
+      organization?.campus === campus &&
+      (scopeType === "campus" || organization.college === college)
+    );
+  }).map((option) => option.value);
+}

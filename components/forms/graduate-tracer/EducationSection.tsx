@@ -10,6 +10,7 @@ import {
   getCollegesForCampus,
   getProgramsForCollege,
   PROGRAM_FOLDER_MAP,
+  PROGRAMS,
 } from "@/lib/programs/catalog";
 import {
   ErrorMessage,
@@ -32,7 +33,8 @@ export function EducationSection({
   readOnly,
   register,
   clearFieldError,
-}: RhfSectionProps) {
+  allowedProgramValues,
+}: RhfSectionProps & { allowedProgramValues?: string[] | null }) {
   const advancedStudyDegree = useWatch({
     control,
     name: "advancedStudyDegree",
@@ -48,8 +50,31 @@ export function EducationSection({
   const campus = campusOverride ?? selectedOrganization?.campus ?? "";
   const college = collegeOverride ?? selectedOrganization?.college ?? "";
 
-  const collegeOptions = getCollegesForCampus(campus);
-  const programOptions = getProgramsForCollege(campus, college);
+  const allowedPrograms = allowedProgramValues
+    ? new Set(allowedProgramValues)
+    : null;
+  const campusOptions = allowedPrograms
+    ? CAMPUSES.filter((option) =>
+        PROGRAMS.some(
+          (program) =>
+            allowedPrograms.has(program.value) &&
+            PROGRAM_FOLDER_MAP[program.value]?.campus === option.value,
+        ),
+      )
+    : CAMPUSES;
+  const collegeOptions = getCollegesForCampus(campus).filter(
+    (option) =>
+      !allowedPrograms ||
+      PROGRAMS.some(
+        (program) =>
+          allowedPrograms.has(program.value) &&
+          PROGRAM_FOLDER_MAP[program.value]?.campus === campus &&
+          PROGRAM_FOLDER_MAP[program.value]?.college === option.value,
+      ),
+  );
+  const programOptions = getProgramsForCollege(campus, college).filter(
+    (option) => !allowedPrograms || allowedPrograms.has(option.value),
+  );
 
   return (
     <div className="space-y-6">
@@ -74,7 +99,7 @@ export function EducationSection({
                     setCollegeOverride("");
                     field.onChange("");
                   }}
-                  options={CAMPUSES}
+                  options={campusOptions}
                   hasError={!!errors.program && !campus}
                   required
                   placeholder="Select your campus"

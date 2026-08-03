@@ -8,7 +8,7 @@ export default async function ProtectedPage() {
 
   const role = getRole(user);
 
-  if (role === ROLES.ADMIN) {
+  if (role === ROLES.ADMIN || role === ROLES.COORDINATOR) {
     redirect("/admin");
   }
 

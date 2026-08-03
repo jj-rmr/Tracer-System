@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { requireAdmin } from "@/lib/auth";
+import {
+  canAccessProgram,
+  canManageManualResponse,
+  isCoordinator,
+  requireStaff,
+} from "@/lib/auth";
 import { deleteDriveFile } from "@/lib/google-drive/files";
 import {
   deleteFormResponseDocument,
+  getFormResponseById,
   getFormResponseDocuments,
   setManualImportStatus,
 } from "@/lib/repositories/form-responses.repository";
@@ -16,9 +22,16 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    await requireAdmin();
+    const staff = await requireStaff();
 
     const { id } = await params;
+    const response = await getFormResponseById(id);
+    if (!response || !canManageManualResponse(staff, response)) {
+      return NextResponse.json(
+        { success: false, message: "Manual response not found." },
+        { status: 404 },
+      );
+    }
     const body = (await request.json()) as {
       status?: unknown;
       uploadKeys?: unknown;
@@ -32,6 +45,18 @@ export async function PATCH(
     }
 
     if (body.status === "completed") {
+      if (
+        isCoordinator(staff) &&
+        !canAccessProgram(staff, response.answers.program)
+      ) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "The selected program is outside your assignments.",
+          },
+          { status: 403 },
+        );
+      }
       if (
         !Array.isArray(body.uploadKeys) ||
         body.uploadKeys.some(

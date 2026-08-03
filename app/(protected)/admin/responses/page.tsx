@@ -60,6 +60,9 @@ export default function ResponsesPage() {
   const searchValue = searchParams.get("search") ?? "";
   const [studies, setStudies] = useState<StudyPeriodSummary[]>([]);
   const [studiesLoaded, setStudiesLoaded] = useState(false);
+  const [allowedProgramValues, setAllowedProgramValues] = useState<
+    string[] | null
+  >(null);
   const [manualDraftId, setManualDraftId] = useState<string | null>(null);
   const [showDeleteDraftModal, setShowDeleteDraftModal] = useState(false);
   const [deletingDraft, setDeletingDraft] = useState(false);
@@ -100,6 +103,7 @@ export default function ResponsesPage() {
         const result = await response.json();
         if (!response.ok) throw new Error(result.message);
         setStudies(result.data.studies);
+        setAllowedProgramValues(result.data.allowedProgramValues);
       })
       .catch(() => {
         if (!controller.signal.aborted) {
@@ -308,7 +312,14 @@ export default function ResponsesPage() {
             label="Program"
             value={filters.program ?? ""}
             onChange={(value) => setFilter("program", value)}
-            options={[{ value: "", label: "All programs" }, ...PROGRAMS]}
+            options={[
+              { value: "", label: "All programs" },
+              ...PROGRAMS.filter(
+                (program) =>
+                  !allowedProgramValues ||
+                  allowedProgramValues.includes(program.value),
+              ),
+            ]}
             placeholder="All programs"
           />
 

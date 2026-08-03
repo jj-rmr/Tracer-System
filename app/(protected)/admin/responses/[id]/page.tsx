@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import ResponseWorkspace from "@/components/responses/ResponseWorkspace";
+import { canManageResponse, requireStaff } from "@/lib/auth";
 import { formResponseToSurvey } from "@/lib/forms/graduate-tracer-adapter";
 import {
   getFormResponseById,
@@ -12,9 +13,10 @@ interface Props {
 }
 
 export default async function ResponseDetailsPage({ params }: Props) {
+  const staff = await requireStaff();
   const { id } = await params;
   const response = await getFormResponseById(id);
-  if (!response) notFound();
+  if (!response || !canManageResponse(staff, response)) notFound();
 
   const responseView = formResponseToSurvey(
     response,

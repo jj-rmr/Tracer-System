@@ -1,6 +1,11 @@
 import type { AuthUser } from "@/lib/auth";
 import { supabase } from "@/lib/supabase/server";
-import { ROLES, type Role } from "@/types";
+import {
+  ROLES,
+  type CoordinatorScopeGrant,
+  type CoordinatorScopeType,
+  type Role,
+} from "@/types";
 import { EXTERNAL_TIMEOUTS, withExternalTimeout } from "@/lib/server/timeouts";
 
 interface AccountRow {
@@ -14,6 +19,27 @@ interface AccountRow {
   enabled: boolean;
   created_at: string;
   updated_at: string;
+  coordinator_scope_grants?: CoordinatorGrantRow[];
+}
+
+interface CoordinatorGrantRow {
+  id: string;
+  scope_type: CoordinatorScopeType;
+  campus: string;
+  college: string | null;
+  program: string | null;
+}
+
+function mapCoordinatorGrant(
+  grant: CoordinatorGrantRow,
+): CoordinatorScopeGrant {
+  return {
+    id: grant.id,
+    scopeType: grant.scope_type,
+    campus: grant.campus,
+    college: grant.college,
+    program: grant.program,
+  };
 }
 
 export function getProfilePictureUrl(user: AuthUser) {
@@ -27,6 +53,9 @@ export function formatAccount(row: AccountRow) {
     email: row.email,
     pictureUrl: row.picture_url,
     role: row.role,
+    coordinatorGrants: (row.coordinator_scope_grants ?? []).map(
+      mapCoordinatorGrant,
+    ),
     verified: row.email_verified,
     enabled: row.enabled,
     labels: [row.role],
@@ -40,7 +69,9 @@ export async function getAccount(id: string) {
     Promise.resolve(
       supabase
         .from("auth_accounts")
-        .select("*")
+        .select(
+          "*, coordinator_scope_grants!coordinator_scope_grants_account_id_fkey(*)",
+        )
         .eq("id", id)
         .single<AccountRow>(),
     ),
@@ -53,7 +84,12 @@ export async function getAccount(id: string) {
 export async function getAllAccounts() {
   const { data, error } = await withExternalTimeout(
     Promise.resolve(
-      supabase.from("auth_accounts").select("*").order("created_at"),
+      supabase
+        .from("auth_accounts")
+        .select(
+          "*, coordinator_scope_grants!coordinator_scope_grants_account_id_fkey(*)",
+        )
+        .order("created_at"),
     ),
     EXTERNAL_TIMEOUTS.authentication,
   );
@@ -71,24 +107,37 @@ export async function updateAccountName(id: string, name: string) {
   if (error) throw error;
 }
 
-export async function updateAccountRole(id: string, role: Role) {
-  const account = await getAccount(id);
+export async function replaceAccountAccess({
+  id,
+  role,
+  coordinatorGrants,
+  actorUserId,
+}: {
+  id: string;
+  role: Role;
+  coordinatorGrants: CoordinatorScopeGrant[];
+  actorUserId: string;
+}) {
   const roleChangeNotice =
     role === ROLES.ADMIN
       ? "You have been promoted to admin."
-      : "You have been demoted to alumni.";
+      : role === ROLES.COORDINATOR
+        ? "Your coordinator access has been updated."
+        : "You have been changed to an alumni account.";
   const { error } = await withExternalTimeout(
     Promise.resolve(
-      supabase
-        .from("auth_accounts")
-        .update({ role, role_change_notice: roleChangeNotice })
-        .eq("id", id),
+      supabase.rpc("replace_account_access", {
+        target_account_id: id,
+        next_role: role,
+        next_grants: coordinatorGrants,
+        actor_account_id: actorUserId,
+        next_notice: roleChangeNotice,
+      }),
     ),
     EXTERNAL_TIMEOUTS.authentication,
   );
   if (error) throw error;
-
-  return { ...account, role };
+  return getAccount(id);
 }
 
 export async function deleteAccount(id: string) {
