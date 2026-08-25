@@ -302,18 +302,6 @@
   }
 }
 
-/* Keep visible labels outside the interactive hitbox. Controls nested in a
-   label remain directly interactive without making the surrounding text a
-   proxy click target. */
-label {
-  pointer-events: none;
-}
-
-label
-  :is(input, textarea, select, button, [role="checkbox"], [role="combobox"]) {
-  pointer-events: auto;
-}
-
 .theme-changing,
 .theme-changing *,
 .theme-changing *::before,

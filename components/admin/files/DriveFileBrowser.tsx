@@ -940,7 +940,7 @@ export default function DriveFileBrowser() {
                     if (
                       event.pointerType === "mouse" ||
                       (event.target as HTMLElement).closest(
-                        "button,input,[data-file-menu]",
+                        "button,input,[role='checkbox'],[data-file-menu]",
                       )
                     ) {
                       return;
@@ -965,7 +965,7 @@ export default function DriveFileBrowser() {
                   onDoubleClick={(event) => {
                     if (
                       (event.target as HTMLElement).closest(
-                        "button,input,[data-file-menu]",
+                        "button,input,[role='checkbox'],[data-file-menu]",
                       )
                     ) {
                       return;
