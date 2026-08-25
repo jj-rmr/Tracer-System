@@ -337,7 +337,9 @@ export default function ResponseTable({
 
   return (
     <div className="w-full overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
-      <Table className="min-w-280 table-auto">
+      <Table
+        className={`${loading || totalRows === 0 ? "" : "min-w-280 "}table-auto`}
+      >
         {!loading && (
           <TableHeader>
             <TableRow className="hover:bg-transparent">
