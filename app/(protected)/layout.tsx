@@ -22,7 +22,7 @@ export default async function DashboardLayout({
       <SessionKeepAlive />
       <DashboardNavigation role={role} />
       <main className="min-w-0 flex-1 px-4 sm:px-6">
-        <div className="mx-auto min-h-full w-full max-w-6xl py-6 pb-[calc(4.5rem+env(safe-area-inset-bottom))] sm:py-8 sm:pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-8">
+        <div className="mx-auto min-h-full w-full max-w-6xl py-6 sm:py-8 max-md:pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-8">
           {children}
         </div>
       </main>
