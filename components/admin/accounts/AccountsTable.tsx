@@ -290,6 +290,16 @@ export default function AccountsTable({
   const confirmRoleChange = async () => {
     if (!roleChange || normalizedRoleConfirmation !== requiredRoleConfirmation)
       return;
+    if (
+      roleChange.role === ROLES.COORDINATOR &&
+      roleChange.coordinatorGrants.length === 0
+    ) {
+      showToast({
+        message: "Add at least one coordinator assignment.",
+        type: "error",
+      });
+      return;
+    }
     setChangingRole(true);
 
     try {
@@ -1223,9 +1233,7 @@ export default function AccountsTable({
               variant="destructive"
               disabled={
                 changingRole ||
-                normalizedRoleConfirmation !== requiredRoleConfirmation ||
-                (roleChange?.role === ROLES.COORDINATOR &&
-                  roleChange.coordinatorGrants.length === 0)
+                normalizedRoleConfirmation !== requiredRoleConfirmation
               }
               onClick={() => void confirmRoleChange()}
             >
